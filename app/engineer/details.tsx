@@ -26,6 +26,7 @@ import ViewShot from 'react-native-view-shot';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
+import { submitComplaintUpdate } from '../src/utils/submitComplaintUpdate';
 
 // DatePickerModal component
 interface DatePickerModalProps {
@@ -318,6 +319,11 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({ visible, onClose, onS
   );
 };
 
+interface UploadResult {
+  secure_url: string;
+  // include other properties as needed
+}
+
 export default function EnggComplaintDetails() {
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -464,10 +470,7 @@ export default function EnggComplaintDetails() {
   const handleSubmit = async () => {
     setHasSubmitAttempt(true);
     
-    if (!typeOfCall) {
-      Alert.alert('Error', 'Please select type of call');
-      return;
-    }
+   
     if (!callAttendedDate || !callAttendedTime) {
       Alert.alert('Error', 'Please enter call attended date and time');
       return;
@@ -488,10 +491,7 @@ export default function EnggComplaintDetails() {
       Alert.alert('Error', 'Please select a pending reason');
       return;
     }
-    if (!remark.trim()) {
-      Alert.alert('Error', 'Please add a remark');
-      return;
-    }
+    
 
     setIsSubmitting(true);
     try {
@@ -506,9 +506,8 @@ export default function EnggComplaintDetails() {
 
   // Handle final submission with document generation
   const handleFinalSubmit = async () => {
-    // Log signature data for debugging
-    // console.log('Signature data length:', customerSignature ? customerSignature.length : 'No signature');
-
+    console.log('🚩 CHECKPOINT 1: Starting form submission process');
+    
     const formData = {
       // Basic complaint information
       complaintNo: getParam('complaintNo'),
@@ -562,42 +561,72 @@ export default function EnggComplaintDetails() {
       }
     };
 
+    console.log('🚩 CHECKPOINT 2: Form data prepared, beginning PDF generation');
+
     // Generate document from form data with the specialized template
     try {
       const htmlContent = createComplaintReportTemplate(formData);
       const fileName = `complaint_${getParam('complaintNo')}_report`;
 
+      console.log('🚩 CHECKPOINT 3: HTML template created, generating PDF');
       const result = await generatePdfFromHtml(htmlContent, fileName);
       
+      console.log('🚩 CHECKPOINT 4: PDF generation result:', result.success ? 'SUCCESS' : 'FAILED');
+      
       if (result.success && result.localUri) {
-        // Upload the generated PDF to Cloudinary
         try {
-          const uploadResult = await uploadPDFToCloudinary(result.localUri);
-        //  console.log('PDF uploaded to Cloudinary:', uploadResult);
+          console.log('🚩 CHECKPOINT 5: Starting Cloudinary upload');
+          const uploadResult = await uploadPDFToCloudinary(result.localUri) as UploadResult;
+          const secureUrl = uploadResult.secure_url;
           
-          Alert.alert('Success', 'Data submitted, PDF generated and uploaded successfully', [
-            {
-              text: 'OK',
-              onPress: () => {
-                router.push({
-                  pathname: '/engineer/list',
-                  params: {
-                    username: getParam('username'),
-                    password: getParam('password')
-                  }
-                });
+          console.log('🚩 CHECKPOINT 6: Cloudinary upload successful, secure URL obtained');
+          console.log('Secure URL:', secureUrl.substring(0, 50) + '...');
+
+          // Call the submitComplaintUpdate utility
+          console.log('🚩 CHECKPOINT 7: Starting server API call with form data');
+          const responseJson = await submitComplaintUpdate({
+            enggname: getParam('S_assignedengg'),
+            remark: customerComment,
+            report: secureUrl,
+            status: workStatus === 'Completed' ? '1' : '0',
+            pendingreason: workStatus === 'Completed' ? 'NULL' : pendingReason,
+          });
+
+          console.log('🚩 CHECKPOINT 8: Server response received:', JSON.stringify(responseJson));
+
+          if (responseJson.status === 'success') {
+            console.log('🚩 CHECKPOINT 9: Server update SUCCESSFUL');
+            Alert.alert('Success', 'Data sent successfully!', [
+              {
+                text: 'OK',
+                onPress: () => {
+                  console.log('🚩 CHECKPOINT 10: Navigating back to list');
+                  router.push({
+                    pathname: '/engineer/list',
+                    params: {
+                      username: getParam('username'),
+                      password: getParam('password')
+                    }
+                  });
+                }
               }
-            }
-          ]);
+            ]);
+          } else {
+            console.log('🚩 CHECKPOINT 9: Server update FAILED:', responseJson.reason);
+            Alert.alert('Error', responseJson.reason || 'Failed to send data. Please try again.');
+          }
         } catch (uploadError) {
-          console.error('Error uploading to Cloudinary:', uploadError);
-          Alert.alert('Warning', 'PDF generated but failed to upload to Cloudinary. Please try again later.');
+          console.log('🚩 ERROR: Cloudinary upload or server communication failed', uploadError);
+          console.error('Error uploading to Cloudinary or posting to server:', uploadError);
+          Alert.alert('Warning', 'PDF generated but failed to upload to Cloudinary or post to server. Please try again later.');
         }
       } else {
+        console.log('🚩 ERROR: PDF generation failed');
         console.error('Failed to generate PDF');
         Alert.alert('Error', 'Failed to generate PDF document. Please try again.');
       }
     } catch (error) {
+      console.log('🚩 ERROR: PDF template generation failed', error);
       console.error('Error in PDF generation:', error);
       Alert.alert('Error', 'Failed to process document. Please try again.');
     }
