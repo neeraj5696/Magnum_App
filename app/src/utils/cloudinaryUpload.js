@@ -32,14 +32,14 @@ const uploadPDFToCloudinary = async (pdfUri, folder = cloudinaryConfig.folder) =
       
       // In Expo, we need to create a file object
       const fileUriParts = pdfUri.split('/');
-      const fileName = fileUriParts[fileUriParts.length - 1];
-      console.log('Extracted filename:', fileName);
+      const fileNameWithExtension = fileUriParts[fileUriParts.length - 1];
+      console.log('Extracted filename with extension:', fileNameWithExtension);
       
       // Create a Blob object from the file
       formData.append('file', {
         uri: pdfUri,
         type: 'application/pdf',
-        name: fileName || 'document.pdf',
+        name: fileNameWithExtension || 'document.pdf', // Use filename with extension for the file name
       });
       
       // Make sure upload preset is set
@@ -48,8 +48,8 @@ const uploadPDFToCloudinary = async (pdfUri, folder = cloudinaryConfig.folder) =
       }
       
       formData.append('upload_preset', cloudinaryConfig.uploadPreset);
-      formData.append('folder', folder);
       formData.append('resource_type', 'raw');
+      formData.append('public_id', `${folder}/${fileNameWithExtension}`); // Use folder and filename with extension as public_id
 
       console.log('Form data created with upload_preset:', cloudinaryConfig.uploadPreset);
       
@@ -83,11 +83,12 @@ const uploadPDFToCloudinary = async (pdfUri, folder = cloudinaryConfig.folder) =
     else {
       // Web platform handling
       const formData = new FormData();
+      const fileNameWithExtension = pdfUri.name || 'document.pdf';
       formData.append('file', pdfUri);
       formData.append('upload_preset', cloudinaryConfig.uploadPreset);
-      formData.append('folder', folder);
       formData.append('format', 'pdf');
       formData.append('resource_type', 'raw');
+      formData.append('public_id', `${folder}/${fileNameWithExtension}`); // Use folder and filename with extension as public_id
       
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/raw/upload`,

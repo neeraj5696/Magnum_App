@@ -1,9 +1,9 @@
 import Constants from 'expo-constants';
 
 const cloudinaryConfig = {
-  cloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dtcwwgcsp',
-  uploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'magnum_crm_preset',
-  folder: process.env.EXPO_PUBLIC_CLOUDINARY_FOLDER || 'hma'  
+  cloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME || 'magnum',
+  uploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'engineer',
+  folder: process.env.EXPO_PUBLIC_CLOUDINARY_FOLDER || 'uploads'  
 };
 
 console.log('Cloudinary config loaded:', cloudinaryConfig);

@@ -14,6 +14,7 @@ import {
   PanResponder,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -330,13 +331,14 @@ export default function EnggComplaintDetails() {
   };
 
   // Debug log
-  console.log('S_SERVDT value:', getParam('S_SERVDT'));
+ // console.log('S_SERVDT value:', getParam('S_SERVDT'));
 
   // Form field states
   const [remark, setRemark] = useState('');
   const [workStatus, setWorkStatus] = useState('');
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [hasSubmitAttempt, setHasSubmitAttempt] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form field states for new fields
   const [faultReported, setFaultReported] = useState('');
@@ -432,10 +434,10 @@ export default function EnggComplaintDetails() {
             result: 'data-uri'
           };
           const capturedSignature = await signatureRef.current.capture(options);
-          console.log('Signature captured:', capturedSignature.substring(0, 60));
+       //  console.log('Signature captured:', capturedSignature.substring(0, 60));
           setCustomerSignature(capturedSignature);
           setShowSignaturePad(false);
-          console.log('customerSignature after save:', capturedSignature.substring(0, 60));
+        //  console.log('customerSignature after save:', capturedSignature.substring(0, 60));
         } else {
           Alert.alert('Error', 'Failed to capture signature');
         }
@@ -461,47 +463,51 @@ export default function EnggComplaintDetails() {
   // Handle form submission
   const handleSubmit = async () => {
     setHasSubmitAttempt(true);
-    // if (!workStatus) {
-    //   Alert.alert('Error', 'Please select a work status');
-    //   return;
-    // }
-    // if (workStatus === 'Pending' && !pendingReason) {
-    //   Alert.alert('Error', 'Please select a pending reason');
-    //   return;
-    // }
-    // if (!customerSignature) {
-    //   Alert.alert('Error', 'Please provide customer signature');
-    //   return;
-    // }
-    // if (!faultReported) {
-    //   Alert.alert('Error', 'Please enter fault reported');
-    //   return;
-    // }
-    // if (!typeOfCall) {
-    //   Alert.alert('Error', 'Please select type of call');
-    //   return;
-    // }
-    // if (!callAttendedDate || !callAttendedTime) {
-    //   Alert.alert('Error', 'Please enter call attended date and time');
-    //   return;
-    // }
-    // if (!callCompletedDate || !callCompletedTime) {
-    //   Alert.alert('Error', 'Please enter call completed date and time');
-    //   return;
-    // }
-    // if (!remark.trim()) {
-    //   Alert.alert('Error', 'Please add a remark');
-    //   return;
-    // }
-    // Directly call handleFinalSubmit instead of showing format modal
-    await handleFinalSubmit();
+    
+    if (!typeOfCall) {
+      Alert.alert('Error', 'Please select type of call');
+      return;
+    }
+    if (!callAttendedDate || !callAttendedTime) {
+      Alert.alert('Error', 'Please enter call attended date and time');
+      return;
+    }
+    if (!callCompletedDate || !callCompletedTime) {
+      Alert.alert('Error', 'Please enter call completed date and time');
+      return;
+    }
+    if (!customerSignature) {
+      Alert.alert('Error', 'Please provide customer signature');
+      return;
+    }
+    if (!workStatus) {
+      Alert.alert('Error', 'Please select a work status');
+      return;
+    }
+    if (workStatus === 'Pending' && !pendingReason) {
+      Alert.alert('Error', 'Please select a pending reason');
+      return;
+    }
+    if (!remark.trim()) {
+      Alert.alert('Error', 'Please add a remark');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await handleFinalSubmit();
+    } catch (error) {
+      console.error('Error in submission:', error);
+      Alert.alert('Error', 'Failed to submit. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handle final submission with document generation
   const handleFinalSubmit = async () => {
     // Log signature data for debugging
-    console.log('Signature data length:',
-      customerSignature ? customerSignature.length : 'No signature');
+    // console.log('Signature data length:', customerSignature ? customerSignature.length : 'No signature');
 
     const formData = {
       // Basic complaint information
@@ -567,7 +573,7 @@ export default function EnggComplaintDetails() {
         // Upload the generated PDF to Cloudinary
         try {
           const uploadResult = await uploadPDFToCloudinary(result.localUri);
-          console.log('PDF uploaded to Cloudinary:', uploadResult);
+        //  console.log('PDF uploaded to Cloudinary:', uploadResult);
           
           Alert.alert('Success', 'Data submitted, PDF generated and uploaded successfully', [
             {
@@ -662,7 +668,7 @@ export default function EnggComplaintDetails() {
         setPendingReasons(data.data.map((item: { PCOMP_STATUS: string }) => item.PCOMP_STATUS));
         setShowPendingReason(true);
         data.data.forEach((item: { PCOMP_STATUS: string }) => {
-          console.log('Reason:', item.PCOMP_STATUS);
+        //  console.log('Reason:', item.PCOMP_STATUS);
         });
       } else {
         setShowPendingReason(false);
@@ -1065,8 +1071,22 @@ export default function EnggComplaintDetails() {
               </>
             )}
 
-            <Pressable style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.submitButtonText}>Submit</Text>
+            <Pressable 
+              style={[
+                styles.submitButton,
+                isSubmitting && styles.submitButtonDisabled
+              ]} 
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <View style={styles.submitButtonContent}>
+                  <ActivityIndicator color="#fff" size="small" style={styles.submitButtonSpinner} />
+                  <Text style={styles.submitButtonText}>Submitting...</Text>
+                </View>
+              ) : (
+                <Text style={styles.submitButtonText}>Submit</Text>
+              )}
             </Pressable>
           </View>
         </View>
@@ -1316,6 +1336,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#1a73e8aa',
+    opacity: 0.8,
+  },
+  submitButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitButtonSpinner: {
+    marginRight: 8,
   },
   submitButtonText: {
     color: '#fff',
