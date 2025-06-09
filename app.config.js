@@ -17,14 +17,16 @@ export default {
       "**/*"
     ],
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
+      bundleIdentifier: "com.magnum.care"
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
       },
-      edgeToEdgeEnabled: true
+      edgeToEdgeEnabled: true,
+      package: "com.magnum.care"
     },
     web: {
       bundler: "metro",
@@ -51,6 +53,12 @@ export default {
       cloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME,
       uploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
       folder: process.env.EXPO_PUBLIC_CLOUDINARY_FOLDER
+    },
+    runtimeVersion: {
+      policy: "sdkVersion"
+    },
+    updates: {
+      url: "https://u.expo.dev/your-project-id"
     }
   }
 }; 

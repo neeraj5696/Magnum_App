@@ -470,15 +470,8 @@ export default function EnggComplaintDetails() {
   const handleSubmit = async () => {
     setHasSubmitAttempt(true);
     
-   
-    if (!callAttendedDate || !callAttendedTime) {
-      Alert.alert('Error', 'Please enter call attended date and time');
-      return;
-    }
-    if (!callCompletedDate || !callCompletedTime) {
-      Alert.alert('Error', 'Please enter call completed date and time');
-      return;
-    }
+ 
+    
     if (!customerSignature) {
       Alert.alert('Error', 'Please provide customer signature');
       return;
@@ -777,7 +770,7 @@ export default function EnggComplaintDetails() {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Remark:</Text>
-              <Text style={styles.value}>{getParam('Remark')}</Text>
+              <Text style={styles.value}>{getParam('S_REMARK1')}</Text>
             </View>
            
           </View>
@@ -787,19 +780,17 @@ export default function EnggComplaintDetails() {
 
             {/* Fault Reported */}
             <Text style={styles.formLabel}>Fault Reported:</Text>
-            <View style={styles.dateTimeInputGroup}>
-              <View style={[styles.dateTimeInput, { flex: 1 }]}>
-                <Ionicons name="time-outline" size={18} color="#666" />
-                <Text style={[styles.dateTimeText, { color: '#333', fontWeight: '500' }]}>
-                  {getParam('S_SERVDT') || 'Not available'}
-                </Text>
-              </View>
+            <View style={[styles.dateTimeInput, { backgroundColor: '#f0f0f0' }]}>
+              <Ionicons name="time-outline" size={18} color="#666" />
+              <Text style={[styles.dateTimeText, { color: '#666' }]}>
+                {getParam('S_SERVDT') || 'Not available'}
+              </Text>
             </View>
 
             {/* Type of Call Dropdown */}
             <Text style={styles.formLabel}>Type of Call:</Text>
-            <View style={[styles.dropdownButton, { backgroundColor: '#f5f5f5' }]}>
-              <Text style={[styles.dropdownButtonText, { color: '#333' }]}>
+            <View style={[styles.dropdownButton, { backgroundColor: '#f0f0f0' }]}>
+              <Text style={[styles.dropdownButtonText, { color: '#666' }]}>
                 {getParam('S_TASK_TYPE') || 'Not available'}
               </Text>
             </View>
@@ -840,22 +831,11 @@ export default function EnggComplaintDetails() {
             {/* Call Attended Date and Time */}
             <View style={styles.dateTimeGroup}>
               <Text style={styles.formLabel}>Call Attended On:</Text>
-              <View style={styles.dateTimeInputGroup}>
-                <Pressable 
-                  style={[styles.dateTimeInput, styles.dateInput]} 
-                  onPress={() => setShowAttendedDatePicker(true)}
-                >
-                  <Ionicons name="calendar-outline" size={18} color="#666" />
-                  <Text style={styles.dateTimeText}>{callAttendedDate || 'Select Date'}</Text>
-                </Pressable>
-                
-                <Pressable 
-                  style={[styles.dateTimeInput, styles.timeInput]} 
-                  onPress={() => setShowAttendedTimePicker(true)}
-                >
-                  <Ionicons name="time-outline" size={18} color="#666" />
-                  <Text style={styles.dateTimeText}>{callAttendedTime || 'Select Time'}</Text>
-                </Pressable>
+              <View style={[styles.dateTimeInput, { backgroundColor: '#f0f0f0' }]}>
+                <Ionicons name="time-outline" size={18} color="#666" />
+                <Text style={[styles.dateTimeText, { color: '#666' }]}>
+                  {getParam('S_assigndate') || 'Not available'}
+                </Text>
               </View>
             </View>
 
@@ -864,7 +844,7 @@ export default function EnggComplaintDetails() {
                 visible={showAttendedDatePicker}
                 onClose={() => setShowAttendedDatePicker(false)}
                 onSelect={setCallAttendedDate}
-                currentValue={callAttendedDate}
+                currentValue={getParam('S_assigndate')}
               />
             )}
             
@@ -873,29 +853,18 @@ export default function EnggComplaintDetails() {
                 visible={showAttendedTimePicker}
                 onClose={() => setShowAttendedTimePicker(false)}
                 onSelect={setCallAttendedTime}
-                currentValue={callAttendedTime}
+                currentValue={getParam('S_assigndate')}
               />
             )}
 
             {/* Call Completed Date and Time */}
             <View style={styles.dateTimeGroup}>
               <Text style={styles.formLabel}>Call Completed On:</Text>
-              <View style={styles.dateTimeInputGroup}>
-                <Pressable 
-                  style={[styles.dateTimeInput, styles.dateInput]} 
-                  onPress={() => setShowCompletedDatePicker(true)}
-                >
-                  <Ionicons name="calendar-outline" size={18} color="#666" />
-                  <Text style={styles.dateTimeText}>{callCompletedDate || 'Select Date'}</Text>
-                </Pressable>
-                
-                <Pressable 
-                  style={[styles.dateTimeInput, styles.timeInput]} 
-                  onPress={() => setShowCompletedTimePicker(true)}
-                >
-                  <Ionicons name="time-outline" size={18} color="#666" />
-                  <Text style={styles.dateTimeText}>{callCompletedTime || 'Select Time'}</Text>
-                </Pressable>
+              <View style={[styles.dateTimeInput, { backgroundColor: '#f0f0f0' }]}>
+                <Ionicons name="time-outline" size={18} color="#666" />
+                <Text style={[styles.dateTimeText, { color: '#666' }]}>
+                  {new Date().toISOString().slice(0, 19).replace('T', ' ')}
+                </Text>
               </View>
             </View>
 
@@ -929,13 +898,11 @@ export default function EnggComplaintDetails() {
 
             {/* Cause of Problem */}
             <Text style={styles.formLabel}>Cause of Problem:</Text>
-            <TextInput
-              style={[styles.textInput, { height: 40 }]}
-              placeholder="Enter cause of problem..."
-              value={causeProblem}
-              onChangeText={setCauseProblem}
-              multiline={false}
-            />
+            <View style={[styles.textInput, { backgroundColor: '#f0f0f0', height: 40 }]}>
+              <Text style={{ color: '#666' }}>
+                {getParam('S_REMARK1') || 'Not available'}
+              </Text>
+            </View>
 
             {/* Diagnosis */}
             <Text style={styles.formLabel}>Diagnosis:</Text>
@@ -1290,7 +1257,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     justifyContent: 'center',
-    alignItems: 'center',
+   
     backgroundColor: '#f9f9f9',
     color: '#333',
     height: 20, // set to whatever height you want

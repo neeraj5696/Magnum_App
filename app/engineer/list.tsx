@@ -14,6 +14,7 @@ interface Complaint {
   S_assigndate?: string;
   COMP_ADD1?: string;
   S_TASK_TYPE?: string;
+  S_REMARK1?: string;
 }
 
 const EngineerList: FC = () => {
@@ -62,75 +63,80 @@ const EngineerList: FC = () => {
     fetchComplaints();
   }, []);
 
-  const renderItem = ({ item }: { item: Complaint }) => (
-    <Pressable
-      style={[styles.card, { borderLeftWidth: 4, borderLeftColor: '#0066CC' }]}
-      onPress={() => {
-        router.push({
-          pathname: '/engineer/details',
-          params: {
-            complaintNo: item.S_SERVNO,
-            clientName: item.COMP_NAME,
-            SYSTEM_NAME: item.SYSTEM_NAME || '',
-            S_assigndate: item.S_assigndate || '',
-            location: item.COMP_ADD1 || '',
-            S_TASK_TYPE: item.S_TASK_TYPE || '',
-            status: item.S_jobstatus || '',
-            S_SERVDT: item.S_SERVDT || '',
-            S_assignedengg: item.S_assignedengg || '',
-            username: params.username as string,
-            password: params.password as string
-          }
-        });
-      }}
-    >
-      <View style={styles.row}>
-        <View style={styles.labelContainer}>
-          <MaterialIcons name="receipt" size={18} color="#0066CC" style={styles.labelIcon} />
-          <Text style={styles.label}>Complaint No : </Text>
+  const renderItem = ({ item }: { item: Complaint }) => {
+    console.log('List item data:', JSON.stringify(item, null, 2));
+    return (
+      <Pressable
+        style={[styles.card, { borderLeftWidth: 4, borderLeftColor: '#0066CC' }]}
+        onPress={() => {
+         
+          router.push({
+            pathname: '/engineer/details',
+            params: {
+              complaintNo: item.S_SERVNO,
+              clientName: item.COMP_NAME,
+              SYSTEM_NAME: item.SYSTEM_NAME || '',
+              S_assigndate: item.S_assigndate || '',
+              location: item.COMP_ADD1 || '',
+              S_TASK_TYPE: item.S_TASK_TYPE || '',
+              status: item.S_jobstatus || '',
+              S_SERVDT: item.S_SERVDT || '',
+              S_assignedengg: item.S_assignedengg || '',
+              S_REMARK1: item.S_REMARK1 || '',
+              username: params.username as string,
+              password: params.password as string
+            }
+          });
+        }}
+      >
+        <View style={styles.row}>
+          <View style={styles.labelContainer}>
+            <MaterialIcons name="receipt" size={18} color="#0066CC" style={styles.labelIcon} />
+            <Text style={styles.label}>Complaint No : </Text>
+          </View>
+          <Text style={styles.text}>{item.S_SERVNO}</Text>
         </View>
-        <Text style={styles.text}>{item.S_SERVNO}</Text>
-      </View>
 
-      <View style={styles.row}>
-        <View style={styles.labelContainer}>
-          <MaterialIcons name="person" size={18} color="#0066CC" style={styles.labelIcon} />
-          <Text style={styles.label}>Client Name : </Text>
+        <View style={styles.row}>
+          <View style={styles.labelContainer}>
+            <MaterialIcons name="person" size={18} color="#0066CC" style={styles.labelIcon} />
+            <Text style={styles.label}>Client Name : </Text>
+          </View>
+          <Text style={styles.grayText}>{item.COMP_NAME}</Text>
         </View>
-        <Text style={styles.grayText}>{item.COMP_NAME}</Text>
-      </View>
 
-      <View style={styles.row}>
-        <View style={styles.labelContainer}>
-          <MaterialIcons name="engineering" size={18} color="#0066CC" style={styles.labelIcon} />
-          <Text style={styles.label}>Engineer : </Text>
+        <View style={styles.row}>
+          <View style={styles.labelContainer}>
+            <MaterialIcons name="engineering" size={18} color="#0066CC" style={styles.labelIcon} />
+            <Text style={styles.label}>Engineer : </Text>
+          </View>
+          <Text style={styles.grayText}>{item.S_assignedengg}</Text>
         </View>
-        <Text style={styles.grayText}>{item.S_assignedengg}</Text>
-      </View>
 
-      <View style={styles.row}>
-        <View style={styles.labelContainer}>
-          <MaterialIcons name="info" size={18} color="#0066CC" style={styles.labelIcon} />
-          <Text style={styles.label}>Status : </Text>
+        <View style={styles.row}>
+          <View style={styles.labelContainer}>
+            <MaterialIcons name="info" size={18} color="#0066CC" style={styles.labelIcon} />
+            <Text style={styles.label}>Status : </Text>
+          </View>
+          <Text style={[
+            styles.grayText,
+            { 
+              color: item.S_jobstatus === 'Completed' ? '#4CAF50' : 
+                     item.S_jobstatus === 'Pending' ? '#FFA000' : '#666'
+            }
+          ]}>{item.S_jobstatus}</Text>
         </View>
-        <Text style={[
-          styles.grayText,
-          { 
-            color: item.S_jobstatus === 'Completed' ? '#4CAF50' : 
-                   item.S_jobstatus === 'Pending' ? '#FFA000' : '#666'
-          }
-        ]}>{item.S_jobstatus}</Text>
-      </View>
 
-      <View style={styles.row}>
-        <View style={styles.labelContainer}>
-          <MaterialIcons name="schedule" size={18} color="#0066CC" style={styles.labelIcon} />
-          <Text style={styles.label}>Fault Reported : </Text>
+        <View style={styles.row}>
+          <View style={styles.labelContainer}>
+            <MaterialIcons name="schedule" size={18} color="#0066CC" style={styles.labelIcon} />
+            <Text style={styles.label}>Fault Reported : </Text>
+          </View>
+          <Text style={styles.grayText}>{item.S_SERVDT}</Text>
         </View>
-        <Text style={styles.grayText}>{item.S_SERVDT}</Text>
-      </View>
-    </Pressable>
-  );
+      </Pressable>
+    );
+  };
 
   return (
     <View style={styles.container}>
