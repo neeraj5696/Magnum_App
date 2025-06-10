@@ -17,28 +17,27 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.background}>
         <LogoHeader />
-       a
 
         <View style={styles.container}>
           {/* Manager and Area Manager Section */}
           <View style={styles.buttonGrid}>
             {/* Manager Image */}
             <TouchableOpacity style={styles.buttonSmall}>
-              <Image 
-                source={require("../assets/images/manager.png")} 
-                style={styles.buttonImageSmall} 
+              <Image
+                source={require("../assets/images/manager.png")}
+                style={styles.buttonImageSmall}
               />
               <Text style={styles.buttonTextSmall}>Manager</Text>
             </TouchableOpacity>
 
             {/* Area Manager Image */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.buttonSmall}
               onPress={() => router.push("/areamanager/alogin")}
             >
-              <Image 
-                source={require("../assets/images/boss.png")} 
-                style={styles.buttonImageSmall} 
+              <Image
+                source={require("../assets/images/boss.png")}
+                style={styles.buttonImageSmall}
               />
               <Text style={styles.buttonTextSmall}>Area Manager</Text>
             </TouchableOpacity>
@@ -47,22 +46,22 @@ export default function HomeScreen() {
           {/* Engineer and Partner Section */}
           <View style={styles.buttonGrid}>
             {/* Engineer Image */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.buttonSmall}
               onPress={() => router.push("/engineer/login")}
             >
-              <Image 
-                source={require("../assets/images/engineer.png")} 
-                style={styles.buttonImageSmall} 
+              <Image
+                source={require("../assets/images/engineer.png")}
+                style={styles.buttonImageSmall}
               />
               <Text style={styles.buttonTextSmall}>Engineer</Text>
             </TouchableOpacity>
 
             {/* Partner Image */}
             <TouchableOpacity style={styles.buttonSmall}>
-              <Image 
-                source={require("../assets/images/collaboration.png")} 
-                style={styles.buttonImageSmall} 
+              <Image
+                source={require("../assets/images/collaboration.png")}
+                style={styles.buttonImageSmall}
               />
               <Text style={styles.buttonTextSmall}>Partner</Text>
             </TouchableOpacity>
@@ -72,18 +71,18 @@ export default function HomeScreen() {
           <View style={styles.buttonGrid}>
             {/* Admin Image */}
             <TouchableOpacity style={styles.buttonSmall}>
-              <Image 
-                source={require("../assets/images/admin.png")} 
-                style={styles.buttonImageSmall} 
+              <Image
+                source={require("../assets/images/admin.png")}
+                style={styles.buttonImageSmall}
               />
               <Text style={styles.buttonTextSmall}>Admin</Text>
             </TouchableOpacity>
 
             {/* Check In/Out Image */}
             <TouchableOpacity style={styles.buttonSmall}>
-              <Image 
-                source={require("../assets/images/checkinout.png")} 
-                style={styles.buttonImageSmall} 
+              <Image
+                source={require("../assets/images/checkinout.png")}
+                style={styles.buttonImageSmall}
               />
               <Text style={styles.buttonTextSmall}>Check In/Out</Text>
             </TouchableOpacity>

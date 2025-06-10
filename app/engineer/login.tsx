@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -13,6 +13,8 @@ export default function EngineerLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const shimmerAnimation = useRef(new Animated.Value(0)).current;
+  const shimmerLoopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   // Reset states when the screen comes into focus
   useFocusEffect(
@@ -39,6 +41,44 @@ export default function EngineerLogin() {
       }
     };
     loadCredentials();
+  }, []);
+
+  useEffect(() => {
+    if (loginSuccess) {
+      shimmerLoopRef.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmerAnimation, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shimmerAnimation, {
+            toValue: 0,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      shimmerLoopRef.current.start();
+
+      // Cleanup function
+      return () => {
+        if (shimmerLoopRef.current && typeof shimmerLoopRef.current.stop === 'function') {
+          shimmerLoopRef.current.stop();
+          shimmerLoopRef.current = null;
+        }
+      };
+    }
+  }, [loginSuccess]);
+
+  // Add cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      if (shimmerLoopRef.current && typeof shimmerLoopRef.current.stop === 'function') {
+        shimmerLoopRef.current.stop();
+        shimmerLoopRef.current = null;
+      }
+    };
   }, []);
 
   const handleLogin = async () => {
@@ -83,6 +123,10 @@ export default function EngineerLogin() {
         setLoginSuccess(true);
         // Navigate to list page after a short delay to show success animation
         setTimeout(() => {
+          if (shimmerLoopRef.current && typeof shimmerLoopRef.current.stop === 'function') {
+            shimmerLoopRef.current.stop();
+            shimmerLoopRef.current = null;
+          }
           router.push({
             pathname: "/engineer/list",
             params: {
@@ -100,6 +144,15 @@ export default function EngineerLogin() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const shimmerStyle = {
+    transform: [{
+      translateX: shimmerAnimation.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-200, 200],
+      }),
+    }],
   };
 
   return (
@@ -151,6 +204,7 @@ export default function EngineerLogin() {
         <View style={styles.buttonContainer}>
           {loginSuccess ? (
             <View style={styles.successContainer}>
+              <Animated.View style={[styles.shimmer, shimmerStyle]} />
               <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
               <Text style={styles.successText}>Login Successful!</Text>
             </View>
@@ -264,11 +318,21 @@ const styles = StyleSheet.create({
     backgroundColor: "rgb(232, 244, 253)",
     padding: 14,
     borderRadius: 8,
+    overflow: "hidden",
   },
   successText: {
     color: "#2E7D32",
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
+  },
+  shimmer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 172, 237, 0.25)",
+    width: 200,
   },
 }); 

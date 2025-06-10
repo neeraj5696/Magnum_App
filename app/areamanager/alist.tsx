@@ -15,6 +15,16 @@ interface Complaint {
   COMP_ADD1?: string;
   S_TASK_TYPE?: string;
   S_REMARK1?: string;
+  S_UPDT?: string;
+  COMP_ADD2?: string;
+  COMP_ADD3?: string;
+  COMP_TEL?: string;
+  S_REMAKR6?: string;
+  S_REMARK3?: string;
+  S_call_assigneddate?: string;
+  S_call_assigned?: string;
+  AreaHD?: string;
+  S_FA_CODE?: string;
 }
 
 const AreaManagerList: FC = () => {
@@ -92,6 +102,16 @@ const AreaManagerList: FC = () => {
             S_SERVDT: item.S_SERVDT || '',
             S_assignedengg: item.S_assignedengg || '',
             S_REMARK1: item.S_REMARK1 || '',
+            S_UPDT: item.S_UPDT || '',
+            COMP_ADD2: item.COMP_ADD2 || '',
+            COMP_ADD3: item.COMP_ADD3 || '',
+            COMP_TEL: item.COMP_TEL || '',
+            S_REMAKR6: item.S_REMAKR6 || '',
+            S_REMARK3: item.S_REMARK3 || '',
+            S_call_assigneddate: item.S_call_assigneddate || '',
+            S_call_assigned: item.S_call_assigned || '',
+            AreaHD: item.AreaHD || '',
+            S_FA_CODE: item.S_FA_CODE || '',
             username: params.username as string,
             password: params.password as string,
             role: params.role as string
@@ -115,13 +135,7 @@ const AreaManagerList: FC = () => {
         <Text style={styles.grayText}>{item.COMP_NAME}</Text>
       </View>
 
-      <View style={styles.row}>
-        <View style={styles.labelContainer}>
-          <MaterialIcons name="engineering" size={18} color="#0066CC" style={styles.labelIcon} />
-          <Text style={styles.label}>Engineer : </Text>
-        </View>
-        <Text style={styles.grayText}>{item.S_assignedengg}</Text>
-      </View>
+     
 
       <View style={styles.row}>
         <View style={styles.labelContainer}>
@@ -137,13 +151,7 @@ const AreaManagerList: FC = () => {
         ]}>{item.S_jobstatus}</Text>
       </View>
 
-      <View style={styles.row}>
-        <View style={styles.labelContainer}>
-          <MaterialIcons name="schedule" size={18} color="#0066CC" style={styles.labelIcon} />
-          <Text style={styles.label}>Fault Reported : </Text>
-        </View>
-        <Text style={styles.grayText}>{item.S_SERVDT}</Text>
-      </View>
+     
     </Pressable>
   );
 
@@ -216,7 +224,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 1,
   },
   labelContainer: {
     flexDirection: "row",

@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import LogoHeader from '../components/LogoHeader';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function AreaManagerLogin() {
   const router = useRouter();
@@ -33,6 +34,8 @@ export default function AreaManagerLogin() {
       }
     };
     loadCredentials();
+    // Reset loginSuccess state when component mounts
+    setLoginSuccess(false);
   }, []);
 
   useEffect(() => {
@@ -52,8 +55,32 @@ export default function AreaManagerLogin() {
         ])
       );
       shimmerLoopRef.current.start();
+
+      // Cleanup function
+      return () => {
+        if (shimmerLoopRef.current) {
+          shimmerLoopRef.current.stop();
+          shimmerLoopRef.current = null;
+        }
+      };
     }
   }, [loginSuccess]);
+
+  // Add cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      if (shimmerLoopRef.current) {
+        shimmerLoopRef.current.stop();
+        shimmerLoopRef.current = null;
+      }
+    };
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setLoginSuccess(false);
+    }, [])
+  );
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -105,6 +132,10 @@ export default function AreaManagerLogin() {
         setLoginSuccess(true);
         // Navigate to list page after a short delay to show success animation
         setTimeout(() => {
+          if (shimmerLoopRef.current) {
+            shimmerLoopRef.current.stop();
+            shimmerLoopRef.current = null;
+          }
           router.push({
             pathname: "/areamanager/alist",
             params: {
