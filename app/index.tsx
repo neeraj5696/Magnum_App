@@ -17,9 +17,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.background}>
         <LogoHeader />
-        <View style={styles.headingContainer}>
-          <Text style={styles.heading}>Magnum Care</Text>
-        </View>
+       a
 
         <View style={styles.container}>
           {/* Manager and Area Manager Section */}
@@ -34,7 +32,10 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             {/* Area Manager Image */}
-            <TouchableOpacity style={styles.buttonSmall}>
+            <TouchableOpacity 
+              style={styles.buttonSmall}
+              onPress={() => router.push("/areamanager/alogin")}
+            >
               <Image 
                 source={require("../assets/images/boss.png")} 
                 style={styles.buttonImageSmall} 
@@ -96,72 +97,50 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f0f2f5",
+    backgroundColor: "#f5f5f5",
   },
   background: {
     flex: 1,
-    backgroundColor: "#f0f2f5",
-    alignItems: "center",
+    padding: 16,
   },
   headingContainer: {
-    width: "90%",
-    marginVertical: 14,
-    paddingVertical: 16,
-    borderWidth: 2,
-    borderColor: "#1a73e8",
-    borderRadius: 14,
     alignItems: "center",
+    marginVertical: 20,
   },
   heading: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
-    color: "#1a73e8",
-    textAlign: "center",
+    color: "#333",
   },
   container: {
-    backgroundColor: "white",
-    padding: 14,
-    borderRadius: 16,
-    width: "92%",
-    marginTop: 14,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    flex: 1,
+    justifyContent: "center",
   },
   buttonGrid: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-    marginTop: 10,
+    justifyContent: "space-around",
+    marginBottom: 20,
   },
   buttonSmall: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
     alignItems: "center",
-    justifyContent: "center",
-    width: "48%",
-    height: 120,
-    elevation: 4,
+    backgroundColor: "white",
+    padding: 15,
+    borderRadius: 12,
+    width: "45%",
+    elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    borderWidth: 1,
-    borderColor: "#e8eaed",
   },
   buttonImageSmall: {
-    width: 48,
-    height: 48,
-    marginBottom: 12,
-    resizeMode: "contain",
+    width: 80,
+    height: 80,
+    marginBottom: 10,
   },
   buttonTextSmall: {
-    fontSize: 18,
-    color: "#202124",
+    fontSize: 16,
     fontWeight: "600",
-    textAlign: "center",
+    color: "#333",
   },
 });

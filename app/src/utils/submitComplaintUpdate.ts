@@ -4,21 +4,21 @@ export async function submitComplaintUpdate({
     report,
     status,
     pendingreason,
+    complaintNo,
   }: {
     enggname: string;
     remark: string;
     report: string;
     status: '1' | '0';
     pendingreason: string;
+    complaintNo: string;
   }) {
     // ... existing code ...
 
-// ... existing code ...
-
 const body = new URLSearchParams();
-body.append('complainno', 'C-20250520122');
-body.append('enggname', 'NARAYAN SINGH'); // Updated value for enggname
-body.append('remark', 'NULL'); // Updated value for remark
+body.append('complainno', complaintNo);
+body.append('enggname', enggname);
+body.append('remark', remark);
 body.append('report', report);
 body.append('status', status);
 body.append('pendingreason', pendingreason);

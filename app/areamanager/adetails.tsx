@@ -27,6 +27,8 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { submitComplaintUpdate } from '../src/utils/submitComplaintUpdate';
+import { MaterialIcons } from '@expo/vector-icons';
+import LogoHeader from '../components/LogoHeader';
 
 // DatePickerModal component
 interface DatePickerModalProps {
@@ -324,7 +326,7 @@ interface UploadResult {
   // include other properties as needed
 }
 
-export default function EnggComplaintDetails() {
+export default function AreaManagerDetails() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -345,6 +347,7 @@ export default function EnggComplaintDetails() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [hasSubmitAttempt, setHasSubmitAttempt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Form field states for new fields
   const [faultReported, setFaultReported] = useState('');
@@ -470,8 +473,6 @@ export default function EnggComplaintDetails() {
   const handleSubmit = async () => {
     setHasSubmitAttempt(true);
     
- 
-    
     if (!customerSignature) {
       Alert.alert('Error', 'Please provide customer signature');
       return;
@@ -485,13 +486,12 @@ export default function EnggComplaintDetails() {
       return;
     }
     
-
     setIsSubmitting(true);
     try {
       await handleFinalSubmit();
     } catch (error) {
       console.error('Error in submission:', error);
-      Alert.alert('Error', 'Failed to submit. Please try again.');
+      setError('Failed to submit. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -551,7 +551,10 @@ export default function EnggComplaintDetails() {
           hasMaterialTakenOut: !!materialTakenOut,
           hasCustomerComment: !!customerComment
         }
-      }
+      },
+      username: getParam('username'),
+      password: getParam('password'),
+      role: getParam('role')
     };
 
     console.log('🚩 CHECKPOINT 2: Form data prepared, beginning PDF generation');
@@ -583,7 +586,6 @@ export default function EnggComplaintDetails() {
             report: secureUrl,
             status: workStatus === 'Completed' ? '1' : '0',
             pendingreason: workStatus === 'Completed' ? 'NULL' : pendingReason,
-            complaintNo: getParam('complaintNo'),
           });
 
           console.log('🚩 CHECKPOINT 8: Server response received:', JSON.stringify(responseJson));
@@ -721,6 +723,27 @@ export default function EnggComplaintDetails() {
   const formatTime = (date: Date) => {
     return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   };
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <LogoHeader />
+        <View style={styles.errorContainer}>
+          <MaterialIcons name="error-outline" size={48} color="#FF3B30" />
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable
+            style={styles.retryButton}
+            onPress={() => {
+              setError(null);
+              setIsSubmitting(false);
+            }}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
@@ -1744,5 +1767,22 @@ const styles = StyleSheet.create({
   calendarDayTextToday: {
     color: '#1a73e8',
     fontWeight: 'bold',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  retryButton: {
+    backgroundColor: '#0066CC',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 }); 

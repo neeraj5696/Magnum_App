@@ -52,7 +52,10 @@ export default {
     extra: {
       cloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME,
       uploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-      folder: process.env.EXPO_PUBLIC_CLOUDINARY_FOLDER
+      folder: process.env.EXPO_PUBLIC_CLOUDINARY_FOLDER,
+      eas: {
+        projectId: "4ab68574-e5b3-4fa0-89aa-d3d7cfa3fcae"
+      }
     },
     runtimeVersion: {
       policy: "sdkVersion"

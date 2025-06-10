@@ -147,6 +147,11 @@ const EngineerList: FC = () => {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#0066CC" />
         </View>
+      ) : complaints.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <MaterialIcons name="info-outline" size={48} color="#666" />
+          <Text style={styles.emptyText}>No complaints found</Text>
+        </View>
       ) : (
         <FlatList
           data={complaints}
@@ -225,6 +230,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
   },
 });
 
