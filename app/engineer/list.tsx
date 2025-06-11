@@ -71,7 +71,7 @@ const EngineerList: FC = () => {
         onPress={() => {
          
           router.push({
-            pathname: '/areamanager/adetails',
+            pathname: '/engineer/details',
             params: {
               complaintNo: item.S_SERVNO,
               clientName: item.COMP_NAME,
