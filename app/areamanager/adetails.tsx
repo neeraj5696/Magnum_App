@@ -87,8 +87,8 @@ export default function AreaManagerDetails() {
   }, [params.username, params.password]);
 
   const handleSubmit = useCallback(async () => {
-    if (!selectedEngineer) {
-      alert("Please select an engineer");
+    if (selectedEngineers.length === 0) {
+      alert("Please select at least one engineer");
       return;
     }
 
@@ -97,7 +97,7 @@ export default function AreaManagerDetails() {
       const formData = new URLSearchParams();
       
       formData.append("complainno", params.complaintNo);
-      formData.append("engineername", selectedEngineer);
+      formData.append("engineername", selectedEngineers.join(','));
       formData.append("assigndate", new Date().toISOString().split('T')[0]);
 
       const response = await fetch(
@@ -115,7 +115,7 @@ export default function AreaManagerDetails() {
       console.log("Submit response:", data);
       
       if (data?.status === "success") {
-        alert("Engineer assigned successfully");
+        alert("Engineer(s) assigned successfully");
         router.back();
       } else {
         alert(data?.status || "Failed to assign engineer");
@@ -126,7 +126,7 @@ export default function AreaManagerDetails() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [params.username, params.password, params.complaintNo, selectedEngineer, router]);
+  }, [params.username, params.password, params.complaintNo, selectedEngineers, router]);
 
   const toggleEngineer = useCallback((engineer: string) => {
     setSelectedEngineers(prev => 
@@ -253,26 +253,56 @@ export default function AreaManagerDetails() {
           </View>
 
           <View style={styles.engineerSection}>
-           
             {isLoading ? (
               <ActivityIndicator size="small" color="#0066CC" />
             ) : (
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={selectedEngineer}
-                  onValueChange={(itemValue) => setSelectedEngineer(itemValue)}
-                  style={styles.picker}
+              <>
+                <Pressable
+                  style={styles.dropdown}
+                  onPress={() => setIsPickerVisible(true)}
                 >
-                  <Picker.Item label="Assign to" value="" />
-                  {engineers.map((engineer, index) => (
-                    <Picker.Item 
-                      key={index} 
-                      label={engineer.ENG_NAME} 
-                      value={engineer.ENG_NAME} 
-                    />
-                  ))}
-                </Picker>
-              </View>
+                  <Text style={styles.dropdownText}>
+                    {selectedEngineers.length > 0
+                      ? selectedEngineers.join(', ')
+                      : 'Assign to'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color="#333" style={{ marginLeft: 8 }} />
+                </Pressable>
+                <Modal
+                  visible={isPickerVisible}
+                  transparent
+                  animationType="slide"
+                  onRequestClose={handleModalClose}
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                      <Text style={styles.sectionTitle}>Select Engineers</Text>
+                      <ScrollView style={{ maxHeight: 300 }}>
+                        {engineers.map((engineer, index) => (
+                          <Pressable
+                            key={index}
+                            style={styles.engineerItem}
+                            onPress={() => toggleEngineer(engineer.ENG_NAME)}
+                          >
+                            <View style={styles.checkbox}>
+                              {selectedEngineers.includes(engineer.ENG_NAME) && (
+                                <Ionicons name="checkmark" size={20} color="#0066CC" />
+                              )}
+                            </View>
+                            <Text style={styles.engineerName}>{engineer.ENG_NAME}</Text>
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                      <Pressable
+                        style={styles.doneButton}
+                        onPress={handleModalClose}
+                      >
+                        <Text style={styles.doneButtonText}>Done</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </Modal>
+              </>
             )}
             <Pressable
               style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
@@ -432,5 +462,37 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  dropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 16,
+    backgroundColor: '#fff',
+    marginBottom: 16,
+  },
+  dropdownText: {
+    flex: 1,
+    color: '#333',
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 }); 

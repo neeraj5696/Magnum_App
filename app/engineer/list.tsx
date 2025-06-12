@@ -153,13 +153,15 @@ const EngineerList: FC = () => {
           <Text style={styles.emptyText}>No complaints found</Text>
         </View>
       ) : (
-        <FlatList
-          data={complaints}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.S_SERVNO}
-          contentContainerStyle={styles.listContainer}
-          
-        />
+        <View style={{ maxHeight: 600, flex: 1 }}>
+          <FlatList
+            data={complaints}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.S_SERVNO}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={true}
+          />
+        </View>
       )}
     </View>
   );
@@ -191,8 +193,10 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
     borderRadius: 8,
-    padding: 16,
+    paddingLeft: 20,
+    paddingTop: 20,
     marginBottom: 12,
+
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -202,7 +206,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   labelContainer: {
     flexDirection: "row",

@@ -7,7 +7,7 @@ import { format } from 'date-fns';
  */
 export const createComplaintReportTemplate = (data: any) => {
   // Format date if it exists
-  const formattedDate = data.submittedAt 
+  const formattedDate = data.submittedAt
     ? format(new Date(data.submittedAt), 'dd MMM yyyy hh:mm a')
     : format(new Date(), 'dd MMM yyyy hh:mm a');
 
@@ -37,23 +37,23 @@ export const createComplaintReportTemplate = (data: any) => {
     causeProblem = '',
     diagnosis = '',
     materialTakenOut = '',
-    // Customer input fields
     customerComment = '',
     customerSignature = '',
+    engineerComment = '',
   } = data;
 
   // Process the signature for embedding in HTML
   const processedSignature = customerSignature || '';
-  console.log('Signature data length:', processedSignature.length > 100 ? 
-    processedSignature.length + ' chars (valid)' : 
+  console.log('Signature data length:', processedSignature.length > 100 ?
+    processedSignature.length + ' chars (valid)' :
     processedSignature.length + ' chars (may be invalid)');
 
   // Format the attended and completed dates/times
-  const attendedDateTime = callAttendedDate && callAttendedTime 
+  const attendedDateTime = callAttendedDate && callAttendedTime
     ? `${callAttendedDate} ${callAttendedTime}`
     : 'Not specified';
 
-  const completedDateTime = callCompletedDate && callCompletedTime 
+  const completedDateTime = callCompletedDate && callCompletedTime
     ? `${callCompletedDate} ${callCompletedTime}`
     : 'Not specified';
 
@@ -397,7 +397,7 @@ export const createComplaintReportTemplate = (data: any) => {
               </div>
               <div class="info-item">
                 <div class="info-label">Call Completed On</div>
-                <div class="info-value">${completedDateTime}</div>
+                <div class="info-value">${formattedDate} </div>
               </div>
             </div>
           </div>
@@ -421,6 +421,7 @@ export const createComplaintReportTemplate = (data: any) => {
                 <div class="info-label">Material Taken Out</div>
                 <div class="info-value">${materialTakenOut || 'None'}</div>
               </div>
+
             </div>
           </div>
           
@@ -430,12 +431,11 @@ export const createComplaintReportTemplate = (data: any) => {
               <div class="info-item">
                 <div class="info-label">Current Status</div>
                 <div class="info-value">
-                  <span class="status-tag ${
-                    workStatus?.toLowerCase().includes('complete') ? 'status-completed' : 
-                    workStatus?.toLowerCase().includes('stand by') ? 'status-standby' :
-                    workStatus?.toLowerCase().includes('observation') ? 'status-observation' : 
-                    'status-pending'
-                  }">
+                  <span class="status-tag ${workStatus?.toLowerCase().includes('complete') ? 'status-completed' :
+      workStatus?.toLowerCase().includes('stand by') ? 'status-standby' :
+        workStatus?.toLowerCase().includes('observation') ? 'status-observation' :
+          'status-pending'
+    }">
                     ${workStatus || 'Pending'}
                     ${workStatus?.toLowerCase().includes('complete') ? ' - Over' : ''}
                     ${(!workStatus || workStatus?.toLowerCase().includes('pending')) ? ` - ${data.pendingReason || 'Pending'}` : ''}
@@ -450,7 +450,7 @@ export const createComplaintReportTemplate = (data: any) => {
             
             <div class="remark-section">
               <div class="section-title">Engineer's Remarks</div>
-              <div class="remark-text">${remark || 'No remarks provided.'}</div>
+              <div class="remark-text">${engineerComment || 'No remarks provided.'}</div>
             </div>
 
             ${customerComment ? `
@@ -471,14 +471,14 @@ export const createComplaintReportTemplate = (data: any) => {
             </div>
             <div class="signature-box">
               <div class="signature-label">Client's Signature</div>
-              ${processedSignature ? 
-                `<div style="text-align: center;">
+              ${processedSignature ?
+      `<div style="text-align: center;">
                    <img src="${processedSignature}" 
                         alt="Client's signature" 
                         class="signature-image" />
-                 </div>` : 
-                `<div class="signature-placeholder">Client's signature</div>`
-              }
+                 </div>` :
+      `<div class="signature-placeholder">Client's signature</div>`
+    }
             </div>
           </div>
           

@@ -79,10 +79,13 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             {/* Check In/Out Image */}
-            <TouchableOpacity style={styles.buttonSmall}>
+            <TouchableOpacity
+              style={styles.buttonSmall}
+              onPress={() => router.push("/engineer_checkinout/checkinout_login")}
+            >
               <Image
                 source={require("../assets/images/checkinout.png")}
-                style={styles.buttonImageSmall}
+                style={styles.buttonImageSmal}
               />
               <Text style={styles.buttonTextSmall}>Check In/Out</Text>
             </TouchableOpacity>
@@ -135,6 +138,13 @@ const styles = StyleSheet.create({
   buttonImageSmall: {
     width: 80,
     height: 80,
+    marginBottom: 10,
+  },
+  buttonImageSmal: {
+    height: 80,
+    width: undefined,
+    aspectRatio: 1.5,
+    resizeMode: "contain",
     marginBottom: 10,
   },
   buttonTextSmall: {

@@ -54,14 +54,14 @@ export default {
       uploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
       folder: process.env.EXPO_PUBLIC_CLOUDINARY_FOLDER,
       eas: {
-        projectId: "4ab68574-e5b3-4fa0-89aa-d3d7cfa3fcae"
+        projectId: "90f492eb-fce4-4a06-8163-16a4e72762f1"
       }
     },
     runtimeVersion: {
       policy: "sdkVersion"
     },
     updates: {
-      url: "https://u.expo.dev/your-project-id"
+      url: "https://u.expo.dev/90f492eb-fce4-4a06-8163-16a4e72762f1"
     }
   }
 }; 

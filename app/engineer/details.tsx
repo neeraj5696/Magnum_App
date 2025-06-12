@@ -24,300 +24,12 @@ import uploadPDFToCloudinary from '../src/utils/cloudinaryUpload';
 import Svg, { Path, G } from 'react-native-svg';
 import ViewShot from 'react-native-view-shot';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { submitComplaintUpdate } from '../src/utils/submitComplaintUpdate';
 
-// DatePickerModal component
-interface DatePickerModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onSelect: (date: string) => void;
-  currentValue: string;
-}
 
-const DatePickerModal: React.FC<DatePickerModalProps> = ({ visible, onClose, onSelect, currentValue }) => {
-  const [selectedDate, setSelectedDate] = useState<Date>(currentValue ? new Date(currentValue) : new Date());
-  const [currentMonth, setCurrentMonth] = useState<number>(selectedDate.getMonth());
-  const [currentYear, setCurrentYear] = useState<number>(selectedDate.getFullYear());
 
-  useEffect(() => {
-    if (visible) {
-      const date = currentValue ? new Date(currentValue) : new Date();
-      setSelectedDate(date);
-      setCurrentMonth(date.getMonth());
-      setCurrentYear(date.getFullYear());
-    }
-  }, [visible, currentValue]);
 
-  const getDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (year: number, month: number) => {
-    return new Date(year, month, 1).getDay();
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
-  };
-
-  const renderCalendarDays = () => {
-    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-    const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
-    const days = [];
-
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<View key={`empty-${i}`} style={styles.calendarDayEmpty} />);
-    }
-
-    // Add cells for each day of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day);
-      const isSelected = selectedDate.getDate() === day &&
-                        selectedDate.getMonth() === currentMonth &&
-                        selectedDate.getFullYear() === currentYear;
-      const isToday = new Date().toDateString() === date.toDateString();
-
-      days.push(
-        <TouchableOpacity
-          key={day}
-          style={[
-            styles.calendarDay,
-            isSelected && styles.calendarDaySelected,
-            isToday && styles.calendarDayToday
-          ]}
-          onPress={() => setSelectedDate(date)}
-        >
-          <Text style={[
-            styles.calendarDayText,
-            isSelected && styles.calendarDayTextSelected,
-            isToday && styles.calendarDayTextToday
-          ]}>
-            {day}
-          </Text>
-        </TouchableOpacity>
-      );
-    }
-
-    return days;
-  };
-
-  return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.pickerContainer}>
-          <View style={styles.pickerHeader}>
-            <Text style={styles.pickerTitle}>Select Date</Text>
-            <View style={styles.pickerActions}>
-              <TouchableOpacity onPress={onClose} style={styles.pickerActionButton}>
-                <Text style={styles.pickerCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  onSelect(formatDate(selectedDate));
-                  onClose();
-                }}
-                style={styles.pickerActionButton}
-              >
-                <Text style={styles.pickerDoneText}>Done</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.calendarContainer}>
-            <View style={styles.calendarHeader}>
-              <TouchableOpacity
-                onPress={() => {
-                  if (currentMonth === 0) {
-                    setCurrentMonth(11);
-                    setCurrentYear(currentYear - 1);
-                  } else {
-                    setCurrentMonth(currentMonth - 1);
-                  }
-                }}
-                style={styles.calendarArrow}
-              >
-                <Ionicons name="chevron-back" size={24} color="#333" />
-              </TouchableOpacity>
-              <Text style={styles.calendarMonthYear}>
-                {new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  if (currentMonth === 11) {
-                    setCurrentMonth(0);
-                    setCurrentYear(currentYear + 1);
-                  } else {
-                    setCurrentMonth(currentMonth + 1);
-                  }
-                }}
-                style={styles.calendarArrow}
-              >
-                <Ionicons name="chevron-forward" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.calendarWeekDays}>
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                <Text key={day} style={styles.calendarWeekDay}>{day}</Text>
-              ))}
-            </View>
-            <View style={styles.calendarDays}>
-              {renderCalendarDays()}
-            </View>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
-
-// TimePickerModal component
-interface TimePickerModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onSelect: (time: string) => void;
-  currentValue: string;
-}
-
-const TimePickerModal: React.FC<TimePickerModalProps> = ({ visible, onClose, onSelect, currentValue }) => {
-  const [hours, setHours] = useState<number>(currentValue ? parseInt(currentValue.split(':')[0]) : new Date().getHours());
-  const [minutes, setMinutes] = useState<number>(currentValue ? parseInt(currentValue.split(':')[1]) : new Date().getMinutes());
-  const [isAM, setIsAM] = useState<boolean>(currentValue ? parseInt(currentValue.split(':')[0]) < 12 : new Date().getHours() < 12);
-
-  useEffect(() => {
-    if (visible) {
-      if (currentValue) {
-        const [h, m] = currentValue.split(':').map(Number);
-        setHours(h);
-        setMinutes(m);
-        setIsAM(h < 12);
-      } else {
-        const now = new Date();
-        setHours(now.getHours());
-        setMinutes(now.getMinutes());
-        setIsAM(now.getHours() < 12);
-      }
-    }
-  }, [visible, currentValue]);
-
-  const formatTime = (h: number, m: number, am: boolean) => {
-    const hour = am ? (h === 0 ? 12 : h) : (h === 12 ? 12 : h - 12);
-    return `${String(hour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-  };
-
-  return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.pickerContainer}>
-          <View style={styles.pickerHeader}>
-            <Text style={styles.pickerTitle}>Select Time</Text>
-            <View style={styles.pickerActions}>
-              <TouchableOpacity onPress={onClose} style={styles.pickerActionButton}>
-                <Text style={styles.pickerCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  const finalHours = isAM ? (hours === 12 ? 0 : hours) : (hours === 12 ? 12 : hours + 12);
-                  onSelect(formatTime(finalHours, minutes, isAM));
-                  onClose();
-                }}
-                style={styles.pickerActionButton}
-              >
-                <Text style={styles.pickerDoneText}>Done</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.timePickerContent}>
-            <View style={styles.timePickerColumn}>
-              <Text style={styles.timePickerLabel}>Hour</Text>
-              <ScrollView style={styles.timePickerScroll}>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
-                  <TouchableOpacity
-                    key={hour}
-                    style={[
-                      styles.timePickerItem,
-                      hours === hour && styles.timePickerItemSelected
-                    ]}
-                    onPress={() => setHours(hour)}
-                  >
-                    <Text style={[
-                      styles.timePickerItemText,
-                      hours === hour && styles.timePickerItemTextSelected
-                    ]}>
-                      {String(hour).padStart(2, '0')}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-            <View style={styles.timePickerColumn}>
-              <Text style={styles.timePickerLabel}>Minute</Text>
-              <ScrollView style={styles.timePickerScroll}>
-                {Array.from({ length: 60 }, (_, i) => i).map((minute) => (
-                  <TouchableOpacity
-                    key={minute}
-                    style={[
-                      styles.timePickerItem,
-                      minutes === minute && styles.timePickerItemSelected
-                    ]}
-                    onPress={() => setMinutes(minute)}
-                  >
-                    <Text style={[
-                      styles.timePickerItemText,
-                      minutes === minute && styles.timePickerItemTextSelected
-                    ]}>
-                      {String(minute).padStart(2, '0')}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-            <View style={styles.timePickerColumn}>
-              <Text style={styles.timePickerLabel}>AM/PM</Text>
-              <View style={styles.ampmContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.ampmButton,
-                    isAM && styles.ampmButtonSelected
-                  ]}
-                  onPress={() => setIsAM(true)}
-                >
-                  <Text style={[
-                    styles.ampmButtonText,
-                    isAM && styles.ampmButtonTextSelected
-                  ]}>AM</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.ampmButton,
-                    !isAM && styles.ampmButtonSelected
-                  ]}
-                  onPress={() => setIsAM(false)}
-                >
-                  <Text style={[
-                    styles.ampmButtonText,
-                    !isAM && styles.ampmButtonTextSelected
-                  ]}>PM</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
 
 interface UploadResult {
   secure_url: string;
@@ -337,7 +49,7 @@ export default function EnggComplaintDetails() {
   };
 
   // Debug log
- // console.log('S_SERVDT value:', getParam('S_SERVDT'));
+  // console.log('S_SERVDT value:', getParam('S_SERVDT'));
 
   // Form field states
   const [remark, setRemark] = useState('');
@@ -345,11 +57,6 @@ export default function EnggComplaintDetails() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [hasSubmitAttempt, setHasSubmitAttempt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Form field states for new fields
-  const [faultReported, setFaultReported] = useState('');
-  const [typeOfCall, setTypeOfCall] = useState('');
-  const [showTypeOfCallModal, setShowTypeOfCallModal] = useState(false);
   const [callAttendedDate, setCallAttendedDate] = useState('');
   const [callAttendedTime, setCallAttendedTime] = useState('');
   const [callCompletedDate, setCallCompletedDate] = useState('');
@@ -361,29 +68,26 @@ export default function EnggComplaintDetails() {
   const [customerComment, setCustomerComment] = useState('');
   const [customerSignature, setCustomerSignature] = useState<string | null>(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
-
-  // For signature drawing
   const [paths, setPaths] = useState<Array<string>>([]);
   const [currentPath, setCurrentPath] = useState<string>('');
   const signatureRef = useRef<any>(null);
   const currentPathRef = useRef('');
-
   const [padLayout, setPadLayout] = useState({ x: 0, y: 0, width: 1, height: 1 });
   const signatureBgRef = useRef(null);
-
-  const [showAttendedDatePicker, setShowAttendedDatePicker] = useState(false);
-  const [showAttendedTimePicker, setShowAttendedTimePicker] = useState(false);
-  const [showCompletedDatePicker, setShowCompletedDatePicker] = useState(false);
-  const [showCompletedTimePicker, setShowCompletedTimePicker] = useState(false);
-
-  // Pending reason state
   const [pendingReasons, setPendingReasons] = useState<string[]>([]);
   const [pendingReason, setPendingReason] = useState('');
   const [showPendingReason, setShowPendingReason] = useState(false);
   const [showPendingReasonModal, setShowPendingReasonModal] = useState(false);
+  const [engineerComment, setEngineerComment] = useState('');
 
-  // Add new state for picker values
-  const [tempDate, setTempDate] = useState(new Date());
+  // Initialize state variables from params on mount
+  useEffect(() => {
+    if (!callAttendedDate) setCallAttendedDate(getParam('S_assigndate'));
+    if (!callAttendedTime) setCallAttendedTime(''); // Set from param if available
+    if (!callCompletedDate) setCallCompletedDate(new Date().toISOString().slice(0, 10)); // Or from param
+    if (!callCompletedTime) setCallCompletedTime(new Date().toISOString().slice(11, 16)); // Or from param
+    if (!causeProblem) setCauseProblem(getParam('S_REMARK1'));
+  }, []);
 
   useEffect(() => {
     currentPathRef.current = currentPath;
@@ -440,10 +144,10 @@ export default function EnggComplaintDetails() {
             result: 'data-uri'
           };
           const capturedSignature = await signatureRef.current.capture(options);
-       //  console.log('Signature captured:', capturedSignature.substring(0, 60));
+          //  console.log('Signature captured:', capturedSignature.substring(0, 60));
           setCustomerSignature(capturedSignature);
           setShowSignaturePad(false);
-        //  console.log('customerSignature after save:', capturedSignature.substring(0, 60));
+          //  console.log('customerSignature after save:', capturedSignature.substring(0, 60));
         } else {
           Alert.alert('Error', 'Failed to capture signature');
         }
@@ -469,9 +173,9 @@ export default function EnggComplaintDetails() {
   // Handle form submission
   const handleSubmit = async () => {
     setHasSubmitAttempt(true);
-    
- 
-    
+
+
+
     if (!customerSignature) {
       Alert.alert('Error', 'Please provide customer signature');
       return;
@@ -484,7 +188,7 @@ export default function EnggComplaintDetails() {
       Alert.alert('Error', 'Please select a pending reason');
       return;
     }
-    
+
 
     setIsSubmitting(true);
     try {
@@ -500,15 +204,13 @@ export default function EnggComplaintDetails() {
   // Handle final submission with document generation
   const handleFinalSubmit = async () => {
     console.log('🚩 CHECKPOINT 1: Starting form submission process');
-    
+
     const formData = {
       // Basic complaint information
       complaintNo: getParam('complaintNo'),
       clientName: getParam('clientName'),
       workStatus,
       remark,
-      
-      // Form fields
       faultReported: getParam('S_SERVDT'),
       typeOfCall: getParam('S_TASK_TYPE'),
       callAttendedDate,
@@ -521,8 +223,6 @@ export default function EnggComplaintDetails() {
       materialTakenOut,
       customerComment,
       customerSignature,
-      
-      // Additional fields from route.params
       systemName: getParam('SYSTEM_NAME'),
       assignDate: getParam('S_assigndate'),
       location: getParam('location'),
@@ -530,14 +230,10 @@ export default function EnggComplaintDetails() {
       status: getParam('status'),
       S_SERVDT: getParam('S_SERVDT'),
       S_assignedengg: getParam('S_assignedengg'),
-      
-      // Pending status information
       pendingReason: workStatus === 'Pending' ? pendingReason : '',
-      
-      // Timestamps
       submittedAt: new Date().toISOString(),
-      
-      // Debug information
+      engineerComment,
+
       debug: {
         workStatus,
         pendingReason,
@@ -563,62 +259,62 @@ export default function EnggComplaintDetails() {
 
       console.log('🚩 CHECKPOINT 3: HTML template created, generating PDF');
       const result = await generatePdfFromHtml(htmlContent, fileName);
-      
+
       console.log('🚩 CHECKPOINT 4: PDF generation result:', result.success ? 'SUCCESS' : 'FAILED');
-      
-      if (result.success && result.localUri) {
-        try {
-          console.log('🚩 CHECKPOINT 5: Starting Cloudinary upload');
-          const uploadResult = await uploadPDFToCloudinary(result.localUri) as UploadResult;
-          const secureUrl = uploadResult.secure_url;
-          
-          console.log('🚩 CHECKPOINT 6: Cloudinary upload successful, secure URL obtained');
-          console.log('Secure URL:', secureUrl.substring(0, 50) + '...');
 
-          // Call the submitComplaintUpdate utility
-          console.log('🚩 CHECKPOINT 7: Starting server API call with form data');
-          const responseJson = await submitComplaintUpdate({
-            enggname: getParam('S_assignedengg'),
-            remark: customerComment,
-            report: secureUrl,
-            status: workStatus === 'Completed' ? '1' : '0',
-            pendingreason: workStatus === 'Completed' ? 'NULL' : pendingReason,
-            complaintNo: getParam('complaintNo'),
-          });
+      // if (result.success && result.localUri) {
+      //   try {
+      //     console.log('🚩 CHECKPOINT 5: Starting Cloudinary upload');
+      //     const uploadResult = await uploadPDFToCloudinary(result.localUri) as UploadResult;
+      //     const secureUrl = uploadResult.secure_url;
 
-          console.log('🚩 CHECKPOINT 8: Server response received:', JSON.stringify(responseJson));
+      //     console.log('🚩 CHECKPOINT 6: Cloudinary upload successful, secure URL obtained');
+      //     console.log('Secure URL:', secureUrl.substring(0, 50) + '...');
 
-          if (responseJson.status === 'success') {
-            console.log('🚩 CHECKPOINT 9: Server update SUCCESSFUL');
-            Alert.alert('Success', 'Data sent successfully!', [
-              {
-                text: 'OK',
-                onPress: () => {
-                  console.log('🚩 CHECKPOINT 10: Navigating back to list');
-                  router.push({
-                    pathname: '/engineer/list',
-                    params: {
-                      username: getParam('username'),
-                      password: getParam('password')
-                    }
-                  });
-                }
-              }
-            ]);
-          } else {
-            console.log('🚩 CHECKPOINT 9: Server update FAILED:', responseJson.reason);
-            Alert.alert('Error', responseJson.reason || 'Failed to send data. Please try again.');
-          }
-        } catch (uploadError) {
-          console.log('🚩 ERROR: Cloudinary upload or server communication failed', uploadError);
-          console.error('Error uploading to Cloudinary or posting to server:', uploadError);
-          Alert.alert('Warning', 'PDF generated but failed to upload to Cloudinary or post to server. Please try again later.');
-        }
-      } else {
-        console.log('🚩 ERROR: PDF generation failed');
-        console.error('Failed to generate PDF');
-        Alert.alert('Error', 'Failed to generate PDF document. Please try again.');
-      }
+      //     // Call the submitComplaintUpdate utility
+      //     console.log('🚩 CHECKPOINT 7: Starting server API call with form data');
+      //     const responseJson = await submitComplaintUpdate({
+      //       enggname: getParam('S_assignedengg'),
+      //       remark: customerComment,
+      //       report: secureUrl,
+      //       status: workStatus === 'Completed' ? '1' : '0',
+      //       pendingreason: workStatus === 'Completed' ? 'NULL' : pendingReason,
+      //       complaintNo: getParam('complaintNo'),
+      //     });
+
+      //     console.log('🚩 CHECKPOINT 8: Server response received:', JSON.stringify(responseJson));
+
+      //     if (responseJson.status === 'success') {
+      //       console.log('🚩 CHECKPOINT 9: Server update SUCCESSFUL');
+      //       Alert.alert('Success', 'Data sent successfully!', [
+      //         {
+      //           text: 'OK',
+      //           onPress: () => {
+      //             console.log('🚩 CHECKPOINT 10: Navigating back to list');
+      //             router.push({
+      //               pathname: '/engineer/list',
+      //               params: {
+      //                 username: getParam('username'),
+      //                 password: getParam('password')
+      //               }
+      //             });
+      //           }
+      //         }
+      //       ]);
+      //     } else {
+      //       console.log('🚩 CHECKPOINT 9: Server update FAILED:', responseJson.reason);
+      //       Alert.alert('Error', responseJson.reason || 'Failed to send data. Please try again.');
+      //     }
+      //   } catch (uploadError) {
+      //     console.log('🚩 ERROR: Cloudinary upload or server communication failed', uploadError);
+      //     console.error('Error uploading to Cloudinary or posting to server:', uploadError);
+      //     Alert.alert('Warning', 'PDF generated but failed to upload to Cloudinary or post to server. Please try again later.');
+      //   }
+      // } else {
+      //   console.log('🚩 ERROR: PDF generation failed');
+      //   console.error('Failed to generate PDF');
+      //   Alert.alert('Error', 'Failed to generate PDF document. Please try again.');
+      // }
     } catch (error) {
       console.log('🚩 ERROR: PDF template generation failed', error);
       console.error('Error in PDF generation:', error);
@@ -657,11 +353,11 @@ export default function EnggComplaintDetails() {
 
   // Fetch pending reasons when workStatus is 'Pending'
   const fetchPendingReasons = async () => {
-    
+
     const formData = new URLSearchParams();
     formData.append('username', getParam('username'));
     formData.append('password', getParam('password'));
-   
+
     try {
       const res = await fetch('https://hma.magnum.org.in/appPendingstatus.php', {
         method: 'POST',
@@ -671,7 +367,7 @@ export default function EnggComplaintDetails() {
         body: formData.toString(),
       });
       const text = await res.text();
-      
+
       // Remove prefix before parsing
       const jsonStart = text.indexOf('{');
       if (jsonStart === -1) {
@@ -686,25 +382,25 @@ export default function EnggComplaintDetails() {
         console.log('Failed to parse JSON:', e);
         return;
       }
-      console.log('data',data);
+      console.log('data', data);
       if (data.status === 'success' && Array.isArray(data.data)) {
         setPendingReasons(data.data.map((item: { PCOMP_STATUS: string }) => item.PCOMP_STATUS));
         setShowPendingReason(true);
         data.data.forEach((item: { PCOMP_STATUS: string }) => {
-        //  console.log('Reason:', item.PCOMP_STATUS);
+          //  console.log('Reason:', item.PCOMP_STATUS);
         });
       } else {
         setShowPendingReason(false);
       }
     } catch (error) {
       setShowPendingReason(false);
-      console.log('error',error);
+      console.log('error', error);
     }
   };
 
-  
+
   useEffect(() => {
-   
+
     if (workStatus === 'Pending') {
       fetchPendingReasons();
     } else {
@@ -712,15 +408,6 @@ export default function EnggComplaintDetails() {
     }
   }, [workStatus]);
 
-  // Helper function to format date
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
-  };
-
-  // Helper function to format time
-  const formatTime = (date: Date) => {
-    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-  };
 
   return (
     <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
@@ -773,7 +460,6 @@ export default function EnggComplaintDetails() {
               <Text style={styles.label}>Remark:</Text>
               <Text style={styles.value}>{getParam('S_REMARK1')}</Text>
             </View>
-           
           </View>
 
           <View style={styles.formSectionBox}>
@@ -796,39 +482,6 @@ export default function EnggComplaintDetails() {
               </Text>
             </View>
 
-            <Modal
-              visible={showTypeOfCallModal}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowTypeOfCallModal(false)}
-            >
-              <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Select Type of Call</Text>
-
-                  {['Installation', 'Warranty', 'Call Basis', 'AMC', 'Preventive'].map((type) => (
-                    <Pressable
-                      key={type}
-                      style={styles.modalItem}
-                      onPress={() => {
-                        setTypeOfCall(type);
-                        setShowTypeOfCallModal(false);
-                      }}
-                    >
-                      <Text style={styles.modalItemText}>{type}</Text>
-                    </Pressable>
-                  ))}
-
-                  <Pressable
-                    style={styles.modalCloseButton}
-                    onPress={() => setShowTypeOfCallModal(false)}
-                  >
-                    <Text style={styles.modalCloseText}>Close</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </Modal>
-
             {/* Call Attended Date and Time */}
             <View style={styles.dateTimeGroup}>
               <Text style={styles.formLabel}>Call Attended On:</Text>
@@ -839,24 +492,6 @@ export default function EnggComplaintDetails() {
                 </Text>
               </View>
             </View>
-
-            {showAttendedDatePicker && (
-              <DatePickerModal
-                visible={showAttendedDatePicker}
-                onClose={() => setShowAttendedDatePicker(false)}
-                onSelect={setCallAttendedDate}
-                currentValue={getParam('S_assigndate')}
-              />
-            )}
-            
-            {showAttendedTimePicker && (
-              <TimePickerModal
-                visible={showAttendedTimePicker}
-                onClose={() => setShowAttendedTimePicker(false)}
-                onSelect={setCallAttendedTime}
-                currentValue={getParam('S_assigndate')}
-              />
-            )}
 
             {/* Call Completed Date and Time */}
             <View style={styles.dateTimeGroup}>
@@ -869,23 +504,14 @@ export default function EnggComplaintDetails() {
               </View>
             </View>
 
-            {showCompletedDatePicker && (
-              <DatePickerModal
-                visible={showCompletedDatePicker}
-                onClose={() => setShowCompletedDatePicker(false)}
-                onSelect={setCallCompletedDate}
-                currentValue={callCompletedDate}
-              />
-            )}
-            
-            {showCompletedTimePicker && (
-              <TimePickerModal
-                visible={showCompletedTimePicker}
-                onClose={() => setShowCompletedTimePicker(false)}
-                onSelect={setCallCompletedTime}
-                currentValue={callCompletedTime}
-              />
-            )}
+
+            {/* Cause of Problem */}
+            <Text style={styles.formLabel}>Cause of Problem:</Text>
+            <View style={[styles.textInput, { backgroundColor: '#f0f0f0', height: 40 }]}>
+              <Text style={{ color: '#666' }}>
+                {getParam('S_REMARK1') || 'Not available'}
+              </Text>
+            </View>
 
             {/* Part Replaced */}
             <Text style={styles.formLabel}>Part Replaced/Stand by (if any):</Text>
@@ -896,14 +522,6 @@ export default function EnggComplaintDetails() {
               onChangeText={setPartReplaced}
               multiline={false}
             />
-
-            {/* Cause of Problem */}
-            <Text style={styles.formLabel}>Cause of Problem:</Text>
-            <View style={[styles.textInput, { backgroundColor: '#f0f0f0', height: 40 }]}>
-              <Text style={{ color: '#666' }}>
-                {getParam('S_REMARK1') || 'Not available'}
-              </Text>
-            </View>
 
             {/* Diagnosis */}
             <Text style={styles.formLabel}>Diagnosis:</Text>
@@ -928,12 +546,21 @@ export default function EnggComplaintDetails() {
             {/* Customer Comment */}
             <Text style={styles.formLabel}>Customer Comment:</Text>
             <TextInput
-              style={[styles.textInput, { height: 80 }]}
-              multiline
-              numberOfLines={4}
+              style={[styles.textInput, { height: 40 }]}
               placeholder="Enter customer's comment here..."
               value={customerComment}
               onChangeText={setCustomerComment}
+              multiline={false}
+            />
+
+            {/* Engineer Comment */}
+            <Text style={styles.formLabel}>Engineer Comment:</Text>
+            <TextInput
+              style={[styles.textInput, { height: 40 }]}
+              placeholder="Enter engineer's comment here..."
+              value={engineerComment}
+              onChangeText={setEngineerComment}
+              multiline={false}
             />
 
             {/* Customer Signature */}
@@ -991,7 +618,7 @@ export default function EnggComplaintDetails() {
                       onPress={() => {
                         setWorkStatus(status);
                         setShowStatusModal(false);
-                        
+
                         // If Pending is selected, load the pending reasons
                         if (status === 'Pending') {
                           fetchPendingReasons();
@@ -1030,7 +657,7 @@ export default function EnggComplaintDetails() {
                 {hasSubmitAttempt && workStatus === 'Pending' && !pendingReason && (
                   <Text style={styles.errorText}>Please select a pending reason</Text>
                 )}
-                
+
                 <Modal
                   visible={showPendingReasonModal}
                   transparent={true}
@@ -1068,11 +695,11 @@ export default function EnggComplaintDetails() {
               </>
             )}
 
-            <Pressable 
+            <Pressable
               style={[
                 styles.submitButton,
                 isSubmitting && styles.submitButtonDisabled
-              ]} 
+              ]}
               onPress={handleSubmit}
               disabled={isSubmitting}
             >
@@ -1258,21 +885,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     justifyContent: 'center',
-   
+
     backgroundColor: '#f9f9f9',
     color: '#333',
     height: 20, // set to whatever height you want
   },
   dropdownButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    padding: 10,
     backgroundColor: '#f9f9f9',
+    color: '#333',
+    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   dropdownButtonText: {
     color: '#555',
@@ -1655,7 +1283,7 @@ const styles = StyleSheet.create({
   ampmContainer: {
     flexDirection: 'column',
     justifyContent: 'center',
-    marginBottom: 10, 
+    marginBottom: 10,
     padding: 10,
     gap: 10,
   },
@@ -1721,7 +1349,7 @@ const styles = StyleSheet.create({
   calendarDaySelected: {
     backgroundColor: 'rgba(26, 115, 232, 0.5)',
     borderRadius: 20,
-    
+
   },
   calendarDayToday: {
     borderWidth: 1,
