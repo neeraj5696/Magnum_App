@@ -22,7 +22,10 @@ export default function HomeScreen() {
           {/* Manager and Area Manager Section */}
           <View style={styles.buttonGrid}>
             {/* Manager Image */}
-            <TouchableOpacity style={styles.buttonSmall}>
+            <TouchableOpacity
+              style={styles.buttonSmall}
+              onPress={() => router.push("/areahead/login")}
+            >
               <Image
                 source={require("../assets/images/manager.png")}
                 style={styles.buttonImageSmall}

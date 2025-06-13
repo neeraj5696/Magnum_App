@@ -16,6 +16,11 @@
     "preview4": {
       "distribution": "internal"
     },
-    "production": {}
+    "cli": {
+      "appVersionSource": "remote"
+    },
+    "production": {
+      "autoIncrement": true
+    }
   }
 }
