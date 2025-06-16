@@ -362,6 +362,8 @@ const styles = StyleSheet.create({
     },
     picker: {
         height: 48,
+        justifyContent: 'center',
+        paddingHorizontal: 10,
     },
     pickerPlaceholder: {
         height: 48,
