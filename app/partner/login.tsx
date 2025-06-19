@@ -1,80 +1,46 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Animated, Alert } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import LogoHeader from '../components/LogoHeader';
-import { Picker } from '@react-native-picker/picker';
 
-// Special placeholder constant
-const PLACEHOLDER_VALUE = '__placeholder__';
-
-export default function AreaHeadLogin() {
+export default function PartnerLogin() {
     const router = useRouter();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [areaHeads, setAreaHeads] = useState<string[]>([]);
-    const [selectedAreaHead, setSelectedAreaHead] = useState(PLACEHOLDER_VALUE);
-    const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [loginSuccess, setLoginSuccess] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const shimmerAnimation = useRef(new Animated.Value(0)).current;
-    const shimmerLoopRef = useRef<Animated.CompositeAnimation | null>(null);
-    const [dropdownReady, setDropdownReady] = useState(false);
+    const shimmerLoopRef = useRef(null);
 
+    // Load credentials on mount
     useEffect(() => {
         const loadCredentials = async () => {
             try {
-                const savedUsername = await SecureStore.getItemAsync("areahead_username");
-                const savedPassword = await SecureStore.getItemAsync("areahead_password");
-                const savedAreaHead = await SecureStore.getItemAsync("areahead_areahd");
-                const savedRememberMe = await SecureStore.getItemAsync("areahead_rememberMe");
-                
-                if (savedRememberMe === "true" && savedUsername && savedPassword && savedAreaHead) {
+                const savedUsername = await SecureStore.getItemAsync("partner_username");
+                const savedPassword = await SecureStore.getItemAsync("partner_password");
+                const savedRememberMe = await SecureStore.getItemAsync("partner_rememberMe");
+                if (savedRememberMe === "true" && savedUsername && savedPassword) {
                     setUsername(savedUsername);
                     setPassword(savedPassword);
-                    setSelectedAreaHead(savedAreaHead);
                     setRememberMe(true);
-                } else {
-                    // Ensure placeholder is selected if no saved credentials
-                    setSelectedAreaHead(PLACEHOLDER_VALUE);
                 }
             } catch (error) {
-                console.log("Error loading credentials:", error);
+                // Ignore errors
             }
         };
-        
         loadCredentials();
     }, []);
 
-    useEffect(() => {
-        // Fetch area heads for dropdown
-        const fetchAreaHeads = async () => {
-            try {
-                setSelectedAreaHead(PLACEHOLDER_VALUE); // Force placeholder before fetch
-                
-                const response = await fetch('https://hma.magnum.org.in/appAreaHeadnames.php');
-                const data = await response.json();
-                
-                if (data?.status === 'success' && Array.isArray(data?.data)) {
-                    const names = data.data.map((item: any) => item.Name);
-                    setAreaHeads(names);
-                } else {
-                    setErrorMessage('Failed to load area heads data');
-                }
-                
-                // Set dropdown ready after data is loaded
-                setDropdownReady(true);
-                // Make absolutely sure the placeholder is selected initially
-                setTimeout(() => setSelectedAreaHead(PLACEHOLDER_VALUE), 100);
-            } catch (error) {
-                setErrorMessage('Network error while loading area heads');
-            }
-        };
-        
-        fetchAreaHeads();
-    }, []);
+    useFocusEffect(
+        React.useCallback(() => {
+            setLoginSuccess(false);
+            setErrorMessage('');
+        }, [])
+    );
 
     useEffect(() => {
         if (loginSuccess) {
@@ -92,9 +58,7 @@ export default function AreaHeadLogin() {
                     }),
                 ])
             );
-            
             shimmerLoopRef.current.start();
-            
             return () => {
                 if (shimmerLoopRef.current && typeof shimmerLoopRef.current.stop === 'function') {
                     shimmerLoopRef.current.stop();
@@ -111,94 +75,46 @@ export default function AreaHeadLogin() {
         };
     }, []);
 
-    // Add useFocusEffect for resetting states
-    useFocusEffect(
-        React.useCallback(() => {
-            setLoginSuccess(false);
-            setErrorMessage('');
-        }, [])
-    );
-
     const handleLogin = async () => {
-        // Form validation
-        if (!username.trim()) {
-            setErrorMessage('Please enter username');
+        if (!username.trim() || !password.trim()) {
+            setErrorMessage('Please enter username and password');
             return;
         }
-        
-        if (!password.trim()) {
-            setErrorMessage('Please enter password');
-            return;
-        }
-        
-        if (selectedAreaHead === PLACEHOLDER_VALUE) {
-            setErrorMessage('Please select an area');
-            return;
-        }
-
         setIsLoading(true);
         setErrorMessage('');
-        
         try {
             const formData = new URLSearchParams();
             formData.append('username', username);
             formData.append('password', password);
-            formData.append('areahd', selectedAreaHead);
-            
-            const response = await fetch('https://hma.magnum.org.in/appManagers.php', {
+            const response = await fetch('https://hma.magnum.org.in/crmPartnersearch.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: formData.toString(),
             });
-            
-            const responseText = await response.text();
-            let data;
-            
-            try {
-                data = JSON.parse(responseText);
-            } catch (error) {
-                setErrorMessage('Invalid server response');
-                setIsLoading(false);
-                return;
-            }
-            
-            if (data?.status === 'success') {
+            const data = await response.json();
+            if (data?.status === 'success' && data.data && data.data.length > 0) {
                 // Save credentials if remember me is checked
                 if (rememberMe) {
-                    await SecureStore.setItemAsync("areahead_username", username);
-                    await SecureStore.setItemAsync("areahead_password", password);
-                    await SecureStore.setItemAsync("areahead_areahd", selectedAreaHead);
-                    await SecureStore.setItemAsync("areahead_rememberMe", "true");
+                    await SecureStore.setItemAsync("partner_username", username);
+                    await SecureStore.setItemAsync("partner_password", password);
+                    await SecureStore.setItemAsync("partner_rememberMe", "true");
                 } else {
-                    await SecureStore.deleteItemAsync("areahead_username");
-                    await SecureStore.deleteItemAsync("areahead_password");
-                    await SecureStore.deleteItemAsync("areahead_areahd");
-                    await SecureStore.deleteItemAsync("areahead_rememberMe");
+                    await SecureStore.deleteItemAsync("partner_username");
+                    await SecureStore.deleteItemAsync("partner_password");
+                    await SecureStore.deleteItemAsync("partner_rememberMe");
                 }
-                
-                // Show success animation
                 setLoginSuccess(true);
-                
-                // Navigate to list view after delay
                 setTimeout(() => {
                     if (shimmerLoopRef.current && typeof shimmerLoopRef.current.stop === 'function') {
                         shimmerLoopRef.current.stop();
                     }
-                    
                     router.push({
-                        pathname: "/areahead/list",
-                        params: {
-                            username,
-                            password,
-                            areahd: selectedAreaHead,
-                            data: JSON.stringify(data.data || [])
-                        },
+                        pathname: '/partner/register',
+                        params: { partner: JSON.stringify(data.data[0]) },
                     });
                 }, 1500);
             } else {
-                setErrorMessage(data?.message || 'Login failed');
+                setErrorMessage('Invalid username or password');
             }
         } catch (error) {
             setErrorMessage('Network error');
@@ -220,8 +136,7 @@ export default function AreaHeadLogin() {
         <View style={styles.container}>
             <LogoHeader />
             <View style={styles.formContainer}>
-                <Text style={styles.title}>MANAGER LOGIN</Text>
-
+                <Text style={styles.title}>PARTNER LOGIN</Text>
                 <View style={styles.inputContainer}>
                     <MaterialIcons name="person" size={20} color="#666" style={styles.inputIcon} />
                     <TextInput
@@ -243,33 +158,6 @@ export default function AreaHeadLogin() {
                         secureTextEntry
                         editable={!isLoading}
                     />
-                </View>
-                <View style={styles.inputContainer}>
-                    <MaterialIcons name="supervisor-account" size={20} color="#666" style={styles.inputIcon} />
-                    <View style={styles.pickerWrapper}>
-                        {dropdownReady ? (
-                            <Picker
-                                selectedValue={selectedAreaHead}
-                                onValueChange={(value) => {
-                                    // Only update if it's a valid value (not placeholder)
-                                    if (value !== PLACEHOLDER_VALUE) {
-                                        setSelectedAreaHead(value);
-                                    }
-                                }}
-                                enabled={!isLoading}
-                                style={styles.picker}
-                            >
-                                <Picker.Item label="Select Area" value={PLACEHOLDER_VALUE} />
-                                {areaHeads.map((item, index) => (
-                                    <Picker.Item key={index} label={item} value={item} />
-                                ))}
-                            </Picker>
-                        ) : (
-                            <View style={styles.pickerPlaceholder}>
-                                <Text style={styles.loadingText}>Loading areas...</Text>
-                            </View>
-                        )}
-                    </View>
                 </View>
                 {errorMessage ? (
                     <Text style={styles.errorText}>{errorMessage}</Text>
@@ -348,7 +236,6 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         borderWidth: 1,
         borderColor: "#ddd",
-        height: 50,
     },
     inputIcon: {
         padding: 12,
@@ -358,12 +245,6 @@ const styles = StyleSheet.create({
         padding: 12,
         fontSize: 16,
     },
-    pickerWrapper: {
-        flex: 1,
-        
-    },
-   
-  
     errorText: {
         color: "#FF3B30",
         fontSize: 14,

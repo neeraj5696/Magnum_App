@@ -102,7 +102,7 @@ export default function AreaHeadList() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Manager Data List</Text>
+     
       
       <View style={styles.filterContainer}>
         <Text style={styles.filterLabel}>Filter by Status:</Text>
@@ -243,7 +243,15 @@ const getStatusStyle = (status: string) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+  container:
+   { flex: 1,
+     backgroundColor: '#fff', 
+     padding: 16,
+    marginBottom: 20,
+    },
+     
+     
+
   loadingContainer: { 
     flex: 1, 
     justifyContent: 'center', 
@@ -279,6 +287,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 12,
+    marginTop: 40,
     paddingHorizontal: 4,
   },
   filterLabel: {

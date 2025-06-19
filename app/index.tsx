@@ -61,7 +61,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             {/* Partner Image */}
-            <TouchableOpacity style={styles.buttonSmall}>
+            <TouchableOpacity style={styles.buttonSmall} onPress={() => router.push("/partner/login")}>
               <Image
                 source={require("../assets/images/collaboration.png")}
                 style={styles.buttonImageSmall}
