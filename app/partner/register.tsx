@@ -74,9 +74,9 @@ export default function PartnerRegister() {
             formData.append('partnerclientstate', form.partnerclientstate);
             formData.append('partnerclientcity', form.partnerclientcity);
             formData.append('partnerclientproduct', form.partnerclientproduct);
-            formData.append('partnerclientproductno', form.partnerclientproductno);
+            formData.append('partnerclientproductno', partner.P_ID|| "");
             formData.append('partnerclientid', form.partnerclientid);
-            formData.append('areahd', form.areahd);
+            formData.append('areahd', partner.areaHD||"");
             formData.append('phoneno', form.phoneno);
             formData.append('remarks', form.remarks || '');
 
