@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput } from 'react-native';
 
-const MAX_LENGTH = 10;
+const MAX_LENGTH = 50;
 
 function formatNumberedInput(text: string) {
   // Remove any existing numbering (e.g., "1. ", "2. ", etc.)
