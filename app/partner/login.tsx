@@ -92,6 +92,7 @@ export default function PartnerLogin() {
                 body: formData.toString(),
             });
             const data = await response.json();
+            console.log('Server response coming in logic screen:', data);
             if (data?.status === 'success' && data.data && data.data.length > 0) {
                 // Save credentials if remember me is checked
                 if (rememberMe) {

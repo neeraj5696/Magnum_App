@@ -5,6 +5,7 @@ export async function submitComplaintUpdate({
     status,
     pendingreason,
     complaintNo,
+    material,
   }: {
     enggname: string;
     remark: string;
@@ -12,6 +13,7 @@ export async function submitComplaintUpdate({
     status: '1' | '0';
     pendingreason: string;
     complaintNo: string;
+    material: string;
   }) {
     // ... existing code ...
 
@@ -22,6 +24,7 @@ body.append('remark', remark);
 body.append('report', report);
 body.append('status', status);
 body.append('pendingreason', pendingreason);
+body.append('materiallist', material);
 
 // Log the body data
 console.log(Object.fromEntries(body.entries()));

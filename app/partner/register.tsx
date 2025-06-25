@@ -21,43 +21,66 @@ export default function PartnerRegister() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const partner = typeof params.partner === 'string' ? JSON.parse(params.partner) : {};
-    const [form, setForm] = useState<FormData>({
-        partnerclientname: '',
-        partnerclientadd1: '',
-        partnerclientadd2: '',
-        partnerclientstate: '',
-        partnerclientcity: '',
-        partnerclientproduct: '',
-        partnerclientproductno: '',
-        partnerclientid: partner.P_ID || '',
-        areahd: partner.AreaHD || '',
-        phoneno: '',
-        remarks: '',
-    });
+ //   console.log('Partner param coming in register screen:', partner);
+    const [partnerclientname, setPartnerClientName] = useState('');
+    const [partnerclientadd1, setPartnerClientAdd1] = useState('');
+    const [partnerclientadd2, setPartnerClientAdd2] = useState('');
+    const [partnerclientstate, setPartnerClientState] = useState('');
+    const [partnerclientcity, setPartnerClientCity] = useState('');
+    const [partnerclientproduct, setPartnerClientProduct] = useState('');
+    const [partnerclientproductno, setPartnerClientProductNo] = useState('');
+    const [partnerclientid, setPartnerClientId] = useState(partner.P_ID || '');
+    const [areahd, setAreaHd] = useState(partner.AreaHD || '');
+    const [phoneno, setPhoneNo] = useState('');
+    const [remarks, setRemarks] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [success, setSuccess] = useState(false);
 
-    const handleChange = (key: keyof typeof form, value: string) => {
-        setForm({ ...form, [key]: value });
-    };
-
     const handleSubmit = async () => {
-        // Validate required fields
-        const requiredFields: (keyof FormData)[] = [
-            'partnerclientname',
-            'partnerclientadd1',
-            'partnerclientstate',
-            'partnerclientcity',
-            'partnerclientproduct',
-            'partnerclientproductno',
-            'phoneno'
-        ];
-
-        const missingFields = requiredFields.filter(field => !form[field]);
-        
-        if (missingFields.length > 0) {
-            setErrorMessage(`Please fill in all required fields: ${missingFields.join(', ')}`);
+        // Check each parameter with an if block
+        if (!partnerclientname) {
+            setErrorMessage('Please enter Client Name.');
+            return;
+        }
+        if (!partnerclientadd1) {
+            setErrorMessage('Please enter Address 1.');
+            return;
+        }
+        if (!partnerclientadd2) {
+            setErrorMessage('Please enter Address 2.');
+            return;
+        }
+        if (!partnerclientstate) {
+            setErrorMessage('Please enter State.');
+            return;
+        }
+        if (!partnerclientcity) {
+            setErrorMessage('Please enter City.');
+            return;
+        }
+        if (!partnerclientproduct) {
+            setErrorMessage('Please enter Product.');
+            return;
+        }
+        if (!partnerclientproductno) {
+            setErrorMessage('Please enter Product Number.');
+            return;
+        }
+        if (!partnerclientid) {
+            setErrorMessage('Missing Partner Client ID.');
+            return;
+        }
+        if (!areahd) {
+            setErrorMessage('Missing Area Head.');
+            return;
+        }
+        if (!phoneno) {
+            setErrorMessage('Please enter Phone Number.');
+            return;
+        }
+        if (!remarks) {
+            setErrorMessage('Please enter Remarks.');
             return;
         }
 
@@ -65,33 +88,41 @@ export default function PartnerRegister() {
         setErrorMessage('');
 
         try {
+            // Log the form data before sending
+            const allFields = {
+                partnerclientname,
+                partnerclientadd1,
+                partnerclientadd2,
+                partnerclientstate,
+                partnerclientcity,
+                partnerclientproduct,
+                partnerclientproductno,
+                partnerclientid,
+                areahd,
+                phoneno,
+                remarks
+            };
+            console.log('Form data to be sent:', allFields);
+
             const formData = new URLSearchParams();
-            
-            // Add all required POST parameters
-            formData.append('partnerclientname', form.partnerclientname);
-            formData.append('partnerclientadd1', form.partnerclientadd1);
-            formData.append('partnerclientadd2', form.partnerclientadd2 || '');
-            formData.append('partnerclientstate', form.partnerclientstate);
-            formData.append('partnerclientcity', form.partnerclientcity);
-            formData.append('partnerclientproduct', form.partnerclientproduct);
-            formData.append('partnerclientproductno', partner.P_ID|| "");
-            formData.append('partnerclientid', form.partnerclientid);
-            formData.append('areahd', partner.areaHD||"");
-            formData.append('phoneno', form.phoneno);
-            formData.append('remarks', form.remarks || '');
+            Object.entries(allFields).forEach(([key, value]) => {
+                formData.append(key, value);
+            });
+
+            // Log the URL-encoded body string
+            console.log('POST body:', formData.toString());
 
             const response = await fetch('https://hma.magnum.org.in/appPartnercomplaint.php', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Accept': 'application/json'
-                },
+                // headers: { 
+                //     'Content-Type': 'application/x-www-form-urlencoded',
+                //     'Accept': 'application/json'
+                // },
                 body: formData.toString(),
             });
 
             const data = await response.json();
-            console.log(data);
-            
+            console.log('Server response:', data);
             if (data?.status === 'success') {
                 setSuccess(true);
                 Alert.alert(
@@ -105,7 +136,7 @@ export default function PartnerRegister() {
                     ]
                 );
             } else {
-                setErrorMessage(data?.message || 'Submission failed. Please try again.');
+                setErrorMessage(data?.status || 'Submission failed. Please try again.');
             }
         } catch (error) {
             setErrorMessage('Network error. Please check your connection and try again.');
@@ -113,6 +144,8 @@ export default function PartnerRegister() {
             setIsLoading(false);
         }
     };
+
+
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
@@ -124,65 +157,81 @@ export default function PartnerRegister() {
                 <Text style={styles.label}>Client Name</Text>
                 <TextInput
                     style={styles.input}
-                    value={form.partnerclientname}
-                    onChangeText={v => handleChange('partnerclientname', v)}
+                    value={partnerclientname}
+                    onChangeText={setPartnerClientName}
                 />
 
                 <Text style={styles.label}>Address1</Text>
                 <TextInput
                     style={styles.input}
-                    value={form.partnerclientadd1}
-                    onChangeText={v => handleChange('partnerclientadd1', v)}
+                    value={partnerclientadd1}
+                    onChangeText={setPartnerClientAdd1}
                 />
 
                 <Text style={styles.label}>Address2</Text>
                 <TextInput
                     style={styles.input}
-                    value={form.partnerclientadd2}
-                    onChangeText={v => handleChange('partnerclientadd2', v)}
+                    value={partnerclientadd2}
+                    onChangeText={setPartnerClientAdd2}
                 />
 
                 <Text style={styles.label}>State</Text>
                 <TextInput
                     style={styles.input}
-                    value={form.partnerclientstate}
-                    onChangeText={v => handleChange('partnerclientstate', v)}
+                    value={partnerclientstate}
+                    onChangeText={setPartnerClientState}
                 />
 
                 <Text style={styles.label}>City</Text>
                 <TextInput
                     style={styles.input}
-                    value={form.partnerclientcity}
-                    onChangeText={v => handleChange('partnerclientcity', v)}
+                    value={partnerclientcity}
+                    onChangeText={setPartnerClientCity}
                 />
 
                 <Text style={styles.label}>Product Name</Text>
                 <TextInput
                     style={styles.input}
-                    value={form.partnerclientproduct}
-                    onChangeText={v => handleChange('partnerclientproduct', v)}
+                    value={partnerclientproduct}
+                    onChangeText={setPartnerClientProduct}
                 />
 
                 <Text style={styles.label}>Product Number</Text>
                 <TextInput
                     style={styles.input}
-                    value={form.partnerclientproductno}
-                    onChangeText={v => handleChange('partnerclientproductno', v)}
+                    value={partnerclientproductno}
+                    onChangeText={setPartnerClientProductNo}
+                />
+
+                <Text style={styles.label}>Partner Client ID</Text>
+                <TextInput
+                    style={styles.input}
+                    value={partnerclientid}
+                    onChangeText={setPartnerClientId}
+                    editable={false}
+                />
+
+                <Text style={styles.label}>Area Head</Text>
+                <TextInput
+                    style={styles.input}
+                    value={areahd}
+                    onChangeText={setAreaHd}
+                    editable={false}
                 />
 
                 <Text style={styles.label}>Phone Number</Text>
                 <TextInput
                     style={styles.input}
-                    value={form.phoneno}
-                    onChangeText={v => handleChange('phoneno', v)}
+                    value={phoneno}
+                    onChangeText={setPhoneNo}
                     keyboardType="phone-pad"
                 />
 
                 <Text style={styles.label}>Remarks</Text>
                 <TextInput
                     style={[styles.input, styles.multilineInput]}
-                    value={form.remarks}
-                    onChangeText={v => handleChange('remarks', v)}
+                    value={remarks}
+                    onChangeText={setRemarks}
                     multiline={true}
                     numberOfLines={4}
                 />

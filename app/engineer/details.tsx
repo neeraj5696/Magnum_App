@@ -16,6 +16,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
+import PrefixedMultilineInput from './PrefixedMultilineInput';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { generatePdfFromHtml } from '../src/utils/documentGenerator';
@@ -79,6 +80,7 @@ export default function EnggComplaintDetails() {
   const [showPendingReason, setShowPendingReason] = useState(false);
   const [showPendingReasonModal, setShowPendingReasonModal] = useState(false);
   const [engineerComment, setEngineerComment] = useState('');
+  const [requiredMaterial, setRequiredMaterial] = useState('');
 
   // Initialize state variables from params on mount
   useEffect(() => {
@@ -262,59 +264,60 @@ export default function EnggComplaintDetails() {
 
       console.log('🚩 CHECKPOINT 4: PDF generation result:', result.success ? 'SUCCESS' : 'FAILED');
 
-      // if (result.success && result.localUri) {
-      //   try {
-      //     console.log('🚩 CHECKPOINT 5: Starting Cloudinary upload');
-      //     const uploadResult = await uploadPDFToCloudinary(result.localUri) as UploadResult;
-      //     const secureUrl = uploadResult.secure_url;
+      if (result.success && result.localUri) {
+        try {
+          console.log('🚩 CHECKPOINT 5: Starting Cloudinary upload');
+          const uploadResult = await uploadPDFToCloudinary(result.localUri) as UploadResult;
+          const secureUrl = uploadResult.secure_url;
 
-      //     console.log('🚩 CHECKPOINT 6: Cloudinary upload successful, secure URL obtained');
-      //     console.log('Secure URL:', secureUrl.substring(0, 50) + '...');
+          console.log('🚩 CHECKPOINT 6: Cloudinary upload successful, secure URL obtained');
+          console.log('Secure URL:', secureUrl.substring(0, 50) + '...');
 
-      //     // Call the submitComplaintUpdate utility
-      //     console.log('🚩 CHECKPOINT 7: Starting server API call with form data');
-      //     const responseJson = await submitComplaintUpdate({
-      //       enggname: getParam('S_assignedengg'),
-      //       remark: customerComment,
-      //       report: secureUrl,
-      //       status: workStatus === 'Completed' ? '1' : '0',
-      //       pendingreason: workStatus === 'Completed' ? 'NULL' : pendingReason,
-      //       complaintNo: getParam('complaintNo'),
-      //     });
+          // Call the submitComplaintUpdate function to update the complaint status
+          console.log('🚩 CHECKPOINT 7: Starting server API call with form data');
+          const responseJson = await submitComplaintUpdate({
+            enggname: getParam('S_assignedengg'),
+            remark: customerComment,
+            report: secureUrl,
+            status: workStatus === 'Completed' ? '1' : '0',
+            pendingreason: workStatus === 'Completed' ? 'NULL' : pendingReason,
+            complaintNo: getParam('complaintNo'),
+            material: requiredMaterial,
+          });
 
-      //     console.log('🚩 CHECKPOINT 8: Server response received:', JSON.stringify(responseJson));
+          console.log('🚩 CHECKPOINT 8: Server response received:', JSON.stringify(responseJson));
 
-      //     if (responseJson.status === 'success') {
-      //       console.log('🚩 CHECKPOINT 9: Server update SUCCESSFUL');
-      //       Alert.alert('Success', 'Data sent successfully!', [
-      //         {
-      //           text: 'OK',
-      //           onPress: () => {
-      //             console.log('🚩 CHECKPOINT 10: Navigating back to list');
-      //             router.push({
-      //               pathname: '/engineer/list',
-      //               params: {
-      //                 username: getParam('username'),
-      //                 password: getParam('password')
-      //               }
-      //             });
-      //           }
-      //         }
-      //       ]);
-      //     } else {
-      //       console.log('🚩 CHECKPOINT 9: Server update FAILED:', responseJson.reason);
-      //       Alert.alert('Error', responseJson.reason || 'Failed to send data. Please try again.');
-      //     }
-      //   } catch (uploadError) {
-      //     console.log('🚩 ERROR: Cloudinary upload or server communication failed', uploadError);
-      //     console.error('Error uploading to Cloudinary or posting to server:', uploadError);
-      //     Alert.alert('Warning', 'PDF generated but failed to upload to Cloudinary or post to server. Please try again later.');
-      //   }
-      // } else {
-      //   console.log('🚩 ERROR: PDF generation failed');
-      //   console.error('Failed to generate PDF');
-      //   Alert.alert('Error', 'Failed to generate PDF document. Please try again.');
-      // }
+          if (responseJson.status === 'success') {
+            console.log('🚩 CHECKPOINT 9: Server update SUCCESSFUL');
+            Alert.alert('Success', 'Data sent successfully!', [
+              {
+                text: 'OK',
+                onPress: () => {
+                  console.log('🚩 CHECKPOINT 10: Navigating back to list');
+                  router.push({
+                    pathname: '/engineer/list',
+                    params: {
+                      username: getParam('username'),
+                      password: getParam('password')
+                    }
+                  });
+                }
+              }
+            ]);
+          } else {
+            console.log('🚩 CHECKPOINT 9: Server update FAILED:', responseJson.reason);
+            Alert.alert('Error', responseJson.reason || 'Failed to send data. Please try again.');
+          }
+        } catch (uploadError) {
+          console.log('🚩 ERROR: Cloudinary upload or server communication failed', uploadError);
+          console.error('Error uploading to Cloudinary or posting to server:', uploadError);
+          Alert.alert('Warning', 'PDF generated but failed to upload to Cloudinary or post to server. Please try again later.');
+        }
+      } else {
+        console.log('🚩 ERROR: PDF generation failed');
+        console.error('Failed to generate PDF');
+        Alert.alert('Error', 'Failed to generate PDF document. Please try again.');
+      }
     } catch (error) {
       console.log('🚩 ERROR: PDF template generation failed', error);
       console.error('Error in PDF generation:', error);
@@ -563,6 +566,17 @@ export default function EnggComplaintDetails() {
               multiline={false}
             />
 
+
+            {/* Required Material input only if 'Due to Material' is selected */}
+            {pendingReason === 'Due to Material' && (
+              <View style={{ marginTop: 16 }}>
+                <PrefixedMultilineInput
+                  label="Required Material"
+                  value={requiredMaterial}
+                  onChange={setRequiredMaterial}
+                />
+              </View>
+            )}
             {/* Customer Signature */}
             <Text style={styles.formLabel}>Customer Signature:</Text>
             <Pressable
@@ -582,6 +596,11 @@ export default function EnggComplaintDetails() {
                 <Text style={styles.signaturePlaceholder}>Tap to add signature</Text>
               )}
             </Pressable>
+
+
+
+
+
 
             {/* Status Dropdown */}
             <Text style={styles.formLabel}>Status:</Text>
@@ -692,6 +711,8 @@ export default function EnggComplaintDetails() {
                     </View>
                   </View>
                 </Modal>
+
+
               </>
             )}
 
