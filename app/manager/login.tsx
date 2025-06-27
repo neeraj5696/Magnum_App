@@ -9,7 +9,7 @@ import { Picker } from '@react-native-picker/picker';
 // Special placeholder constant
 const PLACEHOLDER_VALUE = '__placeholder__';
 
-export default function AreaHeadLogin() {
+export default function ManagerLogin() {
     const router = useRouter();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -26,10 +26,10 @@ export default function AreaHeadLogin() {
     useEffect(() => {
         const loadCredentials = async () => {
             try {
-                const savedUsername = await SecureStore.getItemAsync("areahead_username");
-                const savedPassword = await SecureStore.getItemAsync("areahead_password");
-                const savedAreaHead = await SecureStore.getItemAsync("areahead_areahd");
-                const savedRememberMe = await SecureStore.getItemAsync("areahead_rememberMe");
+                const savedUsername = await SecureStore.getItemAsync("manager_username");
+                const savedPassword = await SecureStore.getItemAsync("manager_password");
+                const savedAreaHead = await SecureStore.getItemAsync("manager_areahd");
+                const savedRememberMe = await SecureStore.getItemAsync("manager_rememberMe");
                 
                 if (savedRememberMe === "true" && savedUsername && savedPassword && savedAreaHead) {
                     setUsername(savedUsername);
@@ -167,15 +167,15 @@ export default function AreaHeadLogin() {
             if (data?.status === 'success') {
                 // Save credentials if remember me is checked
                 if (rememberMe) {
-                    await SecureStore.setItemAsync("areahead_username", username);
-                    await SecureStore.setItemAsync("areahead_password", password);
-                    await SecureStore.setItemAsync("areahead_areahd", selectedAreaHead);
-                    await SecureStore.setItemAsync("areahead_rememberMe", "true");
+                    await SecureStore.setItemAsync("manager_username", username);
+                    await SecureStore.setItemAsync("manager_password", password);
+                    await SecureStore.setItemAsync("manager_areahd", selectedAreaHead);
+                    await SecureStore.setItemAsync("manager_rememberMe", "true");
                 } else {
-                    await SecureStore.deleteItemAsync("areahead_username");
-                    await SecureStore.deleteItemAsync("areahead_password");
-                    await SecureStore.deleteItemAsync("areahead_areahd");
-                    await SecureStore.deleteItemAsync("areahead_rememberMe");
+                    await SecureStore.deleteItemAsync("manager_username");
+                    await SecureStore.deleteItemAsync("manager_password");
+                    await SecureStore.deleteItemAsync("manager_areahd");
+                    await SecureStore.deleteItemAsync("manager_rememberMe");
                 }
                 
                 // Show success animation
@@ -188,7 +188,7 @@ export default function AreaHeadLogin() {
                     }
                     
                     router.push({
-                        pathname: "/areahead/list",
+                        pathname: "/manager/list",
                         params: {
                             username,
                             password,
@@ -361,6 +361,16 @@ const styles = StyleSheet.create({
     pickerWrapper: {
         flex: 1,
         
+    },
+    picker: {
+        flex: 1,
+        height: 50,
+    },
+    pickerPlaceholder: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 50,
     },
    
   

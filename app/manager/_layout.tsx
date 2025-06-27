@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { useColorScheme } from 'react-native';
 
-export default function AreaHeadLayout() {
+export default function ManagerLayout() {
   const colorScheme = useColorScheme();
 
   return (

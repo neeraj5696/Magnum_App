@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert, Modal } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import LogoHeader from '../components/LogoHeader';
@@ -31,8 +31,48 @@ const AreaManagerList: FC = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [filteredComplaints, setFilteredComplaints] = useState<Complaint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<string>('All');
+
+  const statusOptions = ['All', 'New', 'Assigned', 'Pending'];
+
+  // Function to get status priority for sorting
+  const getStatusPriority = (status: string): number => {
+    switch (status) {
+      case 'New': return 1;
+      case 'Assigned': return 2;
+      case 'Pending': return 3;
+      default: return 4;
+    }
+  };
+
+  // Function to filter and sort complaints
+  const filterAndSortComplaints = (complaints: Complaint[], filter: string) => {
+    let filtered = complaints;
+    
+    // Apply filter
+    if (filter !== 'All') {
+      filtered = complaints.filter(complaint => complaint.S_jobstatus === filter);
+    }
+    
+    // Sort by status priority and then by date (newest first)
+    return filtered.sort((a, b) => {
+      const statusA = getStatusPriority(a.S_jobstatus);
+      const statusB = getStatusPriority(b.S_jobstatus);
+      
+      if (statusA !== statusB) {
+        return statusA - statusB;
+      }
+      
+      // If same status, sort by date (newest first)
+      const dateA = new Date(a.S_SERVDT || '').getTime();
+      const dateB = new Date(b.S_SERVDT || '').getTime();
+      return dateB - dateA;
+    });
+  };
 
   const fetchComplaints = async () => {
     try {
@@ -65,6 +105,7 @@ const AreaManagerList: FC = () => {
 
       if (data?.status === "success" && data?.data) {
         setComplaints(data.data);
+        setFilteredComplaints(filterAndSortComplaints(data.data, selectedFilter));
       } else {
         setError(data?.message || "Failed to fetch complaints");
       }
@@ -84,6 +125,16 @@ const AreaManagerList: FC = () => {
     }
     fetchComplaints();
   }, []);
+
+  // Update filtered complaints when filter changes
+  useEffect(() => {
+    setFilteredComplaints(filterAndSortComplaints(complaints, selectedFilter));
+  }, [selectedFilter, complaints]);
+
+  const handleFilterSelect = (filter: string) => {
+    setSelectedFilter(filter);
+    setShowFilterModal(false);
+  };
 
   const renderItem = ({ item }: { item: Complaint }) => (
     <Pressable
@@ -146,7 +197,9 @@ const AreaManagerList: FC = () => {
           styles.grayText,
           { 
             color: item.S_jobstatus === 'Completed' ? '#4CAF50' : 
-                   item.S_jobstatus === 'Pending' ? '#FFA000' : '#666'
+                   item.S_jobstatus === 'Pending' ? '#FFA000' : 
+                   item.S_jobstatus === 'Assigned' ? '#2196F3' :
+                   item.S_jobstatus === 'New' ? '#FF5722' : '#666'
           }
         ]}>{item.S_jobstatus}</Text>
       </View>
@@ -180,24 +233,78 @@ const AreaManagerList: FC = () => {
   return (
     <View style={styles.container}>
       <LogoHeader />
+      
+      {/* Filter Button */}
+      <View style={styles.filterContainer}>
+        <Pressable
+          style={styles.filterButton}
+          onPress={() => setShowFilterModal(true)}
+        >
+          <MaterialIcons name="filter-list" size={20} color="#0066CC" />
+          <Text style={styles.filterButtonText}>
+            Filter: {selectedFilter}
+          </Text>
+          <MaterialIcons name="arrow-drop-down" size={20} color="#0066CC" />
+        </Pressable>
+      </View>
+
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#0066CC" />
         </View>
       ) : (
         <FlatList
-          data={complaints}
+          data={filteredComplaints}
           renderItem={renderItem}
           keyExtractor={(item) => item.S_SERVNO}
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <MaterialIcons name="inbox" size={48} color="#666" />
-              <Text style={styles.emptyText}>No complaints found</Text>
+              <Text style={styles.emptyText}>
+                {selectedFilter === 'All' ? 'No complaints found' : `No ${selectedFilter} complaints found`}
+              </Text>
             </View>
           }
         />
       )}
+
+      {/* Filter Modal */}
+      <Modal
+        visible={showFilterModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowFilterModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Filter by Status</Text>
+            {statusOptions.map((option) => (
+              <Pressable
+                key={option}
+                style={[
+                  styles.filterOption,
+                  selectedFilter === option && styles.selectedFilterOption
+                ]}
+                onPress={() => handleFilterSelect(option)}
+              >
+                <Text style={[
+                  styles.filterOptionText,
+                  selectedFilter === option && styles.selectedFilterOptionText
+                ]}>
+                  {option}
+                </Text>
+                {selectedFilter === option && (
+                  <MaterialIcons name="check" size={20} color="#0066CC" />
+                )}
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 };
@@ -206,6 +313,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+  filterContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  filterButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#f8f9fa",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  filterButtonText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "500",
   },
   listContainer: {
     padding: 16,
@@ -288,6 +420,46 @@ const styles = StyleSheet.create({
     color: "#666",
     fontSize: 16,
     marginTop: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    width: "80%",
+    maxWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  filterOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  selectedFilterOption: {
+    backgroundColor: "#e3f2fd",
+  },
+  filterOptionText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  selectedFilterOptionText: {
+    color: "#0066CC",
+    fontWeight: "500",
   },
 });
 

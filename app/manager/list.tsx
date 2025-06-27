@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-export default function AreaHeadList() {
+export default function ManagerList() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [modalVisible, setModalVisible] = useState(false);
   const statusOptions = ['All', 'New', 'Assigned', 'Pending', 'Over'];

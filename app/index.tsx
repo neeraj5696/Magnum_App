@@ -24,7 +24,7 @@ export default function HomeScreen() {
             {/* Manager Image */}
             <TouchableOpacity
               style={styles.buttonSmall}
-              onPress={() => router.push("/areahead/login")}
+              onPress={() => router.push("/manager/login")}
             >
               <Image
                 source={require("../assets/images/manager.png")}
