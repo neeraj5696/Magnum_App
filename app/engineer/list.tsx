@@ -15,6 +15,7 @@ interface Complaint {
   COMP_ADD1?: string;
   S_TASK_TYPE?: string;
   S_REMARK1?: string;
+  S_REMARK2?: string;
 }
 
 const EngineerList: FC = () => {
@@ -41,6 +42,7 @@ const EngineerList: FC = () => {
       );
 
       const responseText = await response.text();
+      console.log(responseText);
       let data;
       try {
         data = JSON.parse(responseText);
@@ -83,6 +85,7 @@ const EngineerList: FC = () => {
               S_SERVDT: item.S_SERVDT || '',
               S_assignedengg: item.S_assignedengg || '',
               S_REMARK1: item.S_REMARK1 || '',
+              S_REMARK2: item.S_REMARK2 || '',
               username: params.username as string,
               password: params.password as string
             }

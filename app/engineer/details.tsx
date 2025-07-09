@@ -460,9 +460,10 @@ export default function EnggComplaintDetails() {
               <Text style={styles.value}>{getParam('location')}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Remark:</Text>
+              <Text style={styles.label}>Remark1:</Text>
               <Text style={styles.value}>{getParam('S_REMARK1')}</Text>
             </View>
+            
           </View>
 
           <View style={styles.formSectionBox}>
@@ -512,7 +513,8 @@ export default function EnggComplaintDetails() {
             <Text style={styles.formLabel}>Cause of Problem:</Text>
             <View style={[styles.textInput, { backgroundColor: '#f0f0f0', height: 40 }]}>
               <Text style={{ color: '#666' }}>
-                {getParam('S_REMARK1') || 'Not available'}
+                {getParam('S_REMARK2')}
+                
               </Text>
             </View>
 
