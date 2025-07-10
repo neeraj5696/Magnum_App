@@ -104,7 +104,7 @@ export default function CheckInOut() {
           body: formData.toString(),
         }
       );
-
+console.log("staRT",response)
       const responseText = await response.text();
      
 

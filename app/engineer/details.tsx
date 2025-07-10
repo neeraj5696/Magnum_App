@@ -277,7 +277,7 @@ export default function EnggComplaintDetails() {
           console.log('🚩 CHECKPOINT 7: Starting server API call with form data');
           const responseJson = await submitComplaintUpdate({
             enggname: getParam('S_assignedengg'),
-            remark: customerComment,
+            remark:    `D-${diagnosis} E-${engineerComment}`,
             report: secureUrl,
             status: workStatus === 'Completed' ? '1' : '0',
             pendingreason: workStatus === 'Completed' ? 'NULL' : pendingReason,
