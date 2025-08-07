@@ -27,7 +27,7 @@ export async function submitComplaintUpdate({
   body.append("materiallist", material);
 
   // Log the body data
-// console.log(Object.fromEntries(body.entries()));
+console.log(Object.fromEntries(body.entries()));
 
   try {
     const response = await fetch(

@@ -9,11 +9,13 @@ import {
   Alert,
   ActivityIndicator,
   Animated,
+  Pressable,
 } from "react-native";
-import { useRouter } from 'expo-router';
-import LogoHeader from '../components/LogoHeader';
+import { useRouter } from "expo-router";
+import LogoHeader from "../components/LogoHeader";
 import { MaterialIcons } from "@expo/vector-icons";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Footer from "../components/footer";
 
 export default function CheckInOut() {
   const router = useRouter();
@@ -25,6 +27,11 @@ export default function CheckInOut() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const shimmerAnimation = useRef(new Animated.Value(0)).current;
   const shimmerLoopRef = useRef<Animated.CompositeAnimation | null>(null);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [inputFocus, setInputFocus] = useState({
+    username: false,
+    password: false,
+  });
 
   useEffect(() => {
     const loadCredentials = async () => {
@@ -32,7 +39,7 @@ export default function CheckInOut() {
         const savedUsername = await AsyncStorage.getItem("username");
         const savedPassword = await AsyncStorage.getItem("password");
         const savedRememberMe = await AsyncStorage.getItem("rememberMe");
-        
+
         if (savedRememberMe === "true") {
           setUsername(savedUsername || "");
           setPassword(savedPassword || "");
@@ -63,7 +70,10 @@ export default function CheckInOut() {
       );
       shimmerLoopRef.current.start();
       return () => {
-        if (shimmerLoopRef.current && typeof shimmerLoopRef.current.stop === 'function') {
+        if (
+          shimmerLoopRef.current &&
+          typeof shimmerLoopRef.current.stop === "function"
+        ) {
           shimmerLoopRef.current.stop();
           shimmerLoopRef.current = null;
         }
@@ -73,7 +83,10 @@ export default function CheckInOut() {
 
   useEffect(() => {
     return () => {
-      if (shimmerLoopRef.current && typeof shimmerLoopRef.current.stop === 'function') {
+      if (
+        shimmerLoopRef.current &&
+        typeof shimmerLoopRef.current.stop === "function"
+      ) {
         shimmerLoopRef.current.stop();
         shimmerLoopRef.current = null;
       }
@@ -104,9 +117,8 @@ export default function CheckInOut() {
           body: formData.toString(),
         }
       );
-console.log("staRT",response)
+      console.log("staRT", response);
       const responseText = await response.text();
-     
 
       let data;
       try {
@@ -118,45 +130,55 @@ console.log("staRT",response)
       }
 
       if (data?.status === "success") {
-        if(rememberMe){
-          await AsyncStorage.setItem("username" ,username)
+        if (rememberMe) {
+          await AsyncStorage.setItem("username", username);
           await AsyncStorage.setItem("password", password);
           await AsyncStorage.setItem("rememberMe", "true");
-        } else{
+        } else {
           //clear the credential if rememberme is not selected
 
           await AsyncStorage.removeItem("username");
           await AsyncStorage.removeItem("password");
-          await AsyncStorage.removeItem("rememberMe")
+          await AsyncStorage.removeItem("rememberMe");
         }
         setLoginSuccess(true);
         setTimeout(() => {
           setLoginSuccess(false);
-          router.push(`/engineer_checkinout/check_in_out?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
+          router.push(
+            `/engineer_checkinout/check_in_out?username=${encodeURIComponent(
+              username
+            )}&password=${encodeURIComponent(password)}`
+          );
         }, 1500);
       } else {
-        setErrorMessage(data?.message || "Login failed. Please check your credentials.");
+        setErrorMessage(
+          data?.message || "Login failed. Please check your credentials."
+        );
       }
     } catch (error) {
       console.error("Login error:", error);
-      setErrorMessage("Network error. Please check your connection and try again.");
+      setErrorMessage(
+        "Network error. Please check your connection and try again."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   const shimmerStyle = {
-    transform: [{
-      translateX: shimmerAnimation.interpolate({
-        inputRange: [0, 1],
-        outputRange: [-200, 200],
-      }),
-    }],
+    transform: [
+      {
+        translateX: shimmerAnimation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-200, 200],
+        }),
+      },
+    ],
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.logoContainer}>
+      <View>
         <LogoHeader />
       </View>
 
@@ -164,7 +186,12 @@ console.log("staRT",response)
         <Text style={styles.title}>CHECK IN/OUT LOGIN</Text>
 
         <View style={styles.inputContainer}>
-          <MaterialIcons name="person" size={20} color="#666" style={styles.inputIcon} />
+          <MaterialIcons
+            name="person"
+            size={20}
+            color="#666"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={styles.input}
             placeholder="Username"
@@ -176,15 +203,36 @@ console.log("staRT",response)
         </View>
 
         <View style={styles.inputContainer}>
-          <MaterialIcons name="lock" size={20} color="#666" style={styles.inputIcon} />
+          <MaterialIcons
+            name="lock"
+            size={20}
+            color="#666"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={styles.input}
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!isPasswordVisible}
             editable={!isLoading}
+            onFocus={() => setInputFocus((f) => ({ ...f, password: true }))}
+            onBlur={() => {
+              setInputFocus((f) => ({ ...f, password: false }));
+              setIsPasswordVisible(false);
+            }}
           />
+
+          <Text>
+            <Pressable onPress={() => setIsPasswordVisible((prev) => !prev)}>
+              <MaterialIcons
+                name={isPasswordVisible ? "visibility" : "visibility-off"}
+                size={22}
+                color={inputFocus.password ? "#0066CC" : "#666"}
+                style={styles.inputIcon}
+              />
+            </Pressable>
+          </Text>
         </View>
 
         {errorMessage ? (
@@ -212,7 +260,10 @@ console.log("staRT",response)
             </View>
           ) : (
             <TouchableOpacity
-              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+              style={[
+                styles.loginButton,
+                isLoading && styles.loginButtonDisabled,
+              ]}
               onPress={handleLogin}
               disabled={isLoading}
             >
@@ -225,6 +276,7 @@ console.log("staRT",response)
           )}
         </View>
       </View>
+      <Footer />
     </View>
   );
 }
@@ -233,8 +285,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-    justifyContent: "flex-start",
-    paddingTop: 0,
+    padding: 16,
+    justifyContent: "space-between",
   },
   logoContainer: {
     alignItems: "center",
@@ -242,10 +294,10 @@ const styles = StyleSheet.create({
 
   formContainer: {
     backgroundColor: "white",
-    marginHorizontal: 10,
-    marginTop: 40,
+    marginTop: 10,
+    marginBottom: "auto",
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 0,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -253,7 +305,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 1,
   },
   title: {
     fontSize: 24,
@@ -316,7 +368,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   buttonContainer: {
-    height: 'auto',
+    height: "auto",
   },
   successContainer: {
     flexDirection: "row",

@@ -30,7 +30,7 @@ type RouteParams = {
   COMP_ADD2: string;
   COMP_ADD3: string;
   COMP_TEL: string;
-  S_REMAKR6: string;
+  S_REMARK2: string;
   S_REMARK3: string;
   S_call_assigneddate: string;
   S_call_assigned: string;
@@ -238,8 +238,8 @@ export default function AreaManagerDetails() {
            
 
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Remark 6:</Text>
-              <Text style={styles.value}>{params.S_REMAKR6}</Text>
+              <Text style={styles.label}>Remark 2:</Text>
+              <Text style={styles.value}>{params.S_REMARK2}</Text>
             </View>
 
             

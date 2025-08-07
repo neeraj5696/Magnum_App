@@ -1,21 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Animated, Alert } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import LogoHeader from '../components/LogoHeader';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Animated,
+  Alert,
+  Pressable,
+} from "react-native";
+import * as SecureStore from "expo-secure-store";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import LogoHeader from "../components/LogoHeader";
+import { useFocusEffect } from "@react-navigation/native";
+import Footer from "../components/footer";
 
 export default function AreaManagerLogin() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
   const [loginSuccess, setLoginSuccess] = useState(false);
   const shimmerAnimation = useRef(new Animated.Value(0)).current;
   const shimmerLoopRef = useRef<Animated.CompositeAnimation | null>(null);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [inputFocus, setInputFocus] = useState({
+    username: false,
+    password: false,
+  });
 
   useEffect(() => {
     const loadCredentials = async () => {
@@ -97,16 +113,13 @@ export default function AreaManagerLogin() {
       formData.append("password", password);
       formData.append("role", "area_manager");
 
-      const response = await fetch(
-        "https://hma.magnum.org.in/appARlogin.php",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: formData.toString(),
-        }
-      );
+      const response = await fetch("https://hma.magnum.org.in/appARlogin.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData.toString(),
+      });
 
       const responseText = await response.text();
       let data;
@@ -141,28 +154,34 @@ export default function AreaManagerLogin() {
             params: {
               username: username,
               password: password,
-              role: "area_manager"
-            }
+              role: "area_manager",
+            },
           });
         }, 1500);
       } else {
-        setErrorMessage(data?.message || "Login failed. Please check your credentials.");
+        setErrorMessage(
+          data?.message || "Login failed. Please check your credentials."
+        );
       }
     } catch (error) {
       console.error("Login error:", error);
-      setErrorMessage("Network error. Please check your connection and try again.");
+      setErrorMessage(
+        "Network error. Please check your connection and try again."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   const shimmerStyle = {
-    transform: [{
-      translateX: shimmerAnimation.interpolate({
-        inputRange: [0, 1],
-        outputRange: [-200, 200],
-      }),
-    }],
+    transform: [
+      {
+        translateX: shimmerAnimation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-200, 200],
+        }),
+      },
+    ],
   };
 
   return (
@@ -172,7 +191,12 @@ export default function AreaManagerLogin() {
         <Text style={styles.title}>AREA MANAGER LOGIN</Text>
 
         <View style={styles.inputContainer}>
-          <MaterialIcons name="person" size={20} color="#666" style={styles.inputIcon} />
+          <MaterialIcons
+            name="person"
+            size={20}
+            color="#666"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={styles.input}
             placeholder="Username"
@@ -184,15 +208,33 @@ export default function AreaManagerLogin() {
         </View>
 
         <View style={styles.inputContainer}>
-          <MaterialIcons name="lock" size={20} color="#666" style={styles.inputIcon} />
+          <MaterialIcons
+            name="lock"
+            size={20}
+            color="#666"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={styles.input}
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!isPasswordVisible}
             editable={!isLoading}
+            onBlur={()=>{
+              setInputFocus((f)=> ({...f, password: false}));
+              setIsPasswordVisible(false)
+            }}
           />
+          <Text>
+            <Pressable onPress={() => setIsPasswordVisible((prev) => !prev)}>
+              <MaterialIcons
+                name={isPasswordVisible ? "visibility" : "visibility-off"}
+                size={22}
+                color={inputFocus.password ? "#0066CC" : "#666"}
+              />
+            </Pressable>
+          </Text>
         </View>
 
         {errorMessage ? (
@@ -220,7 +262,10 @@ export default function AreaManagerLogin() {
             </View>
           ) : (
             <TouchableOpacity
-              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+              style={[
+                styles.loginButton,
+                isLoading && styles.loginButtonDisabled,
+              ]}
               onPress={handleLogin}
               disabled={isLoading}
             >
@@ -233,6 +278,7 @@ export default function AreaManagerLogin() {
           )}
         </View>
       </View>
+      <Footer />
     </View>
   );
 }
@@ -242,13 +288,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
     padding: 16,
+    justifyContent: "space-between",
   },
   formContainer: {
+    marginTop: 10,
+    marginBottom: "auto",
     backgroundColor: "white",
     padding: 20,
-    borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#0066CC',
+    borderLeftColor: "#0066CC",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -256,7 +304,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 1,
   },
   title: {
     fontSize: 24,
@@ -319,7 +367,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   buttonContainer: {
-    height: 'auto',
+    height: "auto",
   },
   successContainer: {
     flexDirection: "row",
@@ -345,4 +393,4 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 172, 237, 0.25)",
     width: 200,
   },
-}); 
+});

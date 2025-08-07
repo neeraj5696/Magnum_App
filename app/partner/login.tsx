@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import LogoHeader from '../components/LogoHeader';
+import Footer from '../components/footer';
 
 export default function PartnerLogin() {
     const router = useRouter();
@@ -197,6 +198,7 @@ export default function PartnerLogin() {
                     )}
                 </View>
             </View>
+            <Footer />
         </View>
     );
 }
@@ -206,11 +208,13 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#f5f5f5",
         padding: 16,
+        justifyContent: 'space-between',
     },
     formContainer: {
+        
         backgroundColor: "white",
         padding: 20,
-        borderRadius: 12,
+        marginTop: 10,
         borderLeftWidth: 4,
         borderLeftColor: '#0066CC',
         shadowColor: "#000",
@@ -220,7 +224,9 @@ const styles = StyleSheet.create({
         },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
-        elevation: 5,
+        elevation: 1,
+        marginBottom: "auto",
+
     },
     title: {
         fontSize: 24,

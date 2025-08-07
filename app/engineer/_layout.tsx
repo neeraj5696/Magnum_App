@@ -20,6 +20,7 @@ const EngineerLayout: FC = () => {
         name="details"
         options={{
           title: 'Engineer Details',
+          headerShown: false
         }}
       />
     </Stack>

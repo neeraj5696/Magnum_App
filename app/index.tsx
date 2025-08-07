@@ -1,13 +1,8 @@
 import React from "react";
-import {
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  View,
-} from "react-native";
+import { Image, StyleSheet, TouchableOpacity, Text, View } from "react-native";
 import { SafeAreaView } from "react-native";
 import LogoHeader from "./components/LogoHeader";
+import Footer from "./components/footer";
 import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
@@ -17,7 +12,6 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.background}>
         <LogoHeader />
-
         <View style={styles.container}>
           {/* Manager and Area Manager Section */}
           <View style={styles.buttonGrid}>
@@ -61,7 +55,10 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             {/* Partner Image */}
-            <TouchableOpacity style={styles.buttonSmall} onPress={() => router.push("/partner/login")}>
+            <TouchableOpacity
+              style={styles.buttonSmall}
+              onPress={() => router.push("/partner/login")}
+            >
               <Image
                 source={require("../assets/images/collaboration.png")}
                 style={styles.buttonImageSmall}
@@ -84,16 +81,19 @@ export default function HomeScreen() {
             {/* Check In/Out Image */}
             <TouchableOpacity
               style={styles.buttonSmall}
-              onPress={() => router.push("/engineer_checkinout/checkinout_login")}
+              onPress={() =>
+                router.push("/engineer_checkinout/checkinout_login")
+              }
             >
               <Image
                 source={require("../assets/images/checkinout.png")}
-                style={styles.buttonImageSmal}
+                style={styles.buttonImageSmall}
               />
               <Text style={styles.buttonTextSmall}>Check In/Out</Text>
             </TouchableOpacity>
           </View>
         </View>
+        <Footer />
       </View>
     </SafeAreaView>
   );
@@ -107,31 +107,28 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     padding: 16,
+    justifyContent: "space-between",
   },
   headingContainer: {
     alignItems: "center",
-    marginVertical: 20,
   },
   heading: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#333",
   },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-  },
+  container: {},
   buttonGrid: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 20,
+    justifyContent: "space-between",
+    marginVertical: 10,
   },
   buttonSmall: {
     alignItems: "center",
     backgroundColor: "white",
     padding: 15,
     borderRadius: 12,
-    width: "45%",
+    width: "48%",
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -143,13 +140,7 @@ const styles = StyleSheet.create({
     height: 80,
     marginBottom: 10,
   },
-  buttonImageSmal: {
-    height: 80,
-    width: undefined,
-    aspectRatio: 1.5,
-    resizeMode: "contain",
-    marginBottom: 10,
-  },
+
   buttonTextSmall: {
     fontSize: 16,
     fontWeight: "600",

@@ -19,7 +19,7 @@ interface Complaint {
   COMP_ADD2?: string;
   COMP_ADD3?: string;
   COMP_TEL?: string;
-  S_REMAKR6?: string;
+  S_REMARK2?: string;
   S_REMARK3?: string;
   S_call_assigneddate?: string;
   S_call_assigned?: string;
@@ -157,7 +157,7 @@ const AreaManagerList: FC = () => {
             COMP_ADD2: item.COMP_ADD2 || '',
             COMP_ADD3: item.COMP_ADD3 || '',
             COMP_TEL: item.COMP_TEL || '',
-            S_REMAKR6: item.S_REMAKR6 || '',
+            S_REMARK2: item.S_REMARK2 || '',
             S_REMARK3: item.S_REMARK3 || '',
             S_call_assigneddate: item.S_call_assigneddate || '',
             S_call_assigned: item.S_call_assigned || '',
