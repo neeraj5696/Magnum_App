@@ -92,7 +92,7 @@ const EngineerList: FC = () => {
 
   // Header with stats and filter
   const renderHeader = () => (
-    <View style={styles.statsHeader}>
+    <View style={styles.card}>
       <View style={styles.statsRow}>
         <View style={styles.statsBox}>
           <Text style={styles.statsNumber}>{total}</Text>
@@ -218,7 +218,7 @@ const EngineerList: FC = () => {
 
   return (
     <View style={styles.container}>
-      <LogoHeader />
+      {/* <LogoHeader /> */}
       {renderHeader()}
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -238,7 +238,7 @@ const EngineerList: FC = () => {
           showsVerticalScrollIndicator={true}
         />
       )}
-      <Footer />
+      {/* <Footer /> */}
     </View>
   );
 };
@@ -249,6 +249,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
     padding: 8,
     justifyContent: "space-between",
+    marginTop: 40,
   },
   statsHeader: {
     marginBottom: 8,

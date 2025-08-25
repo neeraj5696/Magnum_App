@@ -34,7 +34,7 @@ import { Picker } from "@react-native-picker/picker";
 import { getEpbaxData, getEpbaxAndPowerSupplyData } from "./componenet/Epbax";
 import { getAccessControlData } from "./componenet/AccessControl";
 import { getVpdDdlData } from "./componenet/VpdDdl";
-import SimplePreviewModal from "../src/components/SimplePreviewModal";
+import SimplePreviewModal from "./componenet/SimplePreviewModal";
 
 interface UploadResult {
   secure_url: string;
@@ -402,7 +402,7 @@ export default function EnggComplaintDetails() {
       //       "PDF generated but failed to upload to Cloudinary or post to server. Please try again later."
       //     );
       //   }
-      // } 
+      // }
       // else {
       //   console.log("🚩 ERROR: PDF generation failed");
       //   console.error("Failed to generate PDF");
@@ -421,7 +421,9 @@ export default function EnggComplaintDetails() {
   // Lock orientation to landscape when signature pad opens, unlock when closes
   useEffect(() => {
     if (showSignaturePad) {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT
+
+      );
     } else {
       ScreenOrientation.unlockAsync();
     }
@@ -542,9 +544,9 @@ export default function EnggComplaintDetails() {
     const model = getParam("modelnumber")?.trim();
     const system = getParam("systemName")?.trim();
 
-    console.log("🔍 Debug - modelnumber:", model);
-    console.log("🔍 Debug - systemName:", system);
-    console.log("🔍 Debug - selectedSystemName:", selectedSystemName);
+    // console.log("🔍 Debug - modelnumber:", model);
+    // console.log("🔍 Debug - systemName:", system);
+    // console.log("🔍 Debug - selectedSystemName:", selectedSystemName);
 
     if (model && !selectedSystemName) {
       console.log("🔍 Setting selectedSystemName to:", model);
@@ -590,6 +592,7 @@ export default function EnggComplaintDetails() {
     <SafeAreaView style={[styles.container]}>
       <StatusBar />
       <ScrollView>
+      <View style={styles.divider} />
         {/* Info Section */}
         <View style={styles.infoSectionBox}>
           <Text style={styles.complaintNo}>
@@ -1293,37 +1296,44 @@ export default function EnggComplaintDetails() {
             </View>
           </Modal>
 
-          {/* Preview Button */}
-          <Pressable
-            style={[styles.previewButton]}
-            onPress={() => setShowPreviewModal(true)}
-            disabled={isSubmitting}
-          >
-            <Ionicons name="eye-outline" size={20} color="#1976D2" style={{ marginRight: 8 }} />
-            <Text style={styles.previewButtonText}>Preview PDF</Text>
-          </Pressable>
+          <View style={styles.buttonstyleforpreviewsubmit}>
+            {/* Preview Button */}
+            <Pressable
+              style={[styles.previewButton]}
+              onPress={() => setShowPreviewModal(true)}
+              disabled={isSubmitting}
+            >
+              <Ionicons
+                name="eye-outline"
+                size={20}
+                color="#fff"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.previewButtonText}>PDF</Text>
+            </Pressable>
 
-          <Pressable
-            style={[
-              styles.submitButton,
-              isSubmitting && styles.submitButtonDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <View style={styles.submitButtonContent}>
-                <ActivityIndicator
-                  color="#fff"
-                  size="small"
-                  style={styles.submitButtonSpinner}
-                />
-                <Text style={styles.submitButtonText}>Submitting...</Text>
-              </View>
-            ) : (
-              <Text style={styles.submitButtonText}>Submit</Text>
-            )}
-          </Pressable>
+            <Pressable
+              style={[
+                styles.submitButton,
+                isSubmitting && styles.submitButtonDisabled,
+              ]}
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <View style={styles.submitButtonContent}>
+                  <ActivityIndicator
+                    color="#fff"
+                    size="small"
+                    style={styles.submitButtonSpinner}
+                  />
+                  <Text style={styles.submitButtonText}>Submitting...</Text>
+                </View>
+              ) : (
+                <Text style={styles.submitButtonText}>Submit</Text>
+              )}
+            </Pressable>
+          </View>
         </View>
 
         {/* Signature Pad Modal */}
@@ -1413,7 +1423,6 @@ export default function EnggComplaintDetails() {
           </View>
         )}
 
-        {/* Simple Preview Modal */}
         <SimplePreviewModal
           visible={showPreviewModal}
           onClose={() => setShowPreviewModal(false)}
@@ -1459,6 +1468,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     paddingBottom: 0,
     paddingHorizontal: "4%", // responsive horizontal padding
+    marginTop: 0,
   },
   header: {
     backgroundColor: "#1a73e8",
@@ -1483,7 +1493,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   complaintNoContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: "#0066CC",
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
@@ -1501,7 +1511,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignContent: "center",
     justifyContent: "center",
-    borderColor: "green",
+    borderColor: "#1976D2",
     borderRadius: 16,
     padding: 15,
     marginBottom: 20,
@@ -1512,7 +1522,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: "#1976D2",
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 0,
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -1672,14 +1682,13 @@ const styles = StyleSheet.create({
     color: "#555",
   },
   previewButton: {
-    backgroundColor: "#fff",
-    borderWidth: 2,
+    backgroundColor: "#1976D2",
+
     borderColor: "#1976D2",
     borderRadius: 10,
     paddingVertical: 16,
+    paddingHorizontal: 24,
     alignItems: "center",
-    marginTop: 12,
-    marginBottom: 12,
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -1687,9 +1696,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     flexDirection: "row",
     justifyContent: "center",
+
+    marginRight: 8,
   },
   previewButtonText: {
-    color: "#1976D2",
+    color: "#fff",
     fontSize: 17,
     fontWeight: "bold",
     fontFamily: "Roboto",
@@ -1698,13 +1709,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#1976D2",
     borderRadius: 10,
     paddingVertical: 16,
+    paddingHorizontal: 24,
     alignItems: "center",
-    marginTop: 12,
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.12,
     shadowRadius: 2,
+    flex: 1,
+    marginLeft: 8,
   },
   submitButtonDisabled: {
     backgroundColor: "#1a73e8aa",
@@ -1833,7 +1846,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     backgroundColor: "#f9f9f9",
-    height: 80, // fixed height
+    height: 105, // fixed height
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
@@ -1902,14 +1915,14 @@ const styles = StyleSheet.create({
   },
   signaturePreviewContainer: {
     width: "100%",
-    height: 60, // fixed preview height
+    height: 80, // fixed preview height
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "column",
   },
   signaturePreviewImage: {
     width: "100%",
-    height: 50, // fixed image height
+    height: 80, // fixed image height
   },
   pickerContainer: {
     backgroundColor: "white",
@@ -2118,9 +2131,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   divider: {
-    height: 1,
+    height: 2,
     backgroundColor: "#E0E7EF",
-    marginVertical: 18,
+    marginVertical: 10,
     borderRadius: 1,
   },
   loadingOverlay: {
@@ -2133,5 +2146,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 100,
+  },
+
+  buttonstyleforpreviewsubmit: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 12,
   },
 });
