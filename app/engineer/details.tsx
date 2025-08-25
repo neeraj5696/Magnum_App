@@ -34,6 +34,7 @@ import { Picker } from "@react-native-picker/picker";
 import { getEpbaxData, getEpbaxAndPowerSupplyData } from "./componenet/Epbax";
 import { getAccessControlData } from "./componenet/AccessControl";
 import { getVpdDdlData } from "./componenet/VpdDdl";
+import SimplePreviewModal from "../src/components/SimplePreviewModal";
 
 interface UploadResult {
   secure_url: string;
@@ -121,6 +122,7 @@ export default function EnggComplaintDetails() {
   const [customerCommentFocused, setCustomerCommentFocused] = useState(false);
   const [engineerCommentFocused, setEngineerCommentFocused] = useState(false);
   const [partReplacedFocused, setPartReplacedFocused] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // Fetch both EPABX and Power Supply data on mount
   useEffect(() => {
@@ -1291,6 +1293,16 @@ export default function EnggComplaintDetails() {
             </View>
           </Modal>
 
+          {/* Preview Button */}
+          <Pressable
+            style={[styles.previewButton]}
+            onPress={() => setShowPreviewModal(true)}
+            disabled={isSubmitting}
+          >
+            <Ionicons name="eye-outline" size={20} color="#1976D2" style={{ marginRight: 8 }} />
+            <Text style={styles.previewButtonText}>Preview PDF</Text>
+          </Pressable>
+
           <Pressable
             style={[
               styles.submitButton,
@@ -1400,6 +1412,41 @@ export default function EnggComplaintDetails() {
             <ActivityIndicator size="large" color="#1976D2" />
           </View>
         )}
+
+        {/* Simple Preview Modal */}
+        <SimplePreviewModal
+          visible={showPreviewModal}
+          onClose={() => setShowPreviewModal(false)}
+          formData={{
+            complaintNo: getParam("complaintNo"),
+            clientName: getParam("clientName"),
+            workStatus,
+            remark,
+            faultReported: getParam("S_SERVDT"),
+            typeOfCall: getParam("S_TASK_TYPE"),
+            callAttendedDate,
+            callAttendedTime,
+            callCompletedDate,
+            callCompletedTime,
+            partReplaced,
+            causeProblem,
+            diagnosis,
+            materialTakenOut,
+            customerComment,
+            customerSignature,
+            systemName: getParam("SYSTEM_NAME"),
+            assignDate: getParam("S_assigndate"),
+            location: getParam("location"),
+            taskType: getParam("S_TASK_TYPE"),
+            status: getParam("status"),
+            S_SERVDT: getParam("S_SERVDT"),
+            S_assignedengg: getParam("S_assignedengg"),
+            pendingReason: workStatus === "Pending" ? pendingReason : "",
+            submittedAt: new Date().toISOString(),
+            engineerComment,
+            material: getMaterialSummary(),
+          }}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -1623,6 +1670,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#555",
+  },
+  previewButton: {
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#1976D2",
+    borderRadius: 10,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: 12,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 2,
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  previewButtonText: {
+    color: "#1976D2",
+    fontSize: 17,
+    fontWeight: "bold",
+    fontFamily: "Roboto",
   },
   submitButton: {
     backgroundColor: "#1976D2",
