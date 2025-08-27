@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import React from "react";
+import { View, Image, StyleSheet } from "react-native";
 
 interface LogoHeaderProps {
   containerStyle?: object;
@@ -11,14 +11,14 @@ const LogoHeader: React.FC<LogoHeaderProps> = ({ containerStyle }) => {
       <View style={styles.logoRow}>
         <View style={styles.logoWrapper}>
           <Image
-            source={require('../../assets/images/samsung_logo.png')}
+            source={require("../../assets/images/samsung_logo.png")}
             style={styles.samsungLogo}
             resizeMode="contain"
           />
         </View>
         <View style={styles.logoWrapper}>
           <Image
-            source={require('../../assets/images/magnum_logo.png')}
+            source={require("../../assets/images/magnum_logo.png")}
             style={styles.magnumLogo}
             resizeMode="contain"
           />
@@ -31,35 +31,34 @@ const LogoHeader: React.FC<LogoHeaderProps> = ({ containerStyle }) => {
 
 const styles = StyleSheet.create({
   logoContainer: {
-    width: '100%',
-    backgroundColor: '#fff',
+    width: "100%",
+    backgroundColor: "#fff",
     paddingHorizontal: 0,
     // paddingTop: 0,
     paddingVertical: 8,
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 4,
-    alignItems: 'center',
-    marginTop: 30,
-
+    //elevation: 4,
+    alignItems: "center",
+    // marginTop: 30,
   },
   logoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
     gap: 5,
   },
   logoWrapper: {
-    backgroundColor: 'rgba(255,255,255,1)',
+    backgroundColor: "rgba(255,255,255,1)",
     borderRadius: 16,
     marginHorizontal: 6,
     marginTop: 0,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 2,
@@ -76,11 +75,11 @@ const styles = StyleSheet.create({
   divider: {
     marginVertical: 4,
     height: 2,
-    width: '80%',
-    backgroundColor: '#e6eaf0',
+    width: "80%",
+    backgroundColor: "#e6eaf0",
     borderRadius: 1,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
 });
 
-export default LogoHeader; 
+export default LogoHeader;

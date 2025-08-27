@@ -197,139 +197,147 @@ export default function EngineerLogin() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.container}>
-          <LogoHeader />
-          <View style={styles.formContainer}>
-            <Text style={styles.title}>ENGINEER LOGIN</Text>
+          <View style={styles.innercontainer}>
+            <LogoHeader />
+            <View style={styles.formContainer}>
+              <Text style={styles.title}>ENGINEER LOGIN</Text>
 
-            <View
-              style={[
-                styles.inputContainer,
-                inputFocus.username && styles.inputContainerFocused,
-              ]}
-            >
-              <MaterialIcons
-                name="person"
-                size={22}
-                color={inputFocus.username ? "#0066CC" : "#666"}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Username"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-                editable={!isLoading}
-                onFocus={() => setInputFocus((f) => ({ ...f, username: true }))}
-                onBlur={() => setInputFocus((f) => ({ ...f, username: false }))}
-                placeholderTextColor="#aaa"
-              />
-            </View>
-
-            <View
-              style={[
-                styles.inputContainer,
-                inputFocus.password && styles.inputContainerFocused,
-              ]}
-            >
-              <MaterialIcons
-                name="lock"
-                size={22}
-                color={inputFocus.password ? "#0066CC" : "#666"}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!isPasswordVisible}
-                editable={!isLoading}
-                onFocus={() => setInputFocus((f) => ({ ...f, password: true }))}
-                onBlur={() => {
-                  setInputFocus((f) => ({ ...f, password: false }));
-                  setIsPasswordVisible(false);
-                }}
-                placeholderTextColor="#aaa"
-              />
-              <Text>
-                <Pressable
-                  onPress={() => setIsPasswordVisible((prev) => !prev)}
-                  style={styles.eyecontainer}
-                >
-                  <MaterialIcons
-                    name={isPasswordVisible ? "visibility" : "visibility-off"}
-                    size={22}
-                    color={inputFocus.password ? "#0066CC" : "#666"}
-                    style={styles.inputIcon}
-                  />
-                </Pressable>
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.rememberMeContainer}
-              onPress={() => setRememberMe(!rememberMe)}
-              activeOpacity={0.7}
-            >
-              <MaterialIcons
-                name={rememberMe ? "check-box" : "check-box-outline-blank"}
-                size={24}
-                color="#0066CC"
-              />
-              <Text style={styles.rememberMeText}>Remember Me</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.forgotPasswordContainer}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
-
-            {errorMessage ? (
-              <View style={styles.errorBox}>
+              <View
+                style={[
+                  styles.inputContainer,
+                  inputFocus.username && styles.inputContainerFocused,
+                ]}
+              >
                 <MaterialIcons
-                  name="error-outline"
-                  size={18}
-                  color="#FF3B30"
-                  style={{ marginRight: 4 }}
+                  name="person"
+                  size={22}
+                  color={inputFocus.username ? "#0066CC" : "#666"}
+                  style={styles.inputIcon}
                 />
-                <Text style={styles.errorText}>{errorMessage}</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                  editable={!isLoading}
+                  onFocus={() =>
+                    setInputFocus((f) => ({ ...f, username: true }))
+                  }
+                  onBlur={() =>
+                    setInputFocus((f) => ({ ...f, username: false }))
+                  }
+                  placeholderTextColor="#aaa"
+                />
               </View>
-            ) : null}
 
-            <View style={styles.buttonContainer}>
-              {loginSuccess ? (
-                <View style={styles.successContainer}>
-                  <Animated.View style={[styles.shimmer, shimmerStyle]} />
+              <View
+                style={[
+                  styles.inputContainer,
+                  inputFocus.password && styles.inputContainerFocused,
+                ]}
+              >
+                <MaterialIcons
+                  name="lock"
+                  size={22}
+                  color={inputFocus.password ? "#0066CC" : "#666"}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!isPasswordVisible}
+                  editable={!isLoading}
+                  onFocus={() =>
+                    setInputFocus((f) => ({ ...f, password: true }))
+                  }
+                  onBlur={() => {
+                    setInputFocus((f) => ({ ...f, password: false }));
+                    setIsPasswordVisible(false);
+                  }}
+                  placeholderTextColor="#aaa"
+                />
+                <Text>
+                  <Pressable
+                    onPress={() => setIsPasswordVisible((prev) => !prev)}
+                    style={styles.eyecontainer}
+                  >
+                    <MaterialIcons
+                      name={isPasswordVisible ? "visibility" : "visibility-off"}
+                      size={22}
+                      color={inputFocus.password ? "#0066CC" : "#666"}
+                      style={styles.inputIcon}
+                    />
+                  </Pressable>
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.rememberMeContainer}
+                onPress={() => setRememberMe(!rememberMe)}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons
+                  name={rememberMe ? "check-box" : "check-box-outline-blank"}
+                  size={24}
+                  color="#0066CC"
+                />
+                <Text style={styles.rememberMeText}>Remember Me</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.forgotPasswordContainer}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
+
+              {errorMessage ? (
+                <View style={styles.errorBox}>
                   <MaterialIcons
-                    name="check-circle"
-                    size={26}
-                    color="#4CAF50"
+                    name="error-outline"
+                    size={18}
+                    color="#FF3B30"
+                    style={{ marginRight: 4 }}
                   />
-                  <Text style={styles.successText}>Login Successful!</Text>
+                  <Text style={styles.errorText}>{errorMessage}</Text>
                 </View>
-              ) : (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.loginButton,
-                    isLoading && styles.loginButtonDisabled,
-                    pressed && styles.loginButtonPressed,
-                  ]}
-                  onPress={handleLogin}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="white" />
-                  ) : (
-                    <Text style={styles.loginButtonText}>Login</Text>
-                  )}
-                </Pressable>
-              )}
+              ) : null}
+
+              <View style={styles.buttonContainer}>
+                {loginSuccess ? (
+                  <View style={styles.successContainer}>
+                    <Animated.View style={[styles.shimmer, shimmerStyle]} />
+                    <MaterialIcons
+                      name="check-circle"
+                      size={26}
+                      color="#4CAF50"
+                    />
+                    <Text style={styles.successText}>Login Successful!</Text>
+                  </View>
+                ) : (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.loginButton,
+                      isLoading && styles.loginButtonDisabled,
+                      pressed && styles.loginButtonPressed,
+                    ]}
+                    onPress={handleLogin}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text style={styles.loginButtonText}>Login</Text>
+                    )}
+                  </Pressable>
+                )}
+              </View>
             </View>
+            <Footer />
           </View>
-          <Footer />
         </View>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -342,27 +350,33 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: "space-between",
-    //lignItems: 'center',
     padding: 16,
+  },
+
+  innercontainer: {
+    flex: 1,
+    height: "auto",
+    justifyContent: "space-between",
+    borderWidth: 0,
+    borderRadius: 18,
+    marginVertical: "4%",
+    backgroundColor: "white",
+    elevation: 2,
   },
   formContainer: {
     width: "100%",
     maxWidth: 380,
-    marginTop: 10,
     marginBottom: "auto",
     backgroundColor: "white",
     padding: 28,
-    borderLeftWidth: 5,
-    borderLeftColor: "#0066CC",
+
     shadowColor: "#000",
     shadowOffset: {
-      width: 0,
+      width: 4,
       height: 4,
     },
     shadowOpacity: 0.18,
     shadowRadius: 8.0,
-    elevation: 8,
   },
   title: {
     fontSize: 26,

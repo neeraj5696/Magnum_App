@@ -8,6 +8,7 @@ import {
   Modal,
   TouchableOpacity,
   Alert,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import type { RouteProp } from "@react-navigation/native";
@@ -317,94 +318,93 @@ export default function Check() {
   return (
     <View style={styles.outerContainer}>
       <View style={styles.container}>
-        <LogoHeader />
-        <View style={styles.headerBar}>
-          <Text style={styles.headerText}>Complaint List</Text>
+        <View style={styles.innercontainer}>
+          <LogoHeader />
+          <View
+            style={[
+              styles.mainContent,
+              showDialog && {
+                opacity: 0.3,
+                transform: [{ scale: 0.95 }],
+              },
+            ]}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#3498db" />
+            ) : error ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : complainlist.length > 0 ? (
+              <FlatList
+                data={complainlist}
+                keyExtractor={(item) => item.S_SERVNO}
+                contentContainerStyle={styles.listContent}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.complaintCard}
+                    activeOpacity={0.92}
+                    onPress={() => {
+                      setSelectedComplaint(item);
+                      setShowDialog(true);
+                    }}
+                  >
+                    <View style={styles.cardAccent} />
+                    <View style={styles.cardContent}>
+                      <View style={styles.cardRow}>
+                        <MaterialIcons
+                          name="confirmation-number"
+                          size={22}
+                          color="#3498db"
+                          style={styles.cardIcon}
+                        />
+                        <Text style={styles.cardLabel}>Complaint No:</Text>
+                        <Text style={styles.cardValue}>{item.S_SERVNO}</Text>
+                      </View>
+                      <View style={styles.cardRow}>
+                        <MaterialIcons
+                          name="business"
+                          size={20}
+                          color="#2c3e50"
+                          style={styles.cardIcon}
+                        />
+                        <Text style={styles.cardLabel}>Company:</Text>
+                        <Text style={styles.cardValue}>{item.COMP_NAME}</Text>
+                      </View>
+                      <View style={styles.cardRow}>
+                        <MaterialIcons
+                          name="engineering"
+                          size={20}
+                          color="#2c3e50"
+                          style={styles.cardIcon}
+                        />
+                        <Text style={styles.cardLabel}>Engineer:</Text>
+                        <Text style={styles.cardValue}>
+                          {item.S_assignedengg}
+                        </Text>
+                      </View>
+                      <View style={styles.cardRow}>
+                        <MaterialIcons
+                          name="assignment-turned-in"
+                          size={20}
+                          color="#27ae60"
+                          style={styles.cardIcon}
+                        />
+                        <Text style={styles.cardLabel}>Status:</Text>
+                        <Text style={styles.cardValue}>{item.S_jobstatus}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )}
+              />
+            ) : (
+              <Text style={styles.noDataText}>No complaints found</Text>
+            )}
+          </View>
+          <Footer />
         </View>
-        <View
-          style={[
-            styles.mainContent,
-            showDialog && {
-              opacity: 0.3,
-              transform: [{ scale: 0.95 }],
-            },
-          ]}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="large" color="#3498db" />
-          ) : error ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          ) : complainlist.length > 0 ? (
-            <FlatList
-              data={complainlist}
-              keyExtractor={(item) => item.S_SERVNO}
-              contentContainerStyle={styles.listContent}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.complaintCard}
-                  activeOpacity={0.92}
-                  onPress={() => {
-                    setSelectedComplaint(item);
-                    setShowDialog(true);
-                  }}
-                >
-                  <View style={styles.cardAccent} />
-                  <View style={styles.cardContent}>
-                    <View style={styles.cardRow}>
-                      <MaterialIcons
-                        name="confirmation-number"
-                        size={22}
-                        color="#3498db"
-                        style={styles.cardIcon}
-                      />
-                      <Text style={styles.cardLabel}>Complaint No:</Text>
-                      <Text style={styles.cardValue}>{item.S_SERVNO}</Text>
-                    </View>
-                    <View style={styles.cardRow}>
-                      <MaterialIcons
-                        name="business"
-                        size={20}
-                        color="#2c3e50"
-                        style={styles.cardIcon}
-                      />
-                      <Text style={styles.cardLabel}>Company:</Text>
-                      <Text style={styles.cardValue}>{item.COMP_NAME}</Text>
-                    </View>
-                    <View style={styles.cardRow}>
-                      <MaterialIcons
-                        name="engineering"
-                        size={20}
-                        color="#2c3e50"
-                        style={styles.cardIcon}
-                      />
-                      <Text style={styles.cardLabel}>Engineer:</Text>
-                      <Text style={styles.cardValue}>
-                        {item.S_assignedengg}
-                      </Text>
-                    </View>
-                    <View style={styles.cardRow}>
-                      <MaterialIcons
-                        name="assignment-turned-in"
-                        size={20}
-                        color="#27ae60"
-                        style={styles.cardIcon}
-                      />
-                      <Text style={styles.cardLabel}>Status:</Text>
-                      <Text style={styles.cardValue}>{item.S_jobstatus}</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              )}
-            />
-          ) : (
-            <Text style={styles.noDataText}>No complaints found</Text>
-          )}
-        </View>
-        <Footer />
       </View>
-    
+
       {/* Modal remains unchanged */}
       <Modal
         visible={showDialog}
@@ -502,177 +502,186 @@ export default function Check() {
 const styles = StyleSheet.create({
   outerContainer: {
     flex: 1,
-    backgroundColor: "#eaf1fb", // soft blue background
+    backgroundColor: "#f6f8fa", // lighter, modern background
     justifyContent: "flex-start",
   },
   container: {
     flex: 1,
     marginHorizontal: 0,
-      backgroundColor: "transparent",
+    backgroundColor: "transparent",
     padding: 16,
   },
-  headerBar: {
-    backgroundColor: "#3498db",
-    paddingVertical: 18,
-    alignItems: "center",
-    marginTop: 13,
-    shadowColor: "#3498db",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.13,
+  innercontainer: {
+    flex: 1,
+    marginTop: 20,
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
     shadowRadius: 8,
-    elevation: 6,
-  },
-  headerText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "600",
-    letterSpacing: 1.2,
+    elevation: 4,
   },
   mainContent: {
     flex: 1,
-    paddingVertical: 20,
-   
   },
   listContent: {
-    // paddingBottom: 30,
-    // paddingTop: 10,
+    paddingBottom: 40,
+    paddingTop: 16,
   },
   complaintCard: {
     flexDirection: "row",
-    backgroundColor: "#fff",   
-    elevation: 6,
+    backgroundColor: "#fff",
+    marginHorizontal: 8,
+    marginVertical: 8,
+    borderLeftWidth: 5,
+    borderColor: "#3498db",
+    borderRadius: 14,
+    padding: 16,
     shadowColor: "#3498db",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.13,
-    shadowRadius: 12,
-    overflow: "hidden",
-    borderWidth: 1.2,
-    borderColor: "#e3eaf5",
-    minHeight: 110,
-    alignItems: "center",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  cardAccent: {
-    width: 8,
-    backgroundColor: "#3498db",
-    height: "100%",
-  },
+  cardAccent: {},
   cardContent: {
     flex: 1,
-    paddingLeft: 10,
+    paddingHorizontal: 8,
     justifyContent: "center",
   },
   cardRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 4,
   },
   cardIcon: {
-    marginRight: 10,
+    marginRight: 6,
   },
   cardLabel: {
-    fontWeight: "500",
-    color: "#34495e",
-    fontSize: 14,
-    marginRight: 4,
+    fontWeight: "600",
+    color: "#444",
+    fontSize: 15,
+    marginHorizontal: 4,
+    width: 100,
+    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'Roboto',
   },
   cardValue: {
-    fontSize: 15,
+    fontSize: 16,
     color: "#222",
     fontWeight: "400",
+    flexShrink: 1,
+    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'Roboto',
   },
   errorContainer: {
-    padding: 16,
+    padding: 18,
     backgroundColor: "#ffebee",
-    margin: 16,
-    borderRadius: 8,
+    margin: 18,
+    borderRadius: 10,
   },
   errorText: {
     color: "#c62828",
-    fontSize: 16,
+    fontSize: 17,
     textAlign: "center",
+    fontWeight: "600",
   },
   noDataText: {
     textAlign: "center",
-    fontSize: 18,
-    color: "#666",
-    marginTop: 30,
-    fontWeight: "500",
+    fontSize: 19,
+    color: "#888",
+    marginTop: 40,
+    fontWeight: "600",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 20,
-    width: "90%",
-    maxWidth: 400,
-    height: "80%",
-    maxHeight: 600,
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 24,
+    width: "92%",
+    maxWidth: 420,
+    minHeight: 320,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
   },
   modalHeader: {
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 8,
     justifyContent: "center",
+    flexDirection: "row",
   },
   divider: {
     height: 1,
     backgroundColor: "#e1e4e8",
-    marginVertical: 10,
+    marginVertical: 12,
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    marginBottom: 30,
+    borderColor: "#e1e4e8",
+    borderRadius: 10,
+    marginBottom: 24,
+    backgroundColor: "#f6f8fa",
   },
   picker: {
-    height: 60,
+    height: 54,
+    fontSize: 16,
   },
   detailsCard: {
     backgroundColor: "#f4f8fb",
-    borderRadius: 10,
-    paddingVertical: 18,
-    paddingLeft: 10,
-    marginBottom: 20,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingLeft: 12,
+    marginBottom: 18,
     shadowColor: "#2980b9",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
-    elevation: 10,
+    elevation: 6,
   },
   detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   detailIcon: {
     marginRight: 8,
   },
   detailLabel: {
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#2980b9",
     fontSize: 15,
     marginRight: 4,
+    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'Roboto',
   },
   detailValue: {
     fontSize: 15,
     color: "#222",
     fontWeight: "500",
+    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'Roboto',
   },
   modalButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 30,
+    marginTop: 28,
   },
   modalButton: {
     flex: 1,
-    padding: 18,
-    borderRadius: 8,
-    marginHorizontal: 5,
+    padding: 16,
+    borderRadius: 10,
+    marginHorizontal: 6,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cancelButton: {
     backgroundColor: "#e74c3c",
@@ -683,13 +692,16 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'Roboto',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 25,
     fontWeight: "bold",
-    marginBottom: 30,
+    marginBottom: 18,
     textAlign: "center",
     color: "#2c3e50",
+    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'Roboto',
   },
 });

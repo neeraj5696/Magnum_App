@@ -11,7 +11,8 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.background}>
-        <LogoHeader />
+      <View style= {styles.innercontainer}>
+      <LogoHeader />
         <View style={styles.container}>
           {/* Manager and Area Manager Section */}
           <View style={styles.buttonGrid}>
@@ -95,6 +96,7 @@ export default function HomeScreen() {
         </View>
         <Footer />
       </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -102,12 +104,17 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "rgb(226, 234, 243)",
   },
   background: {
     flex: 1,
     padding: 16,
     justifyContent: "space-between",
+    marginTop: 20,
+  },
+  innercontainer: {
+    justifyContent: "space-between",
+    flex: 1,
   },
   headingContainer: {
     alignItems: "center",
