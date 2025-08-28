@@ -34,7 +34,6 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#fff",
     paddingHorizontal: 0,
-    // paddingTop: 0,
     paddingVertical: 8,
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
@@ -67,6 +66,7 @@ const styles = StyleSheet.create({
   samsungLogo: {
     width: 170,
     height: 100,
+    marginLeft: 5
   },
   magnumLogo: {
     width: 120,

@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { format } from "date-fns";
 
 /**
  * Creates a beautifully styled HTML template specifically for complaint reports
@@ -8,65 +8,72 @@ import { format } from 'date-fns';
 export const createComplaintReportTemplate = (data: any) => {
   // Format date if it exists
   const formattedDate = data.submittedAt
-    ? format(new Date(data.submittedAt), 'dd MMM yyyy hh:mm a')
-    : format(new Date(), 'dd MMM yyyy hh:mm a');
+    ? format(new Date(data.submittedAt), "dd MMM yyyy hh:mm a")
+    : format(new Date(), "dd MMM yyyy hh:mm a");
 
   // Format fault reported date
   const formattedFaultReported = data.S_SERVDT
-    ? format(new Date(data.S_SERVDT), 'dd MMM yyyy hh:mm a')
-    : 'N/A';
+    ? format(new Date(data.S_SERVDT), "dd MMM yyyy hh:mm a")
+    : "N/A";
 
   // Extract client details and form data
   const {
-    complaintNo = '',
-    clientName = '',
-    workStatus = '',
-    remark = '',
-    assignDate = '',
-    systemName = '',
-    location = '',
-    status = '',
-    taskType = '',
-    S_SERVDT = '',
-    S_assignedengg = '',
-    callAttendedDate = '',
-    callAttendedTime = '',
-    callCompletedDate = '',
-    callCompletedTime = '',
-    partReplaced = '',
-    causeProblem = '',
-    diagnosis = '',
-    materialTakenOut = '',
-    customerComment = '',
-    customerSignature = '',
-    engineerComment = '',
+    complaintNo = "",
+    clientName = "",
+    workStatus = "",
+    remark = "",
+    assignDate = "",
+    systemName = "",
+    location = "",
+    status = "",
+    taskType = "",
+    S_SERVDT = "",
+    S_assignedengg = "",
+    callAttendedDate = "",
+    callAttendedTime = "",
+    callCompletedDate = "",
+    callCompletedTime = "",
+    partReplaced = "",
+    causeProblem = "",
+    diagnosis = "",
+    materialTakenOut = "",
+    customerComment = "",
+    customerSignature = "",
+    engineerComment = "",
   } = data;
 
   // Process the signature for embedding in HTML
-  const processedSignature = customerSignature || '';
-  console.log('Signature data length:', processedSignature.length > 100 ?
-    processedSignature.length + ' chars (valid)' :
-    processedSignature.length + ' chars (may be invalid)');
+  const processedSignature = customerSignature || "";
+  console.log(
+    "Signature data length:",
+    processedSignature.length > 100
+      ? processedSignature.length + " chars (valid)"
+      : processedSignature.length + " chars (may be invalid)"
+  );
 
   // Format the attended and completed dates/times
-  const attendedDateTime = callAttendedDate && callAttendedTime
-    ? `${callAttendedDate} ${callAttendedTime}`
-    : 'Not specified';
+  const attendedDateTime =
+    callAttendedDate && callAttendedTime
+      ? `${callAttendedDate} ${callAttendedTime}`
+      : "Not specified";
 
-  const completedDateTime = callCompletedDate && callCompletedTime
-    ? `${callCompletedDate} ${callCompletedTime}`
-    : 'Not specified';
+  const completedDateTime =
+    callCompletedDate && callCompletedTime
+      ? `${callCompletedDate} ${callCompletedTime}`
+      : "Not specified";
 
   // Debug log for assigned engineer
-  console.log('Assigned Engineer value:', S_assignedengg);
+  console.log("Assigned Engineer value:", S_assignedengg);
 
   function getCurrentISTTime() {
     const now = new Date();
     const istOffset = 5.5 * 60 * 60 * 1000;
-    const istTime = new Date(now.getTime() + istOffset - (now.getTimezoneOffset() * 60000));
+    const istTime = new Date(
+      now.getTime() + istOffset - now.getTimezoneOffset() * 60000
+    );
     const hours = istTime.getHours();
-    const minutes = istTime.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'pm' : 'am';
+    const minutes = istTime.getMinutes().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "pm" : "am";
     const formattedHours = hours % 12 || 12;
     return `${formattedHours}:${minutes} ${ampm}`;
   }
@@ -95,6 +102,15 @@ export const createComplaintReportTemplate = (data: any) => {
             --section-bg: #ffffff;
             --header-gradient: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
           }
+          .company-header-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 110%;
+            object-fit: fill;
+            display: block;
+          }
           
           body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -115,12 +131,12 @@ export const createComplaintReportTemplate = (data: any) => {
           }
           
           .header {
-            background: var(--header-gradient);
-            color: white;
-            padding: 16px 32px;
-            text-align: center;
             position: relative;
-            margin: 0;
+            margin: 15px 15px 0 151px , ;
+            padding: 0 20px 0 20px;
+            height: 140px;
+            background: var(--header-gradient);
+            overflow: hidden;
           }
           
           .company-name {
@@ -131,12 +147,7 @@ export const createComplaintReportTemplate = (data: any) => {
             letter-spacing: 1.5px;
           }
           
-          .document-title {
-            font-size: 18px;
-            margin-top: 8px;
-            font-weight: 400;
-            opacity: 0.9;
-          }
+          .document-title { display: none; }
           
           .complaint-number {
             background-color: var(--section-bg);
@@ -346,8 +357,7 @@ export const createComplaintReportTemplate = (data: any) => {
       <body>
         <div class="container">
           <div class="header">
-            <h1 class="company-name">Magnum CRM</h1>
-            <div class="document-title">Complaint Report</div>
+          ${data.headerImageDataUri ? `<img src="${data.headerImageDataUri}" alt="Magnum CRM" class="company-header-image" />` : ``}
           </div>
           
           <div class="complaint-number">
@@ -363,23 +373,23 @@ export const createComplaintReportTemplate = (data: any) => {
               </div>
               <div class="info-item">
                 <div class="info-label">System Name</div>
-                <div class="info-value">${systemName || 'N/A'}</div>
+                <div class="info-value">${systemName || "N/A"}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Address</div>
-                <div class="info-value">${location || 'N/A'}</div>
+                <div class="info-value">${location || "N/A"}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Task Type</div>
-                <div class="info-value">${taskType || 'N/A'}</div>
+                <div class="info-value">${taskType || "N/A"}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Assigned Date</div>
-                <div class="info-value">${assignDate || 'N/A'}</div>
+                <div class="info-value">${assignDate || "N/A"}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Assigned Engineer</div>
-                <div class="info-value">${S_assignedengg || 'N/A'}</div>
+                <div class="info-value">${S_assignedengg || "N/A"}</div>
               </div>
             </div>
           </div>
@@ -389,7 +399,7 @@ export const createComplaintReportTemplate = (data: any) => {
             <div class="info-grid">
               <div class="info-item">
                 <div class="info-label">Fault Reported</div>
-                <div class="info-value">${S_SERVDT || 'N/A'}</div>
+                <div class="info-value">${S_SERVDT || "N/A"}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Call Attended On</div>
@@ -407,19 +417,19 @@ export const createComplaintReportTemplate = (data: any) => {
             <div class="info-grid">
               <div class="info-item">
                 <div class="info-label">Part Replaced/Stand by</div>
-                <div class="info-value">${partReplaced || 'None'}</div>
+                <div class="info-value">${partReplaced || "None"}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Cause of Problem</div>
-                <div class="info-value">${causeProblem || 'Not specified'}</div>
+                <div class="info-value">${causeProblem || "Not specified"}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Diagnosis</div>
-                <div class="info-value">${diagnosis || 'Not specified'}</div>
+                <div class="info-value">${diagnosis || "Not specified"}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Material Taken Out</div>
-                <div class="info-value">${materialTakenOut || 'None'}</div>
+                <div class="info-value">${materialTakenOut || "None"}</div>
               </div>
 
             </div>
@@ -431,14 +441,27 @@ export const createComplaintReportTemplate = (data: any) => {
               <div class="info-item">
                 <div class="info-label">Current Status</div>
                 <div class="info-value">
-                  <span class="status-tag ${workStatus?.toLowerCase().includes('complete') ? 'status-completed' :
-      workStatus?.toLowerCase().includes('stand by') ? 'status-standby' :
-        workStatus?.toLowerCase().includes('observation') ? 'status-observation' :
-          'status-pending'
-    }">
-                    ${workStatus || 'Pending'}
-                    ${workStatus?.toLowerCase().includes('complete') ? ' - Over' : ''}
-                    ${(!workStatus || workStatus?.toLowerCase().includes('pending')) ? ` - ${data.pendingReason || 'Pending'}` : ''}
+                  <span class="status-tag ${
+                    workStatus?.toLowerCase().includes("complete")
+                      ? "status-completed"
+                      : workStatus?.toLowerCase().includes("stand by")
+                      ? "status-standby"
+                      : workStatus?.toLowerCase().includes("observation")
+                      ? "status-observation"
+                      : "status-pending"
+                  }">
+                    ${workStatus || "Pending"}
+                    ${
+                      workStatus?.toLowerCase().includes("complete")
+                        ? " - Over"
+                        : ""
+                    }
+                    ${
+                      !workStatus ||
+                      workStatus?.toLowerCase().includes("pending")
+                        ? ` - ${data.pendingReason || "Pending"}`
+                        : ""
+                    }
                   </span>
                 </div>
               </div>
@@ -450,10 +473,14 @@ export const createComplaintReportTemplate = (data: any) => {
             
             <div class="remark-section">
               <div class="section-title">Engineer's Remarks</div>
-              <div class="remark-text">${engineerComment || 'No remarks provided.'}</div>
+              <div class="remark-text">${
+                engineerComment || "No remarks provided."
+              }</div>
             </div>
 
-            ${customerComment ? `
+            ${
+              customerComment
+                ? `
             <div class="remark-section" style="margin-top: 20px;">
               <div class="section-title">Customer's Comment</div>
               <div class="customer-comment">
@@ -461,7 +488,9 @@ export const createComplaintReportTemplate = (data: any) => {
                 <div>${customerComment}</div>
               </div>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
           </div>
           
           <div class="signatures">
@@ -471,14 +500,15 @@ export const createComplaintReportTemplate = (data: any) => {
             </div>
             <div class="signature-box">
               <div class="signature-label">Client's Signature</div>
-              ${processedSignature ?
-      `<div style="text-align: center;">
+              ${
+                processedSignature
+                  ? `<div style="text-align: center;">
                    <img src="${processedSignature}" 
                         alt="Client's signature" 
                         class="signature-image" />
-                 </div>` :
-      `<div class="signature-placeholder">Client's signature</div>`
-    }
+                 </div>`
+                  : `<div class="signature-placeholder">Client's signature</div>`
+              }
             </div>
           </div>
           
@@ -493,7 +523,7 @@ export const createComplaintReportTemplate = (data: any) => {
 };
 
 const complaintReportTemplate = {
-  createComplaintReportTemplate
+  createComplaintReportTemplate,
 };
 
-export default complaintReportTemplate; 
+export default complaintReportTemplate;

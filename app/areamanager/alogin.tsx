@@ -292,7 +292,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "rgb(226, 234, 243)",
-    padding: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 16,
     justifyContent: "space-between",
   },
   innercontainer: {
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderWidth: 0,
     borderRadius: 18,
-    marginVertical: "4%",
+    marginTop: 20,
     backgroundColor: "white",
     elevation: 2,
   },

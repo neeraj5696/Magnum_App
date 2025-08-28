@@ -23,8 +23,11 @@ export default function PartnerLogin() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const shimmerAnimation = useRef(new Animated.Value(0)).current;
-  const shimmerLoopRef = useRef(null);
+  const shimmerLoopRef = useRef<Animated.CompositeAnimation | null>(null);
 
+
+
+  
   // Load credentials on mount
   useEffect(() => {
     const loadCredentials = async () => {
@@ -250,7 +253,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "rgb(226, 234, 243)",
-    padding: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 16,
     justifyContent: "space-between",
   },
 
@@ -258,9 +262,9 @@ const styles = StyleSheet.create({
     flex: 1,
     height: "auto",
     justifyContent: "space-between",
-   
+
     borderRadius: 18,
-    marginVertical: "4%",
+    marginTop: 20,
     backgroundColor: "white",
     elevation: 2,
   },

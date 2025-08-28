@@ -133,7 +133,7 @@ export default function EngineerLogin() {
       );
 
       const data = await response.json();
-      console.log("que be", response);
+      //console.log("que be", response);
 
       if (data?.status === "success") {
         if (rememberMe) {
@@ -350,7 +350,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 16,
   },
 
   innercontainer: {
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderWidth: 0,
     borderRadius: 18,
-    marginVertical: "4%",
+    marginTop: 20,
     backgroundColor: "white",
     elevation: 2,
   },

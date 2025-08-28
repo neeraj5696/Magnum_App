@@ -1,6 +1,7 @@
 import { Alert } from 'react-native';
-import { generatePdfForPreview } from './documentGenerator';
+import documentGenerator from './documentGenerator';
 import { createComplaintReportTemplate } from './complaintReportTemplate';
+import { getHeaderImageDataUri } from './getHeaderImageDataUri';
 
 interface ComplaintFormData {
   complaintNo: string;
@@ -55,21 +56,29 @@ export const handleComplaintPreview = async (formData: ComplaintFormData): Promi
     }
 
     console.log("Generating PDF preview for complaint:", formData.complaintNo);
+
+    // Resolve local header image to base64 data URI via shared util
+    const headerImageDataUri = await getHeaderImageDataUri();
     
-    // Generate HTML content from form data
-    const htmlContent = createComplaintReportTemplate(formData);
+    // Generate HTML content from form data with embedded local image
+    const htmlContent = createComplaintReportTemplate({
+      ...formData,
+      headerImageDataUri,
+    });
     console.log("HTML content generated successfully");
     
-    // Generate PDF for preview
-    const result = await generatePdfForPreview(htmlContent);
+    // Generate PDF for preview using shared generator
+    const result = await documentGenerator.generatePdfFromHtml(
+      htmlContent,
+      `preview_${formData.complaintNo || 'document'}`
+    );
     console.log("PDF preview generation result:", result);
     
-    if (result.success && result.uri) {
-      console.log("PDF preview generated successfully at:", result.uri);
+    if (result.success && result.localUri) {
+      console.log("PDF preview generated successfully at:", result.localUri);
       return { 
         success: true, 
-        uri: result.uri,
-        base64: result.base64 
+        uri: result.localUri
       };
     } else {
       console.error("PDF preview generation failed");
