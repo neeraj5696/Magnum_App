@@ -332,78 +332,78 @@ export default function EnggComplaintDetails() {
       );
 
       if (result.success && result.localUri) {
-        // try {
-        //   console.log("🚩 CHECKPOINT 5: Starting Cloudinary upload");
-        //   const uploadResult = (await uploadPDFToCloudinary(
-        //     result.localUri
-        //   )) as UploadResult;
-        //   const secureUrl = uploadResult.secure_url;
+        try {
+          console.log("🚩 CHECKPOINT 5: Starting Cloudinary upload");
+          const uploadResult = (await uploadPDFToCloudinary(
+            result.localUri
+          )) as UploadResult;
+          const secureUrl = uploadResult.secure_url;
 
-        //   console.log(
-        //     "🚩 CHECKPOINT 6: Cloudinary upload successful, secure URL obtained"
-        //   );
-        //   console.log("Secure URL:", secureUrl.substring(0, 50) + "...");
+          console.log(
+            "🚩 CHECKPOINT 6: Cloudinary upload successful, secure URL obtained"
+          );
+          console.log("Secure URL:", secureUrl.substring(0, 50) + "...");
 
-        //   // Call the submitComplaintUpdate function to update the complaint status
-        //   console.log(
-        //     "🚩 CHECKPOINT 7: Starting server API call with form data"
-        //   );
-        //   const responseJson = await submitComplaintUpdate({
-        //     enggname: getParam("S_assignedengg"),
-        //     remark: `D-${diagnosis} E-${engineerComment}`,
-        //     report: secureUrl,
-        //     status: workStatus === "Completed" ? "1" : "0",
-        //     pendingreason: workStatus === "Completed" ? "NULL" : pendingReason,
-        //     complaintNo: getParam("complaintNo"),
-        //     material: getMaterialSummary(),
-        //   });
+          // Call the submitComplaintUpdate function to update the complaint status
+          console.log(
+            "🚩 CHECKPOINT 7: Starting server API call with form data"
+          );
+          const responseJson = await submitComplaintUpdate({
+            enggname: getParam("S_assignedengg"),
+            remark: `D-${diagnosis} E-${engineerComment}`,
+            report: secureUrl,
+            status: workStatus === "Completed" ? "1" : "0",
+            pendingreason: workStatus === "Completed" ? "NULL" : pendingReason,
+            complaintNo: getParam("complaintNo"),
+            material: getMaterialSummary(),
+          });
 
-        //   console.log(
-        //     "🚩 CHECKPOINT 8: Server response received:",
-        //     JSON.stringify(responseJson)
-        //   );
+          console.log(
+            "🚩 CHECKPOINT 8: Server response received:",
+            JSON.stringify(responseJson)
+          );
 
-        //   if (responseJson.status === "success") {
-        //     console.log("🚩 CHECKPOINT 9: Server update SUCCESSFUL");
-        //     Alert.alert("Success", "Data sent successfully!", [
-        //       {
-        //         text: "OK",
-        //         onPress: () => {
-        //           console.log("🚩 CHECKPOINT 10: Navigating back to list");
-        //           router.push({
-        //             pathname: "/engineer/list",
-        //             params: {
-        //               username: getParam("username"),
-        //               password: getParam("password"),
-        //             },
-        //           });
-        //         },
-        //       },
-        //     ]);
-        //   } else {
-        //     console.log(
-        //       "🚩 CHECKPOINT 9: Server update FAILED:",
-        //       responseJson.reason
-        //     );
-        //     Alert.alert(
-        //       "Error",
-        //       responseJson.reason || "Failed to send data. Please try again."
-        //     );
-        //   }
-        // } catch (uploadError) {
-        //   console.log(
-        //     "🚩 ERROR: Cloudinary upload or server communication failed",
-        //     uploadError
-        //   );
-        //   console.error(
-        //     "Error uploading to Cloudinary or posting to server:",
-        //     uploadError
-        //   );
-        //   Alert.alert(
-        //     "Warning",
-        //     "PDF generated but failed to upload to Cloudinary or post to server. Please try again later."
-        //   );
-        // }
+          if (responseJson.status === "success") {
+            console.log("🚩 CHECKPOINT 9: Server update SUCCESSFUL");
+            Alert.alert("Success", "Data sent successfully!", [
+              {
+                text: "OK",
+                onPress: () => {
+                  console.log("🚩 CHECKPOINT 10: Navigating back to list");
+                  router.push({
+                    pathname: "/engineer/list",
+                    params: {
+                      username: getParam("username"),
+                      password: getParam("password"),
+                    },
+                  });
+                },
+              },
+            ]);
+          } else {
+            console.log(
+              "🚩 CHECKPOINT 9: Server update FAILED:",
+              responseJson.reason
+            );
+            Alert.alert(
+              "Error",
+              responseJson.reason || "Failed to send data. Please try again."
+            );
+          }
+        } catch (uploadError) {
+          console.log(
+            "🚩 ERROR: Cloudinary upload or server communication failed",
+            uploadError
+          );
+          console.error(
+            "Error uploading to Cloudinary or posting to server:",
+            uploadError
+          );
+          Alert.alert(
+            "Warning",
+            "PDF generated but failed to upload to Cloudinary or post to server. Please try again later."
+          );
+        }
       }
       else {
         console.log("🚩 ERROR: PDF generation failed");

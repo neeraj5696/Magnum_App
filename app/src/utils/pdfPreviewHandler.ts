@@ -58,12 +58,21 @@ export const handleComplaintPreview = async (formData: ComplaintFormData): Promi
     console.log("Generating PDF preview for complaint:", formData.complaintNo);
 
     // Resolve local header image to base64 data URI via shared util
-    const headerImageDataUri = await getHeaderImageDataUri();
+    let headerImageDataUri;
+    try {
+      headerImageDataUri = await getHeaderImageDataUri();
+      if (!headerImageDataUri) {
+        console.warn('Header image could not be loaded, will proceed without it');
+      }
+    } catch (error) {
+      console.error('Error loading header image:', error);
+      // Continue without header image
+    }
     
     // Generate HTML content from form data with embedded local image
     const htmlContent = createComplaintReportTemplate({
       ...formData,
-      headerImageDataUri,
+      headerImageDataUri: headerImageDataUri || '', // Pass empty string if undefined
     });
     console.log("HTML content generated successfully");
     

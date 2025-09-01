@@ -21,7 +21,7 @@ export default function PartnerRegister() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const partner = typeof params.partner === 'string' ? JSON.parse(params.partner) : {};
- //   console.log('Partner param coming in register screen:', partner);
+    //   console.log('Partner param coming in register screen:', partner);
     const [partnerclientname, setPartnerClientName] = useState('');
     const [partnerclientadd1, setPartnerClientAdd1] = useState('');
     const [partnerclientadd2, setPartnerClientAdd2] = useState('');
@@ -109,15 +109,16 @@ export default function PartnerRegister() {
                 formData.append(key, value);
             });
 
-            // Log the URL-encoded body string
-            console.log('POST body:', formData.toString());
+            // Log the form data object and URL-encoded string
+            console.log('Form Data Object:', JSON.stringify(allFields, null, 2));
+            console.log('URL-encoded POST body:', formData.toString());
 
             const response = await fetch('https://hma.magnum.org.in/appPartnercomplaint.php', {
                 method: 'POST',
-                // headers: { 
-                //     'Content-Type': 'application/x-www-form-urlencoded',
-                //     'Accept': 'application/json'
-                // },
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json'
+                },
                 body: formData.toString(),
             });
 
@@ -237,13 +238,13 @@ export default function PartnerRegister() {
                 />
 
                 {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                     style={[
                         styles.submitButton,
                         isLoading && styles.submitButtonDisabled
-                    ]} 
-                    onPress={handleSubmit} 
+                    ]}
+                    onPress={handleSubmit}
                     disabled={isLoading}
                 >
                     {isLoading ? (
