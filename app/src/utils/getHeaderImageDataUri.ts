@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import { Asset } from 'expo-asset';
+import { Platform } from 'react-native';
 
 let cachedHeaderImageDataUri: string | undefined;
 
@@ -12,74 +13,61 @@ export const getHeaderImageDataUri = async (): Promise<string | undefined> => {
   try {
     console.log('Loading header image...');
     
-    // In production, we need to use the asset's module ID
-    const imageModule = require('../../../assets/images/magnum_header.png');
-    const asset = Asset.fromModule(imageModule);
-    
-    console.log('Asset loaded, checking local URI...');
-    
-    // In production, we need to explicitly download the asset
-    if (!asset.localUri) {
-      console.log('Downloading asset...');
-      await asset.downloadAsync();
+    // Method 1: Use pre-generated base64 (most reliable for production)
+    try {
+      const HEADER_IMAGE_BASE64 = require('../../../scripts/headerImageBase64.txt');
+      if (HEADER_IMAGE_BASE64) {
+        cachedHeaderImageDataUri = HEADER_IMAGE_BASE64;
+        console.log('Header image loaded from pre-generated base64');
+        return cachedHeaderImageDataUri;
+      }
+    } catch (requireError) {
+      console.log('Pre-generated base64 not available, trying Asset API');
     }
     
-    if (asset.localUri) {
-      console.log('Converting image to base64...');
+    // Method 2: Try using Asset API as fallback
+    try {
+      const imageModule = require('../../../assets/images/magnum_header.png');
+      const asset = Asset.fromModule(imageModule);
       
-      // For production, we can try both methods
-      let base64;
+      await asset.downloadAsync();
       
-      // First try reading the file directly
-      try {
-        base64 = await FileSystem.readAsStringAsync(asset.localUri, {
+      if (asset.localUri) {
+        const base64 = await FileSystem.readAsStringAsync(asset.localUri, {
           encoding: FileSystem.EncodingType.Base64,
         });
-      } catch (fileError) {
-        console.log('FileSystem read failed, trying alternative method...', fileError);
-        // Fallback: Use fetch to get the asset
-        try {
-          const response = await fetch(asset.uri);
-          const blob = await response.blob();
-          base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const result = reader.result as string;
-              resolve(result.split(',')[1]); // Remove data URL prefix
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-        } catch (fetchError) {
-          console.error('Failed to load image via fetch:', fetchError);
-          return undefined;
+        
+        if (base64) {
+          cachedHeaderImageDataUri = `data:image/png;base64,${base64}`;
+          console.log('Header image loaded via Asset API');
+          return cachedHeaderImageDataUri;
         }
       }
-      
-      if (!base64) {
-        console.error('Failed to read image file as base64');
-        return undefined;
-      }
-      
-      // Ensure we have the data URL prefix
-      const base64String = String(base64);
-      cachedHeaderImageDataUri = base64String.startsWith('data:') 
-        ? base64String 
-        : `data:image/png;base64,${base64String}`;
-        
-      console.log('Header image loaded successfully');
-      return cachedHeaderImageDataUri;
-    } else {
-      console.error('Failed to get local URI for header image');
+    } catch (assetError) {
+      console.log('Asset API method failed:', assetError);
     }
+    
   } catch (e) {
     console.error('Error in getHeaderImageDataUri:', e);
   }
   
-  console.warn('Returning undefined for header image');
+  console.warn('All methods failed, returning undefined');
   return undefined;
 };
 
 export default getHeaderImageDataUri;
+
+// Helper function to convert image to base64 (for manual conversion if needed)
+export const convertImageToBase64 = async (imagePath: string): Promise<string | undefined> => {
+  try {
+    const base64 = await FileSystem.readAsStringAsync(imagePath, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return `data:image/png;base64,${base64}`;
+  } catch (error) {
+    console.error('Error converting image to base64:', error);
+    return undefined;
+  }
+};
 
 

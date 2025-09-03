@@ -40,15 +40,23 @@ export const createComplaintReportTemplate = (data: any) => {
     customerComment = "",
     customerSignature = "",
     engineerComment = "",
+    engineerSignature = "",
   } = data;
 
-  // Process the signature for embedding in HTML
-  const processedSignature = customerSignature || "";
+  // Process the signatures for embedding in HTML
+  const processedCustomerSignature = customerSignature || "";
+  const processedEngineerSignature = engineerSignature || "";
   console.log(
-    "Signature data length:",
-    processedSignature.length > 100
-      ? processedSignature.length + " chars (valid)"
-      : processedSignature.length + " chars (may be invalid)"
+    "Customer signature data length:",
+    processedCustomerSignature.length > 100
+      ? processedCustomerSignature.length + " chars (valid)"
+      : processedCustomerSignature.length + " chars (may be invalid)"
+  );
+  console.log(
+    "Engineer signature data length:",
+    processedEngineerSignature.length > 100
+      ? processedEngineerSignature.length + " chars (valid)"
+      : processedEngineerSignature.length + " chars (may be invalid)"
   );
 
   // Format the attended and completed dates/times
@@ -496,14 +504,22 @@ export const createComplaintReportTemplate = (data: any) => {
           <div class="signatures">
             <div class="signature-box">
               <div class="signature-label">Engineer's Signature</div>
-              <div class="signature-placeholder">null</div>
+              ${
+                processedEngineerSignature
+                  ? `<div style="text-align: center;">
+                   <img src="${processedEngineerSignature}" 
+                        alt="Engineer's signature" 
+                        class="signature-image" />
+                 </div>`
+                  : `<div class="signature-placeholder">Engineer's signature</div>`
+              }
             </div>
             <div class="signature-box">
               <div class="signature-label">Client's Signature</div>
               ${
-                processedSignature
+                processedCustomerSignature
                   ? `<div style="text-align: center;">
-                   <img src="${processedSignature}" 
+                   <img src="${processedCustomerSignature}" 
                         alt="Client's signature" 
                         class="signature-image" />
                  </div>`

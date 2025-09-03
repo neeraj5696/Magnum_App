@@ -80,7 +80,12 @@ export default function EnggComplaintDetails() {
   const [customerSignature, setCustomerSignature] = useState<string | null>(
     null
   );
+  const [engineerSignature, setEngineerSignature] = useState<string | null>(
+    null
+  );
   const [showSignaturePad, setShowSignaturePad] = useState(false);
+  const [showEngineerSignaturePad, setShowEngineerSignaturePad] = useState(false);
+  const [currentSignatureType, setCurrentSignatureType] = useState<'customer' | 'engineer'>('customer');
   const [paths, setPaths] = useState<Array<string>>([]);
   const [currentPath, setCurrentPath] = useState<string>("");
   const signatureRef = useRef<any>(null);
@@ -196,7 +201,11 @@ export default function EnggComplaintDetails() {
   const clearSignature = () => {
     setPaths([]);
     setCurrentPath("");
-    setCustomerSignature(null);
+    if (currentSignatureType === 'customer') {
+      setCustomerSignature(null);
+    } else {
+      setEngineerSignature(null);
+    }
   };
 
   // Save signature
@@ -210,10 +219,14 @@ export default function EnggComplaintDetails() {
             result: "data-uri",
           };
           const capturedSignature = await signatureRef.current.capture(options);
-          //  console.log('Signature captured:', capturedSignature.substring(0, 60));
-          setCustomerSignature(capturedSignature);
-          setShowSignaturePad(false);
-          //  console.log('customerSignature after save:', capturedSignature.substring(0, 60));
+          
+          if (currentSignatureType === 'customer') {
+            setCustomerSignature(capturedSignature);
+            setShowSignaturePad(false);
+          } else {
+            setEngineerSignature(capturedSignature);
+            setShowEngineerSignaturePad(false);
+          }
         } else {
           Alert.alert("Error", "Failed to capture signature");
         }
@@ -227,13 +240,20 @@ export default function EnggComplaintDetails() {
   };
 
   // Open signature pad
-  const openSignaturePad = () => {
-    // Reset paths when opening the signature pad if there's no existing signature
-    if (!customerSignature) {
+  const openSignaturePad = (type: 'customer' | 'engineer' = 'customer') => {
+    setCurrentSignatureType(type);
+    const existingSignature = type === 'customer' ? customerSignature : engineerSignature;
+    
+    if (!existingSignature) {
       setPaths([]);
       setCurrentPath("");
     }
-    setShowSignaturePad(true);
+    
+    if (type === 'customer') {
+      setShowSignaturePad(true);
+    } else {
+      setShowEngineerSignaturePad(true);
+    }
   };
 
   // Handle form submission
@@ -242,6 +262,10 @@ export default function EnggComplaintDetails() {
 
     if (!customerSignature) {
       Alert.alert("Error", "Please provide customer signature");
+      return;
+    }
+    if (!engineerSignature) {
+      Alert.alert("Error", "Please provide engineer signature");
       return;
     }
     if (!workStatus) {
@@ -287,6 +311,7 @@ export default function EnggComplaintDetails() {
       materialTakenOut,
       customerComment,
       customerSignature,
+      engineerSignature,
       systemName: getParam("SYSTEM_NAME"),
       assignDate: getParam("S_assigndate"),
       location: getParam("location"),
@@ -302,6 +327,7 @@ export default function EnggComplaintDetails() {
         workStatus,
         pendingReason,
         hasSignature: !!customerSignature,
+        hasEngineerSignature: !!engineerSignature,
         formFields: {
           callAttended: !!callAttendedDate && !!callAttendedTime,
           callCompleted: !!callCompletedDate && !!callCompletedTime,
@@ -329,7 +355,7 @@ export default function EnggComplaintDetails() {
       console.log(
         "🚩 CHECKPOINT 4: PDF generation result:",
         result.success ? "SUCCESS" : "FAILED"
-      );
+      );3
 
       if (result.success && result.localUri) {
         try {
@@ -420,20 +446,17 @@ export default function EnggComplaintDetails() {
     }
   };
 
-  // Lock orientation to landscape when signature pad opens, unlock when closes
+  // Lock orientation when signature pad opens, unlock when closes
   useEffect(() => {
-    if (showSignaturePad) {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT
-
-      );
+    if (showSignaturePad || showEngineerSignaturePad) {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
     } else {
       ScreenOrientation.unlockAsync();
     }
-    // On unmount, unlock orientation
     return () => {
       ScreenOrientation.unlockAsync();
     };
-  }, [showSignaturePad]);
+  }, [showSignaturePad, showEngineerSignaturePad]);
 
   // Update pad layout on every layout change
   const updatePadLayout = () => {
@@ -448,10 +471,10 @@ export default function EnggComplaintDetails() {
 
   // When modal opens, and on every layout change, update pad layout
   useEffect(() => {
-    if (showSignaturePad) {
+    if (showSignaturePad || showEngineerSignaturePad) {
       setTimeout(updatePadLayout, 100);
     }
-  }, [showSignaturePad]);
+  }, [showSignaturePad, showEngineerSignaturePad]);
 
   // Fetch pending reasons when workStatus is 'Pending'
   const fetchPendingReasons = async () => {
@@ -1183,11 +1206,30 @@ export default function EnggComplaintDetails() {
 
           {/* Customer Signature */}
           <Text style={styles.formLabel}>Customer Signature:</Text>
-          <Pressable style={styles.signatureBox} onPress={openSignaturePad}>
+          <Pressable style={styles.signatureBox} onPress={() => openSignaturePad('customer')}>
             {customerSignature ? (
               <View style={styles.signaturePreviewContainer}>
                 <Image
                   source={{ uri: customerSignature }}
+                  style={styles.signaturePreviewImage}
+                  resizeMode="contain"
+                />
+                <Text style={styles.signatureText}>Signature Saved ✓</Text>
+              </View>
+            ) : (
+              <Text style={styles.signaturePlaceholder}>
+                Tap to add signature
+              </Text>
+            )}
+          </Pressable>
+
+          {/* Engineer Signature */}
+          <Text style={styles.formLabel}>Engineer Signature:</Text>
+          <Pressable style={styles.signatureBox} onPress={() => openSignaturePad('engineer')}>
+            {engineerSignature ? (
+              <View style={styles.signaturePreviewContainer}>
+                <Image
+                  source={{ uri: engineerSignature }}
                   style={styles.signaturePreviewImage}
                   resizeMode="contain"
                 />
@@ -1339,7 +1381,7 @@ export default function EnggComplaintDetails() {
           </View>
         </View>
 
-        {/* Signature Pad Modal */}
+        {/* Customer Signature Pad Modal */}
         <Modal
           visible={showSignaturePad}
           transparent={true}
@@ -1348,6 +1390,89 @@ export default function EnggComplaintDetails() {
         >
           <View style={styles.modalContainer}>
             <View style={styles.signatureModalContent}>
+              <Text style={styles.modalTitle}>Customer Signature</Text>
+              <ViewShot
+                ref={signatureRef}
+                style={styles.signaturePad}
+                options={{ format: "jpg", quality: 0.9, result: "data-uri" }}
+              >
+                <View
+                  ref={signatureBgRef}
+                  style={styles.signatureBackground}
+                  onLayout={updatePadLayout}
+                >
+                  <Svg
+                    height={padLayout.height}
+                    width={padLayout.width}
+                    viewBox={`0 0 ${padLayout.width} ${padLayout.height}`}
+                  >
+                    <G>
+                      {/* Draw all saved paths */}
+                      {paths.map((path, index) => (
+                        <Path
+                          key={`path-${index}`}
+                          d={path}
+                          stroke="black"
+                          strokeWidth={2}
+                          fill="none"
+                        />
+                      ))}
+
+                      {/* Draw current path */}
+                      {currentPath ? (
+                        <Path
+                          d={currentPath}
+                          stroke="black"
+                          strokeWidth={2}
+                          fill="none"
+                        />
+                      ) : null}
+                    </G>
+                  </Svg>
+                </View>
+              </ViewShot>
+
+              {/* Touch handler overlay for signature pad */}
+              <View
+                style={[styles.signatureOverlay]}
+                {...panResponder.panHandlers}
+              />
+
+              <View style={styles.signatureButtonsSmall}>
+                <TouchableOpacity
+                  style={styles.signatureButtonSmall}
+                  onPress={clearSignature}
+                >
+                  <Text style={styles.signatureButtonTextSmall}>Clear</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.signatureButtonSmall,
+                    styles.signatureButtonPrimarySmall,
+                  ]}
+                  onPress={saveSignature}
+                >
+                  <Text
+                    style={[styles.signatureButtonTextSmall, { color: "#fff" }]}
+                  >
+                    Save
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Engineer Signature Pad Modal */}
+        <Modal
+          visible={showEngineerSignaturePad}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowEngineerSignaturePad(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.signatureModalContent}>
+              <Text style={styles.modalTitle}>Engineer Signature</Text>
               <ViewShot
                 ref={signatureRef}
                 style={styles.signaturePad}
@@ -1456,6 +1581,7 @@ export default function EnggComplaintDetails() {
             pendingReason: workStatus === "Pending" ? pendingReason : "",
             submittedAt: new Date().toISOString(),
             engineerComment,
+            engineerSignature,
             material: getMaterialSummary(),
           }}
         />
@@ -1871,7 +1997,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   signaturePad: {
-    height: 155,
+    height: 200,
     width: "100%",
     backgroundColor: "#fff",
     borderWidth: 1,
@@ -1887,10 +2013,10 @@ const styles = StyleSheet.create({
   },
   signatureOverlay: {
     position: "absolute",
-    top: 20 + 20, // modalTitle height + marginVertical
-    left: 20,
+    top: 95,
+    left: 10,
     right: 20,
-    height: 200,
+    height:200,
     backgroundColor: "transparent",
   },
   signatureButtonsSmall: {
