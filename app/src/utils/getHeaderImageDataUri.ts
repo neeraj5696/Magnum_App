@@ -14,16 +14,17 @@ export const getHeaderImageDataUri = async (): Promise<string | undefined> => {
     console.log('Loading header image...');
     
     // Method 1: Use pre-generated base64 (most reliable for production)
-    try {
-      const HEADER_IMAGE_BASE64 = require('../../../scripts/headerImageBase64.txt');
-      if (HEADER_IMAGE_BASE64) {
-        cachedHeaderImageDataUri = HEADER_IMAGE_BASE64;
-        console.log('Header image loaded from pre-generated base64');
-        return cachedHeaderImageDataUri;
-      }
-    } catch (requireError) {
-      console.log('Pre-generated base64 not available, trying Asset API');
-    }
+    // Commented out to fix Metro bundler error - requiring .txt files causes issues
+    // try {
+    //   const HEADER_IMAGE_BASE64 = require('../../../scripts/headerImageBase64.txt');
+    //   if (HEADER_IMAGE_BASE64) {
+    //     cachedHeaderImageDataUri = HEADER_IMAGE_BASE64;
+    //     console.log('Header image loaded from pre-generated base64');
+    //     return cachedHeaderImageDataUri;
+    //   }
+    // } catch (requireError) {
+    //   console.log('Pre-generated base64 not available, trying Asset API');
+    // }
     
     // Method 2: Try using Asset API as fallback
     try {

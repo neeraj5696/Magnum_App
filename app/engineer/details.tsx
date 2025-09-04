@@ -242,13 +242,11 @@ export default function EnggComplaintDetails() {
   // Open signature pad
   const openSignaturePad = (type: 'customer' | 'engineer' = 'customer') => {
     setCurrentSignatureType(type);
-    const existingSignature = type === 'customer' ? customerSignature : engineerSignature;
     
-    if (!existingSignature) {
-      setPaths([]);
-      setCurrentPath("");
-    }
-    
+    // Always clear paths when opening signature pad
+    setPaths([]);
+    setCurrentPath("");
+
     if (type === 'customer') {
       setShowSignaturePad(true);
     } else {
@@ -355,7 +353,7 @@ export default function EnggComplaintDetails() {
       console.log(
         "🚩 CHECKPOINT 4: PDF generation result:",
         result.success ? "SUCCESS" : "FAILED"
-      );3
+      ); 3
 
       if (result.success && result.localUri) {
         try {
@@ -617,7 +615,7 @@ export default function EnggComplaintDetails() {
     <SafeAreaView style={[styles.container]}>
       <StatusBar />
       <ScrollView>
-      <View style={styles.divider} />
+        <View style={styles.divider} />
         {/* Info Section */}
         <View style={styles.infoSectionBox}>
           <Text style={styles.complaintNo}>
@@ -860,56 +858,56 @@ export default function EnggComplaintDetails() {
               {!(
                 getParam("systemName") && getParam("systemName").trim() !== ""
               ) && (
-                <>
-                  <Text style={styles.formLabel}>System Type</Text>
-                  <Pressable
-                    style={styles.dropdownButton}
-                    onPress={() => setShowSystemModal(true)}
-                  >
-                    <Text style={styles.dropdownButtonText}>
-                      {selectedSystem || "Select System Type"}
-                    </Text>
-                    <Ionicons name="chevron-down" size={21} color="#666" />
-                  </Pressable>
-                  {/* System Type Modal list */}
-                  <Modal
-                    visible={showSystemModal}
-                    transparent
-                    animationType="slide"
-                    onRequestClose={() => setShowSystemModal(false)}
-                  >
-                    <View style={styles.modalContainer}>
-                      <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>
-                          Select System Type
-                        </Text>
-                        {["CCTV", "ACCESS CONTROL", "VDP", "EPABX"].map(
-                          (name) => (
-                            <Pressable
-                              key={name}
-                              style={styles.modalItem}
-                              onPress={() => {
-                                setSelectedSystem(name);
-                                setShowSystemModal(false);
-                                setSelectedParts([]);
-                                setSelectedSystemName("");
-                              }}
-                            >
-                              <Text style={styles.modalItemText}>{name}</Text>
-                            </Pressable>
-                          )
-                        )}
-                        <Pressable
-                          style={styles.modalCloseButton}
-                          onPress={() => setShowSystemModal(false)}
-                        >
-                          <Text style={styles.modalCloseText}>Close</Text>
-                        </Pressable>
+                  <>
+                    <Text style={styles.formLabel}>System Type</Text>
+                    <Pressable
+                      style={styles.dropdownButton}
+                      onPress={() => setShowSystemModal(true)}
+                    >
+                      <Text style={styles.dropdownButtonText}>
+                        {selectedSystem || "Select System Type"}
+                      </Text>
+                      <Ionicons name="chevron-down" size={21} color="#666" />
+                    </Pressable>
+                    {/* System Type Modal list */}
+                    <Modal
+                      visible={showSystemModal}
+                      transparent
+                      animationType="slide"
+                      onRequestClose={() => setShowSystemModal(false)}
+                    >
+                      <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                          <Text style={styles.modalTitle}>
+                            Select System Type
+                          </Text>
+                          {["CCTV", "ACCESS CONTROL", "VDP", "EPABX"].map(
+                            (name) => (
+                              <Pressable
+                                key={name}
+                                style={styles.modalItem}
+                                onPress={() => {
+                                  setSelectedSystem(name);
+                                  setShowSystemModal(false);
+                                  setSelectedParts([]);
+                                  setSelectedSystemName("");
+                                }}
+                              >
+                                <Text style={styles.modalItemText}>{name}</Text>
+                              </Pressable>
+                            )
+                          )}
+                          <Pressable
+                            style={styles.modalCloseButton}
+                            onPress={() => setShowSystemModal(false)}
+                          >
+                            <Text style={styles.modalCloseText}>Close</Text>
+                          </Pressable>
+                        </View>
                       </View>
-                    </View>
-                  </Modal>
-                </>
-              )}
+                    </Modal>
+                  </>
+                )}
 
               {/* If CCTV, show free-text input */}
               {selectedSystem === "CCTV" ? (
@@ -927,56 +925,56 @@ export default function EnggComplaintDetails() {
                     getParam("modelnumber") &&
                     getParam("modelnumber").trim() !== ""
                   ) && (
-                    <>
-                      <Text style={styles.formLabel}>System Name</Text>
-                      <Pressable
-                        style={styles.dropdownButton}
-                        onPress={() => setShowSystemNameModal(true)}
-                      >
-                        <Text style={styles.dropdownButtonText}>
-                          {selectedSystemName || "Select System Name"}
-                        </Text>
-                        <Ionicons name="chevron-down" size={20} color="#666" />
-                      </Pressable>
-                      <Modal
-                        visible={showSystemNameModal}
-                        transparent
-                        animationType="slide"
-                        onRequestClose={() => setShowSystemNameModal(false)}
-                      >
-                        <View style={styles.modalContainer}>
-                          <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>
-                              Select System Name
-                            </Text>
-                            <ScrollView style={{ maxHeight: 500 }}>
-                              {systemNamesList.map((name) => (
-                                <Pressable
-                                  key={name}
-                                  style={styles.modalItem}
-                                  onPress={() => {
-                                    setSelectedSystemName(name);
-                                    setShowSystemNameModal(false);
-                                    setSelectedParts([]);
-                                  }}
-                                >
-                                  <Text style={styles.modalItemText}>
-                                    {name}
-                                  </Text>
-                                </Pressable>
-                              ))}
-                            </ScrollView>
-                            <Pressable
-                              style={styles.modalCloseButton}
-                              onPress={() => setShowSystemNameModal(false)}
-                            >
-                              <Text style={styles.modalCloseText}>Close</Text>
-                            </Pressable>
+                      <>
+                        <Text style={styles.formLabel}>System Name</Text>
+                        <Pressable
+                          style={styles.dropdownButton}
+                          onPress={() => setShowSystemNameModal(true)}
+                        >
+                          <Text style={styles.dropdownButtonText}>
+                            {selectedSystemName || "Select System Name"}
+                          </Text>
+                          <Ionicons name="chevron-down" size={20} color="#666" />
+                        </Pressable>
+                        <Modal
+                          visible={showSystemNameModal}
+                          transparent
+                          animationType="slide"
+                          onRequestClose={() => setShowSystemNameModal(false)}
+                        >
+                          <View style={styles.modalContainer}>
+                            <View style={styles.modalContent}>
+                              <Text style={styles.modalTitle}>
+                                Select System Name
+                              </Text>
+                              <ScrollView style={{ maxHeight: 500 }}>
+                                {systemNamesList.map((name) => (
+                                  <Pressable
+                                    key={name}
+                                    style={styles.modalItem}
+                                    onPress={() => {
+                                      setSelectedSystemName(name);
+                                      setShowSystemNameModal(false);
+                                      setSelectedParts([]);
+                                    }}
+                                  >
+                                    <Text style={styles.modalItemText}>
+                                      {name}
+                                    </Text>
+                                  </Pressable>
+                                ))}
+                              </ScrollView>
+                              <Pressable
+                                style={styles.modalCloseButton}
+                                onPress={() => setShowSystemNameModal(false)}
+                              >
+                                <Text style={styles.modalCloseText}>Close</Text>
+                              </Pressable>
+                            </View>
                           </View>
-                        </View>
-                      </Modal>
-                    </>
-                  )}
+                        </Modal>
+                      </>
+                    )}
                   {/* Parts No Dropdown (only if system name is selected) */}
                   {selectedSystemName && (
                     <>
@@ -2016,7 +2014,7 @@ const styles = StyleSheet.create({
     top: 95,
     left: 10,
     right: 20,
-    height:200,
+    height: 200,
     backgroundColor: "transparent",
   },
   signatureButtonsSmall: {
