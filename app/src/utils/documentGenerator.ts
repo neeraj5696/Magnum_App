@@ -3,7 +3,6 @@ import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
-import { format } from 'date-fns';
 
 /**
  * Generate PDF from HTML content and store it locally
@@ -13,6 +12,11 @@ import { format } from 'date-fns';
  */
 export const generatePdfFromHtml = async (htmlContent: string, fileName: string) => {
   try {
+    // Sanitize filename for filesystem safety
+    const sanitizedFileName = (fileName || 'document')
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9._-]/g, '_');
+
     // Add base64 image handling options to ensure images render correctly
     const options = {
       html: htmlContent,
@@ -31,11 +35,20 @@ export const generatePdfFromHtml = async (htmlContent: string, fileName: string)
     // Store the PDF locally
     const localUri = Platform.OS === 'web' 
       ? uri // For web, the uri is already a blob URL
-      : `${FileSystem.documentDirectory}${fileName}.pdf`; // For mobile, save to app's document directory
+      : `${FileSystem.documentDirectory}${sanitizedFileName}.pdf`; // For mobile, save to app's document directory
     
     if (Platform.OS !== 'web') {
       // For mobile platforms, copy the file to app's document directory
       console.log('Copying PDF from temp to document directory...');
+      // If a file with the same name exists, remove it first to avoid copy errors
+      try {
+        const existing = await FileSystem.getInfoAsync(localUri);
+        if (existing.exists) {
+          await FileSystem.deleteAsync(localUri, { idempotent: true });
+        }
+      } catch (preErr) {
+        console.warn('Pre-copy cleanup warning:', preErr);
+      }
       await FileSystem.copyAsync({
         from: uri,
         to: localUri
@@ -54,9 +67,10 @@ export const generatePdfFromHtml = async (htmlContent: string, fileName: string)
     
     // Handle file sharing/download based on platform
     if (Platform.OS === 'web') {
-      await saveWebFile(uri, `${fileName}.pdf`);
+      await saveWebFile(uri, `${sanitizedFileName}.pdf`);
     } else {
-      await shareMobileFile(uri, `${fileName}.pdf`);
+      // Share the saved file, not the temporary one
+      await shareMobileFile(localUri, `${sanitizedFileName}.pdf`);
     }
     
     return {
