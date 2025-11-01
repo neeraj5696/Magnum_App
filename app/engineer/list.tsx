@@ -32,6 +32,7 @@ interface Complaint {
   COMP_ADD2?: string;
   COMP_ADD3?: string;
   COMP_TEL?: string;
+  AMC_Status?: string;
 }
 
 const EngineerList: FC = () => {
@@ -215,12 +216,14 @@ const EngineerList: FC = () => {
                     password: params.password as string,
                     status: item.S_jobstatus || "",
                     SystemName: item.SystemName || "",
+                    AMC_Status: item.AMC_Status || "",
                     modelnumber: item.Modelnumber || "",
                     COMP_TYPE: item.COMP_TYPE || "",
                     S_UPDT: item.S_UPDT || "",
                     COMP_ADD2: item.COMP_ADD2 || "",
                     COMP_ADD3: item.COMP_ADD3 || "",
                     COMP_TEL: item.COMP_TEL || "",
+                    
                   },
                 });
               }}

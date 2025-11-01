@@ -58,6 +58,7 @@ export const createComplaintReportTemplate = (data: any) => {
     assignedengineer = "",
     systemStatus = "",
     engineerUpdateBy = "",
+    AMC_Status = ""
   } = data;
 
   // Process the signatures for embedding in HTML
@@ -94,10 +95,20 @@ export const createComplaintReportTemplate = (data: any) => {
   console.log("SystemName type:", typeof SystemName, "length:", SystemName?.length);
   console.log("COMP_TYPE type:", typeof COMP_TYPE, "length:", COMP_TYPE?.length);
 
-  console.log("All data keys:", Object.keys(data));
-  console.log("All data values for SystemName and COMP_TYPE:", {
-    SystemName: data.SystemName,
-    COMP_TYPE: data.COMP_TYPE,
+  console.log("🔍 TEMPLATE DEBUG - All data keys:", Object.keys(data));
+  console.log("🔍 TEMPLATE DEBUG - SystemName (data):", data.SystemName);
+  console.log("🔍 TEMPLATE DEBUG - SystemName (destructured):", SystemName);
+  console.log("🔍 TEMPLATE DEBUG - AMC_Status (data):", data.AMC_Status);
+  console.log("🔍 TEMPLATE DEBUG - AMC_Status (destructured):", AMC_Status);
+  console.log("🔍 TEMPLATE DEBUG - COMP_TYPE (data):", data.COMP_TYPE);
+  console.log("🔍 TEMPLATE DEBUG - COMP_TYPE (destructured):", COMP_TYPE);
+  console.log("🔍 TEMPLATE DEBUG - All data values:", {
+    SystemName_data: data.SystemName,
+    SystemName_destructured: SystemName,
+    AMC_Status_data: data.AMC_Status,
+    AMC_Status_destructured: AMC_Status,
+    COMP_TYPE_data: data.COMP_TYPE,
+    COMP_TYPE_destructured: COMP_TYPE,
     systemName: data.systemName,
     comp_type: data.comp_type
   });
@@ -414,7 +425,7 @@ export const createComplaintReportTemplate = (data: any) => {
               </div>
               <div class="info-item">
                 <div class="info-label">System Name & Configuration</div>
-                <div class="info-value">${data.SystemName && data.systemName ? `${data.SystemName} | ${data.systemName}` : data.SystemName || data.systemName || "N/A"}</div>
+                <div class="info-value">${SystemName && systemName ? `${SystemName} | ${systemName}` : SystemName || systemName || "N/A"}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Address</div>
@@ -424,8 +435,8 @@ export const createComplaintReportTemplate = (data: any) => {
                 }</div>
               </div>
               <div class="info-item">
-                <div class="info-label">Complaint Type</div>
-                <div class="info-value">${COMP_TYPE || "Complaint"}</div>
+                <div class="info-label"> System Status</div>
+                <div class="info-value">${AMC_Status}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Assigned Date</div>
@@ -555,9 +566,7 @@ export const createComplaintReportTemplate = (data: any) => {
               }
               <div style="margin-top:8px; text-align:left;">
                 <h3>Engineer Updated By: <span style="font-weight:normal">${engineerUpdateBy}</span></h3>
-                <div><strong>System Status:</strong> ${
-                  systemStatus || "-"
-                }</div>
+               
               </div>
             </div>
             <div class="signature-box">

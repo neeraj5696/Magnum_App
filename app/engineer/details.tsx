@@ -315,8 +315,7 @@ export default function EnggComplaintDetails() {
     const formData = {
       // Basic complaint information
       complaintNo: getParam("complaintNo"),
-      clientName: getParam("clientName"),
-      
+      clientName: getParam("clientName"),      
       faultReported: getParam("S_SERVDT"),
       typeOfCall: getParam("S_TASK_TYPE"),
       systemName: getParam("SYSTEM_NAME"),
@@ -335,6 +334,8 @@ export default function EnggComplaintDetails() {
       COMP_ADD2: getParam("COMP_ADD2"),
       COMP_ADD3: getParam("COMP_ADD3"),
       COMP_TEL: getParam("COMP_TEL"),
+      COMP_ADD1: getParam("COMP_ADD1"),
+      AMC_Status: getParam("AMC_Status"),
       workStatus,
       remark,
       callAttendedDate,
@@ -355,8 +356,7 @@ export default function EnggComplaintDetails() {
       customerName,
       customerContact,
       assignedengineer: assignedengineer || "",
-      systemStatus,
-      engineerUpdateBy: engineerUpdateBy || "",
+          engineerUpdateBy: engineerUpdateBy || "",
       debug: {
         workStatus,
         pendingReason,
@@ -377,22 +377,48 @@ export default function EnggComplaintDetails() {
 
     console.log("🔍 DEBUG formData after creation:", {
       SystemName: formData.SystemName,
+      AMC_Status: formData.AMC_Status,
       COMP_TYPE: formData.COMP_TYPE
+    });
+    
+    console.log("🔍 DEBUG - Raw params for SystemName and AMC_Status:", {
+      SystemName: getParam("SystemName"),
+      AMC_Status: getParam("AMC_Status")
     });
 
     console.log(
       "🚩 CHECKPOINT 2: Form data prepared, beginning PDF generation"
     );
     console.log("🔍 DEBUG formData.SystemName:", formData.SystemName);
+    console.log("🔍 DEBUG formData.AMC_Status:", formData.AMC_Status);
     console.log("🔍 DEBUG formData.COMP_TYPE:", formData.COMP_TYPE);
     console.log("🔍 DEBUG All params received:", JSON.stringify(params, null, 2));
+    console.log("🔍 DEBUG Complete formData object:", JSON.stringify(formData, null, 2));
 
     // Generate document from form data with the specialized template
     try {
-      const htmlContent = createComplaintReportTemplate({
+      console.log("🔍 DEBUG - Data being passed to template:", {
+        SystemName: formData.SystemName,
+        AMC_Status: formData.AMC_Status,
+        COMP_TYPE: formData.COMP_TYPE
+      });
+      
+      const templateData = {
         ...formData,
         headerImageDataUri,
+        // Explicitly ensure these fields are included
+        SystemName: formData.SystemName || getParam("SystemName"),
+        AMC_Status: formData.AMC_Status || getParam("AMC_Status"),
+        COMP_TYPE: formData.COMP_TYPE || getParam("COMP_TYPE"),
+      };
+      
+      console.log("🔍 DEBUG - Final template data:", {
+        SystemName: templateData.SystemName,
+        AMC_Status: templateData.AMC_Status,
+        COMP_TYPE: templateData.COMP_TYPE
       });
+      
+      const htmlContent = createComplaintReportTemplate(templateData);
       const fileName = `complaint_${getParam("complaintNo")}_report`;
 
       console.log("🚩 CHECKPOINT 3: HTML template created, generating PDF");
@@ -716,6 +742,16 @@ export default function EnggComplaintDetails() {
             />
             <Text style={styles.label}>Complaint type:</Text>
             <Text style={styles.value}>{getParam("COMP_TYPE")}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Ionicons
+              name="briefcase-outline"
+              size={18}
+              color="#1976D2"
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.label}>System Status:</Text>
+            <Text style={styles.value}>{getParam("AMC_Status")}</Text>
           </View>
           <View style={styles.infoRow}>
             <Ionicons
@@ -1315,17 +1351,7 @@ export default function EnggComplaintDetails() {
                 </Text>
                 <Ionicons name="chevron-down" size={20} color={"#666"} />
               </Pressable>
-              {/* System Status */}
-              <Text style={styles.formLabel}>System Status</Text>
-              <Pressable
-                style={styles.dropdownButton}
-                onPress={() => setShowSystemStatusModal(true)}
-              >
-                <Text style={styles.dropdownButtonText}>
-                  {systemStatus || "Select System Status"}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#666" />
-              </Pressable>
+            
 
               <Text style={styles.formLabel}>Engineer Signature:</Text>
 
@@ -1759,12 +1785,15 @@ export default function EnggComplaintDetails() {
             customerComment,
             customerSignature,
             systemName: getParam("SYSTEM_NAME"),
+            SystemName: getParam("SystemName"),
             assignDate: getParam("S_assigndate"),
             location: getParam("location"),
             taskType: getParam("S_TASK_TYPE"),
             status: getParam("status"),
             S_SERVDT: getParam("S_SERVDT"),
             S_assignedengg: getParam("S_assignedengg"),
+            COMP_TYPE: getParam("COMP_TYPE"),
+            AMC_Status: getParam("AMC_Status"),
             pendingReason: workStatus === "Pending" ? pendingReason : "",
             submittedAt: new Date().toISOString(),
             engineerComment,
