@@ -59,10 +59,11 @@ export default function EnggComplaintDetails() {
     return value || "";
   };
 
-  // Debug log
-  // console.log('S_SERVDT value:', getParam('S_SERVDT'));
+  // Debug: Log the problematic parameters immediately
+  console.log("🔍 IMMEDIATE DEBUG - SystemName:", getParam("SystemName"));
+  console.log("🔍 IMMEDIATE DEBUG - COMP_TYPE:", getParam("COMP_TYPE"));
+  console.log("🔍 IMMEDIATE DEBUG - All params:", params);
 
-  // Form field states
   const [remark, setRemark] = useState("");
   const [workStatus, setWorkStatus] = useState("");
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -84,8 +85,11 @@ export default function EnggComplaintDetails() {
     null
   );
   const [showSignaturePad, setShowSignaturePad] = useState(false);
-  const [showEngineerSignaturePad, setShowEngineerSignaturePad] = useState(false);
-  const [currentSignatureType, setCurrentSignatureType] = useState<'customer' | 'engineer'>('customer');
+  const [showEngineerSignaturePad, setShowEngineerSignaturePad] =
+    useState(false);
+  const [currentSignatureType, setCurrentSignatureType] = useState<
+    "customer" | "engineer"
+  >("customer");
   const [paths, setPaths] = useState<Array<string>>([]);
   const [currentPath, setCurrentPath] = useState<string>("");
   const signatureRef = useRef<any>(null);
@@ -129,6 +133,14 @@ export default function EnggComplaintDetails() {
   const [engineerCommentFocused, setEngineerCommentFocused] = useState(false);
   const [partReplacedFocused, setPartReplacedFocused] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerContact, setCustomerContact] = useState("");
+  const [systemStatus, setSystemStatus] = useState("");
+  const [showSystemStatusModal, setShowSystemStatusModal] = useState(false);
+  const [showUpdateEngineerModal, setShowUpdateEngineerModal] = useState(false);
+  const [attendingengineer, setAttendingengineer] = useState("");
+  const [assignedengineer, setAssignedengineer] = useState("");
+  const [engineerUpdateBy, setEngineerUpdateBy] = useState("");
 
   // Fetch both EPABX and Power Supply data on mount
   useEffect(() => {
@@ -197,11 +209,20 @@ export default function EnggComplaintDetails() {
     })
   ).current;
 
+  // assign engineer list
+
+  const engineerlist = (S_assignedengg: string) =>
+    S_assignedengg
+      ? S_assignedengg.split(",")
+          .map((e) => e.trim())
+          .filter(Boolean)
+      : [];
+
   // Clear signature
   const clearSignature = () => {
     setPaths([]);
     setCurrentPath("");
-    if (currentSignatureType === 'customer') {
+    if (currentSignatureType === "customer") {
       setCustomerSignature(null);
     } else {
       setEngineerSignature(null);
@@ -219,8 +240,8 @@ export default function EnggComplaintDetails() {
             result: "data-uri",
           };
           const capturedSignature = await signatureRef.current.capture(options);
-          
-          if (currentSignatureType === 'customer') {
+
+          if (currentSignatureType === "customer") {
             setCustomerSignature(capturedSignature);
             setShowSignaturePad(false);
           } else {
@@ -240,14 +261,14 @@ export default function EnggComplaintDetails() {
   };
 
   // Open signature pad
-  const openSignaturePad = (type: 'customer' | 'engineer' = 'customer') => {
+  const openSignaturePad = (type: "customer" | "engineer" = "customer") => {
     setCurrentSignatureType(type);
-    
+
     // Always clear paths when opening signature pad
     setPaths([]);
     setCurrentPath("");
 
-    if (type === 'customer') {
+    if (type === "customer") {
       setShowSignaturePad(true);
     } else {
       setShowEngineerSignaturePad(true);
@@ -295,10 +316,27 @@ export default function EnggComplaintDetails() {
       // Basic complaint information
       complaintNo: getParam("complaintNo"),
       clientName: getParam("clientName"),
-      workStatus,
-      remark,
+      
       faultReported: getParam("S_SERVDT"),
       typeOfCall: getParam("S_TASK_TYPE"),
+      systemName: getParam("SYSTEM_NAME"),
+      SystemName: getParam("SystemName"),
+      assignDate: getParam("S_assigndate"),
+      location: getParam("location"),
+      taskType: getParam("S_TASK_TYPE"),
+      status: getParam("status"),
+      S_SERVDT: getParam("S_SERVDT"),
+      S_assignedengg: getParam("S_assignedengg"),
+      COMP_TYPE: getParam("COMP_TYPE"),
+      S_REMARK1: getParam("S_REMARK1"),
+      S_REMARK2: getParam("S_REMARK2"),
+      modelnumber: getParam("modelnumber"),
+      S_UPDT: getParam("S_UPDT"),
+      COMP_ADD2: getParam("COMP_ADD2"),
+      COMP_ADD3: getParam("COMP_ADD3"),
+      COMP_TEL: getParam("COMP_TEL"),
+      workStatus,
+      remark,
       callAttendedDate,
       callAttendedTime,
       callCompletedDate,
@@ -310,17 +348,15 @@ export default function EnggComplaintDetails() {
       customerComment,
       customerSignature,
       engineerSignature,
-      systemName: getParam("SYSTEM_NAME"),
-      assignDate: getParam("S_assigndate"),
-      location: getParam("location"),
-      taskType: getParam("S_TASK_TYPE"),
-      status: getParam("status"),
-      S_SERVDT: getParam("S_SERVDT"),
-      S_assignedengg: getParam("S_assignedengg"),
+      
       pendingReason: workStatus === "Pending" ? pendingReason : "",
       submittedAt: new Date().toISOString(),
       engineerComment,
-
+      customerName,
+      customerContact,
+      assignedengineer: assignedengineer || "",
+      systemStatus,
+      engineerUpdateBy: engineerUpdateBy || "",
       debug: {
         workStatus,
         pendingReason,
@@ -336,15 +372,27 @@ export default function EnggComplaintDetails() {
           hasCustomerComment: !!customerComment,
         },
       },
+      attendingengineer: attendingengineer || "",
     };
+
+    console.log("🔍 DEBUG formData after creation:", {
+      SystemName: formData.SystemName,
+      COMP_TYPE: formData.COMP_TYPE
+    });
 
     console.log(
       "🚩 CHECKPOINT 2: Form data prepared, beginning PDF generation"
     );
+    console.log("🔍 DEBUG formData.SystemName:", formData.SystemName);
+    console.log("🔍 DEBUG formData.COMP_TYPE:", formData.COMP_TYPE);
+    console.log("🔍 DEBUG All params received:", JSON.stringify(params, null, 2));
 
     // Generate document from form data with the specialized template
     try {
-      const htmlContent = createComplaintReportTemplate({ ...formData, headerImageDataUri });
+      const htmlContent = createComplaintReportTemplate({
+        ...formData,
+        headerImageDataUri,
+      });
       const fileName = `complaint_${getParam("complaintNo")}_report`;
 
       console.log("🚩 CHECKPOINT 3: HTML template created, generating PDF");
@@ -353,7 +401,8 @@ export default function EnggComplaintDetails() {
       console.log(
         "🚩 CHECKPOINT 4: PDF generation result:",
         result.success ? "SUCCESS" : "FAILED"
-      ); 3
+      );
+      3;
 
       if (result.success && result.localUri) {
         try {
@@ -428,8 +477,7 @@ export default function EnggComplaintDetails() {
             "PDF generated but failed to upload to Cloudinary or post to server. Please try again later."
           );
         }
-      }
-      else {
+      } else {
         console.log("🚩 ERROR: PDF generation failed");
         console.error("Failed to generate PDF");
         Alert.alert(
@@ -611,6 +659,12 @@ export default function EnggComplaintDetails() {
     return summary;
   };
 
+  // Where you load params, after initializing useState:
+  useEffect(() => {
+    const engStr = getParam("S_assignedengg");
+    setAssignedengineer(engStr);
+  }, []);
+
   return (
     <SafeAreaView style={[styles.container]}>
       <StatusBar />
@@ -628,7 +682,7 @@ export default function EnggComplaintDetails() {
               color="#1976D2"
               style={{ marginRight: 6 }}
             />
-            <Text style={styles.label}>Complaint Name:</Text>
+            <Text style={styles.label}>Customer Name:</Text>
             <Text style={styles.value}>{getParam("clientName")}</Text>
           </View>
           <View style={styles.infoRow}>
@@ -649,7 +703,9 @@ export default function EnggComplaintDetails() {
               style={{ marginRight: 6 }}
             />
             <Text style={styles.label}>System Name:</Text>
-            <Text style={styles.value}>{getParam("SYSTEM_NAME")}</Text>
+            <Text style={styles.value}>
+              {getParam("SystemName") + " ,  " + getParam("SYSTEM_NAME")}
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <Ionicons
@@ -658,8 +714,8 @@ export default function EnggComplaintDetails() {
               color="#1976D2"
               style={{ marginRight: 6 }}
             />
-            <Text style={styles.label}>Task type:</Text>
-            <Text style={styles.value}>{getParam("S_TASK_TYPE")}</Text>
+            <Text style={styles.label}>Complaint type:</Text>
+            <Text style={styles.value}>{getParam("COMP_TYPE")}</Text>
           </View>
           <View style={styles.infoRow}>
             <Ionicons
@@ -858,56 +914,56 @@ export default function EnggComplaintDetails() {
               {!(
                 getParam("systemName") && getParam("systemName").trim() !== ""
               ) && (
-                  <>
-                    <Text style={styles.formLabel}>System Type</Text>
-                    <Pressable
-                      style={styles.dropdownButton}
-                      onPress={() => setShowSystemModal(true)}
-                    >
-                      <Text style={styles.dropdownButtonText}>
-                        {selectedSystem || "Select System Type"}
-                      </Text>
-                      <Ionicons name="chevron-down" size={21} color="#666" />
-                    </Pressable>
-                    {/* System Type Modal list */}
-                    <Modal
-                      visible={showSystemModal}
-                      transparent
-                      animationType="slide"
-                      onRequestClose={() => setShowSystemModal(false)}
-                    >
-                      <View style={styles.modalContainer}>
-                        <View style={styles.modalContent}>
-                          <Text style={styles.modalTitle}>
-                            Select System Type
-                          </Text>
-                          {["CCTV", "ACCESS CONTROL", "VDP", "EPABX"].map(
-                            (name) => (
-                              <Pressable
-                                key={name}
-                                style={styles.modalItem}
-                                onPress={() => {
-                                  setSelectedSystem(name);
-                                  setShowSystemModal(false);
-                                  setSelectedParts([]);
-                                  setSelectedSystemName("");
-                                }}
-                              >
-                                <Text style={styles.modalItemText}>{name}</Text>
-                              </Pressable>
-                            )
-                          )}
-                          <Pressable
-                            style={styles.modalCloseButton}
-                            onPress={() => setShowSystemModal(false)}
-                          >
-                            <Text style={styles.modalCloseText}>Close</Text>
-                          </Pressable>
-                        </View>
+                <>
+                  <Text style={styles.formLabel}>System Type</Text>
+                  <Pressable
+                    style={styles.dropdownButton}
+                    onPress={() => setShowSystemModal(true)}
+                  >
+                    <Text style={styles.dropdownButtonText}>
+                      {selectedSystem || "Select System Type"}
+                    </Text>
+                    <Ionicons name="chevron-down" size={21} color="#666" />
+                  </Pressable>
+                  {/* System Type Modal list */}
+                  <Modal
+                    visible={showSystemModal}
+                    transparent
+                    animationType="slide"
+                    onRequestClose={() => setShowSystemModal(false)}
+                  >
+                    <View style={styles.modalContainer}>
+                      <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>
+                          Select System Type
+                        </Text>
+                        {["CCTV", "ACCESS CONTROL", "VDP", "EPABX"].map(
+                          (name) => (
+                            <Pressable
+                              key={name}
+                              style={styles.modalItem}
+                              onPress={() => {
+                                setSelectedSystem(name);
+                                setShowSystemModal(false);
+                                setSelectedParts([]);
+                                setSelectedSystemName("");
+                              }}
+                            >
+                              <Text style={styles.modalItemText}>{name}</Text>
+                            </Pressable>
+                          )
+                        )}
+                        <Pressable
+                          style={styles.modalCloseButton}
+                          onPress={() => setShowSystemModal(false)}
+                        >
+                          <Text style={styles.modalCloseText}>Close</Text>
+                        </Pressable>
                       </View>
-                    </Modal>
-                  </>
-                )}
+                    </View>
+                  </Modal>
+                </>
+              )}
 
               {/* If CCTV, show free-text input */}
               {selectedSystem === "CCTV" ? (
@@ -925,56 +981,56 @@ export default function EnggComplaintDetails() {
                     getParam("modelnumber") &&
                     getParam("modelnumber").trim() !== ""
                   ) && (
-                      <>
-                        <Text style={styles.formLabel}>System Name</Text>
-                        <Pressable
-                          style={styles.dropdownButton}
-                          onPress={() => setShowSystemNameModal(true)}
-                        >
-                          <Text style={styles.dropdownButtonText}>
-                            {selectedSystemName || "Select System Name"}
-                          </Text>
-                          <Ionicons name="chevron-down" size={20} color="#666" />
-                        </Pressable>
-                        <Modal
-                          visible={showSystemNameModal}
-                          transparent
-                          animationType="slide"
-                          onRequestClose={() => setShowSystemNameModal(false)}
-                        >
-                          <View style={styles.modalContainer}>
-                            <View style={styles.modalContent}>
-                              <Text style={styles.modalTitle}>
-                                Select System Name
-                              </Text>
-                              <ScrollView style={{ maxHeight: 500 }}>
-                                {systemNamesList.map((name) => (
-                                  <Pressable
-                                    key={name}
-                                    style={styles.modalItem}
-                                    onPress={() => {
-                                      setSelectedSystemName(name);
-                                      setShowSystemNameModal(false);
-                                      setSelectedParts([]);
-                                    }}
-                                  >
-                                    <Text style={styles.modalItemText}>
-                                      {name}
-                                    </Text>
-                                  </Pressable>
-                                ))}
-                              </ScrollView>
-                              <Pressable
-                                style={styles.modalCloseButton}
-                                onPress={() => setShowSystemNameModal(false)}
-                              >
-                                <Text style={styles.modalCloseText}>Close</Text>
-                              </Pressable>
-                            </View>
+                    <>
+                      <Text style={styles.formLabel}>System Name</Text>
+                      <Pressable
+                        style={styles.dropdownButton}
+                        onPress={() => setShowSystemNameModal(true)}
+                      >
+                        <Text style={styles.dropdownButtonText}>
+                          {selectedSystemName || "Select System Name"}
+                        </Text>
+                        <Ionicons name="chevron-down" size={20} color="#666" />
+                      </Pressable>
+                      <Modal
+                        visible={showSystemNameModal}
+                        transparent
+                        animationType="slide"
+                        onRequestClose={() => setShowSystemNameModal(false)}
+                      >
+                        <View style={styles.modalContainer}>
+                          <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>
+                              Select System Name
+                            </Text>
+                            <ScrollView style={{ maxHeight: 500 }}>
+                              {systemNamesList.map((name) => (
+                                <Pressable
+                                  key={name}
+                                  style={styles.modalItem}
+                                  onPress={() => {
+                                    setSelectedSystemName(name);
+                                    setShowSystemNameModal(false);
+                                    setSelectedParts([]);
+                                  }}
+                                >
+                                  <Text style={styles.modalItemText}>
+                                    {name}
+                                  </Text>
+                                </Pressable>
+                              ))}
+                            </ScrollView>
+                            <Pressable
+                              style={styles.modalCloseButton}
+                              onPress={() => setShowSystemNameModal(false)}
+                            >
+                              <Text style={styles.modalCloseText}>Close</Text>
+                            </Pressable>
                           </View>
-                        </Modal>
-                      </>
-                    )}
+                        </View>
+                      </Modal>
+                    </>
+                  )}
                   {/* Parts No Dropdown (only if system name is selected) */}
                   {selectedSystemName && (
                     <>
@@ -1203,43 +1259,176 @@ export default function EnggComplaintDetails() {
           )}
 
           {/* Customer Signature */}
-          <Text style={styles.formLabel}>Customer Signature:</Text>
-          <Pressable style={styles.signatureBox} onPress={() => openSignaturePad('customer')}>
-            {customerSignature ? (
-              <View style={styles.signaturePreviewContainer}>
-                <Image
-                  source={{ uri: customerSignature }}
-                  style={styles.signaturePreviewImage}
-                  resizeMode="contain"
-                />
-                <Text style={styles.signatureText}>Signature Saved ✓</Text>
-              </View>
-            ) : (
-              <Text style={styles.signaturePlaceholder}>
-                Tap to add signature
-              </Text>
-            )}
-          </Pressable>
+          <View style={styles.customersectioncontainer}>
+            {/* New fields for customer name and contact */}
+            <View style={{ marginBottom: 10 }}>
+              <Text style={styles.formLabel}>Customer Name</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter customer name"
+                value={customerName}
+                onChangeText={setCustomerName}
+              />
+              <Text style={styles.formLabel}>Customer Contact No.</Text>
+
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter contact number"
+                value={customerContact}
+                onChangeText={setCustomerContact}
+                keyboardType="phone-pad"
+              />
+              <Text style={styles.formLabel}>Customer Signature:</Text>
+            </View>
+            <Pressable
+              style={styles.signatureBox}
+              onPress={() => openSignaturePad("customer")}
+            >
+              {customerSignature ? (
+                <View style={styles.signaturePreviewContainer}>
+                  <Image
+                    source={{ uri: customerSignature }}
+                    style={styles.signaturePreviewImage}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.signatureText}>Signature Saved ✓</Text>
+                </View>
+              ) : (
+                <Text style={styles.signaturePlaceholder}>
+                  Tap to add signature
+                </Text>
+              )}
+            </Pressable>
+          </View>
 
           {/* Engineer Signature */}
-          <Text style={styles.formLabel}>Engineer Signature:</Text>
-          <Pressable style={styles.signatureBox} onPress={() => openSignaturePad('engineer')}>
-            {engineerSignature ? (
-              <View style={styles.signaturePreviewContainer}>
-                <Image
-                  source={{ uri: engineerSignature }}
-                  style={styles.signaturePreviewImage}
-                  resizeMode="contain"
-                />
-                <Text style={styles.signatureText}>Signature Saved ✓</Text>
-              </View>
-            ) : (
-              <Text style={styles.signaturePlaceholder}>
-                Tap to add signature
-              </Text>
-            )}
-          </Pressable>
+          <View style={styles.customersectioncontainer}>
+            {/* New Engineer Signature fields */}
+            <View style={{ marginBottom: 10 }}>
+              <Text style={styles.formLabel}>Update date by</Text>
+              <Pressable
+                style={styles.dropdownButton}
+                onPress={() => setShowUpdateEngineerModal(true)}
+              >
+                <Text style={styles.dropdownButtonText}>
+                  {attendingengineer || "Select Engineer "}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color={"#666"} />
+              </Pressable>
+              {/* System Status */}
+              <Text style={styles.formLabel}>System Status</Text>
+              <Pressable
+                style={styles.dropdownButton}
+                onPress={() => setShowSystemStatusModal(true)}
+              >
+                <Text style={styles.dropdownButtonText}>
+                  {systemStatus || "Select System Status"}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#666" />
+              </Pressable>
 
+              <Text style={styles.formLabel}>Engineer Signature:</Text>
+
+              {/* Complain attending engineer model */}
+
+              <Modal
+                visible={showUpdateEngineerModal}
+                transparent={true}
+                animationType={"slide"}
+                onRequestClose={() => setShowUpdateEngineerModal(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Select Site Engineer</Text>
+                    {engineerlist(assignedengineer).map((Key) => (
+                      <Pressable
+                        key={Key}
+                        style={[
+                          styles.modalItem,
+                          {
+                            backgroundColor: "#f2f2f2",
+                            marginVertical: 5,
+                            borderRadius: 6,
+                          },
+                        ]}
+                        onPress={() => {
+                          setAttendingengineer(Key);
+                          setEngineerUpdateBy(Key);
+                          setShowUpdateEngineerModal(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.modalItemText,
+                            { padding: 8, fontSize: 16 },
+                          ]}
+                        >
+                          {Key}
+                        </Text>
+                      </Pressable>
+                    ))}
+                    <Pressable
+                      style={styles.modalCloseButton}
+                      onPress={() => setShowUpdateEngineerModal(false)}
+                    >
+                      <Text style={styles.modalCloseText}>Close</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </Modal>
+
+              {/* system status model  */}
+              <Modal
+                visible={showSystemStatusModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowSystemStatusModal(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>System Status</Text>
+                    {["AMC", "Call Basis"].map((option) => (
+                      <Pressable
+                        key={option}
+                        style={styles.modalItem}
+                        onPress={() => {
+                          setSystemStatus(option);
+                          setShowSystemStatusModal(false);
+                        }}
+                      >
+                        <Text style={styles.modalItemText}>{option}</Text>
+                      </Pressable>
+                    ))}
+                    <Pressable
+                      style={styles.modalCloseButton}
+                      onPress={() => setShowSystemStatusModal(false)}
+                    >
+                      <Text style={styles.modalCloseText}>Close</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </Modal>
+            </View>
+            <Pressable
+              style={styles.signatureBox}
+              onPress={() => openSignaturePad("engineer")}
+            >
+              {engineerSignature ? (
+                <View style={styles.signaturePreviewContainer}>
+                  <Image
+                    source={{ uri: engineerSignature }}
+                    style={styles.signaturePreviewImage}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.signatureText}>Signature Saved ✓</Text>
+                </View>
+              ) : (
+                <Text style={styles.signaturePlaceholder}>
+                  Tap to add signature
+                </Text>
+              )}
+            </Pressable>
+          </View>
           {/* Status Dropdown */}
           <Text style={styles.formLabel}>Status:</Text>
           <Pressable
@@ -1581,6 +1770,13 @@ export default function EnggComplaintDetails() {
             engineerComment,
             engineerSignature,
             material: getMaterialSummary(),
+            customerName,
+            customerContact,
+            showUpdateEngineerModal,
+            systemStatus,
+            attendingengineer,
+            assignedengineer,
+            engineerUpdateBy,
           }}
         />
       </ScrollView>
@@ -1693,6 +1889,19 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     marginHorizontal: "2%", // responsive card margin
   },
+
+  customersectioncontainer: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    backgroundColor: "#FAFAFA",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+  },
   formLabel: {
     fontSize: 15,
     fontWeight: "600",
@@ -1700,6 +1909,10 @@ const styles = StyleSheet.create({
     color: "#1976D2",
     marginTop: 0, // ensure no extra top margin
     fontFamily: "Roboto",
+  },
+
+  formLabel1: {
+    fontSize: 16,
   },
   textInput: {
     borderWidth: 1,

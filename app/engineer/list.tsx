@@ -27,6 +27,11 @@ interface Complaint {
   S_REMARK2?: string;
   SystemName?: string;
   Modelnumber?: string;
+  COMP_TYPE?: string;
+  S_UPDT?: string;
+  COMP_ADD2?: string;
+  COMP_ADD3?: string;
+  COMP_TEL?: string;
 }
 
 const EngineerList: FC = () => {
@@ -53,8 +58,9 @@ const EngineerList: FC = () => {
           body: formData.toString(),
         }
       );
-
+      
       const responseText = await response.text();
+      console.log("responseText yahi bhejna hai", responseText);
       let data;
       try {
         data = JSON.parse(responseText);
@@ -64,6 +70,12 @@ const EngineerList: FC = () => {
       }
 
       if (data?.status === "success" && data?.data) {
+        // Debug: Check the first item to see what fields are available
+        if (data.data.length > 0) {
+          console.log("🔍 First complaint item:", JSON.stringify(data.data[0], null, 2));
+          console.log("🔍 SystemName in first item:", data.data[0].SystemName);
+          console.log("🔍 COMP_TYPE in first item:", data.data[0].COMP_TYPE);
+        }
         setComplaints(data.data);
       }
     } catch (error) {
@@ -202,8 +214,13 @@ const EngineerList: FC = () => {
                     username: params.username as string,
                     password: params.password as string,
                     status: item.S_jobstatus || "",
-                    systemName: item.SystemName || "",
+                    SystemName: item.SystemName || "",
                     modelnumber: item.Modelnumber || "",
+                    COMP_TYPE: item.COMP_TYPE || "",
+                    S_UPDT: item.S_UPDT || "",
+                    COMP_ADD2: item.COMP_ADD2 || "",
+                    COMP_ADD3: item.COMP_ADD3 || "",
+                    COMP_TEL: item.COMP_TEL || "",
                   },
                 });
               }}
