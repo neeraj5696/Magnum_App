@@ -439,8 +439,8 @@ export const createComplaintReportTemplate = (data: any) => {
                 <div class="info-value">${AMC_Status}</div>
               </div>
               <div class="info-item">
-                <div class="info-label">Assigned Date</div>
-                <div class="info-value">${assignDate || "N/A"}</div>
+                <div class="info-label">Fault Reported</div>
+                <div class="info-value">${S_SERVDT || "N/A"}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Assigned Engineer</div>
@@ -452,9 +452,10 @@ export const createComplaintReportTemplate = (data: any) => {
           <div class="section">
             <div class="section-title">Complaint Details</div>
             <div class="info-grid">
-              <div class="info-item">
-                <div class="info-label">Fault Reported</div>
-                <div class="info-value">${S_SERVDT || "N/A"}</div>
+             
+               <div class="info-item">
+                <div class="info-label">Assigned Date</div>
+                <div class="info-value">${assignDate || "N/A"}</div>
               </div>
                <div class="info-item">
                 <div class="info-label">Complaint Type</div>

@@ -61,8 +61,8 @@ export default function EnggComplaintDetails() {
 
   // Debug: Log the problematic parameters immediately
   console.log("🔍 IMMEDIATE DEBUG - SystemName:", getParam("SystemName"));
-  console.log("🔍 IMMEDIATE DEBUG - COMP_TYPE:", getParam("COMP_TYPE"));
-  console.log("🔍 IMMEDIATE DEBUG - All params:", params);
+  // console.log("🔍 IMMEDIATE DEBUG - COMP_TYPE:", getParam("COMP_TYPE"));
+  // console.log("🔍 IMMEDIATE DEBUG - All params:", params);
 
   const [remark, setRemark] = useState("");
   const [workStatus, setWorkStatus] = useState("");
@@ -170,7 +170,7 @@ export default function EnggComplaintDetails() {
 
   // Set selectedSystem from params.systemName if present and not already set
   useEffect(() => {
-    const paramSystemName = getParam("systemName");
+    const paramSystemName = getParam("SystemName");
     if (!selectedSystem && paramSystemName && paramSystemName.trim() !== "") {
       setSelectedSystem(paramSystemName);
     }
@@ -315,7 +315,7 @@ export default function EnggComplaintDetails() {
     const formData = {
       // Basic complaint information
       complaintNo: getParam("complaintNo"),
-      clientName: getParam("clientName"),      
+      clientName: getParam("clientName"),
       faultReported: getParam("S_SERVDT"),
       typeOfCall: getParam("S_TASK_TYPE"),
       systemName: getParam("SYSTEM_NAME"),
@@ -349,14 +349,14 @@ export default function EnggComplaintDetails() {
       customerComment,
       customerSignature,
       engineerSignature,
-      
+
       pendingReason: workStatus === "Pending" ? pendingReason : "",
       submittedAt: new Date().toISOString(),
       engineerComment,
       customerName,
       customerContact,
       assignedengineer: assignedengineer || "",
-          engineerUpdateBy: engineerUpdateBy || "",
+      engineerUpdateBy: engineerUpdateBy || "",
       debug: {
         workStatus,
         pendingReason,
@@ -378,31 +378,20 @@ export default function EnggComplaintDetails() {
     console.log("🔍 DEBUG formData after creation:", {
       SystemName: formData.SystemName,
       AMC_Status: formData.AMC_Status,
-      COMP_TYPE: formData.COMP_TYPE
+      COMP_TYPE: formData.COMP_TYPE,
     });
-    
+
     console.log("🔍 DEBUG - Raw params for SystemName and AMC_Status:", {
       SystemName: getParam("SystemName"),
-      AMC_Status: getParam("AMC_Status")
+      AMC_Status: getParam("AMC_Status"),
     });
 
     console.log(
       "🚩 CHECKPOINT 2: Form data prepared, beginning PDF generation"
     );
-    console.log("🔍 DEBUG formData.SystemName:", formData.SystemName);
-    console.log("🔍 DEBUG formData.AMC_Status:", formData.AMC_Status);
-    console.log("🔍 DEBUG formData.COMP_TYPE:", formData.COMP_TYPE);
-    console.log("🔍 DEBUG All params received:", JSON.stringify(params, null, 2));
-    console.log("🔍 DEBUG Complete formData object:", JSON.stringify(formData, null, 2));
 
     // Generate document from form data with the specialized template
     try {
-      console.log("🔍 DEBUG - Data being passed to template:", {
-        SystemName: formData.SystemName,
-        AMC_Status: formData.AMC_Status,
-        COMP_TYPE: formData.COMP_TYPE
-      });
-      
       const templateData = {
         ...formData,
         headerImageDataUri,
@@ -411,13 +400,13 @@ export default function EnggComplaintDetails() {
         AMC_Status: formData.AMC_Status || getParam("AMC_Status"),
         COMP_TYPE: formData.COMP_TYPE || getParam("COMP_TYPE"),
       };
-      
-      console.log("🔍 DEBUG - Final template data:", {
-        SystemName: templateData.SystemName,
-        AMC_Status: templateData.AMC_Status,
-        COMP_TYPE: templateData.COMP_TYPE
-      });
-      
+
+      // console.log("🔍 DEBUG - Final template data:", {
+      //   SystemName: templateData.SystemName,
+      //   AMC_Status: templateData.AMC_Status,
+      //   COMP_TYPE: templateData.COMP_TYPE
+      // });
+
       const htmlContent = createComplaintReportTemplate(templateData);
       const fileName = `complaint_${getParam("complaintNo")}_report`;
 
@@ -447,7 +436,13 @@ export default function EnggComplaintDetails() {
           console.log(
             "🚩 CHECKPOINT 7: Starting server API call with form data"
           );
+
+
+        
+          
           const responseJson = await submitComplaintUpdate({
+
+           
             enggname: getParam("S_assignedengg"),
             remark: `D-${diagnosis} E-${engineerComment}`,
             report: secureUrl,
@@ -948,7 +943,7 @@ export default function EnggComplaintDetails() {
             <View style={{ marginTop: 16 }}>
               {/* System Type Dropdown - only show if systemName is NOT present */}
               {!(
-                getParam("systemName") && getParam("systemName").trim() !== ""
+                getParam("SystemName") && getParam("SystemName").trim() !== ""
               ) && (
                 <>
                   <Text style={styles.formLabel}>System Type</Text>
@@ -1351,7 +1346,6 @@ export default function EnggComplaintDetails() {
                 </Text>
                 <Ionicons name="chevron-down" size={20} color={"#666"} />
               </Pressable>
-            
 
               <Text style={styles.formLabel}>Engineer Signature:</Text>
 
