@@ -349,6 +349,7 @@ export default function EnggComplaintDetails() {
       customerComment,
       customerSignature,
       engineerSignature,
+      mailaddcallrpt: getParam("mailaddcallrpt"),
 
       pendingReason: workStatus === "Pending" ? pendingReason : "",
       submittedAt: new Date().toISOString(),
@@ -426,23 +427,19 @@ export default function EnggComplaintDetails() {
             result.localUri
           )) as UploadResult;
           const secureUrl = uploadResult.secure_url;
-
+          console.log("Upload Result:", uploadResult);
           console.log(
             "🚩 CHECKPOINT 6: Cloudinary upload successful, secure URL obtained"
           );
           console.log("Secure URL:", secureUrl.substring(0, 50) + "...");
 
+          
           // Call the submitComplaintUpdate function to update the complaint status
           console.log(
             "🚩 CHECKPOINT 7: Starting server API call with form data"
           );
 
-
-        
-          
           const responseJson = await submitComplaintUpdate({
-
-           
             enggname: getParam("S_assignedengg"),
             remark: `D-${diagnosis} E-${engineerComment}`,
             report: secureUrl,
@@ -459,6 +456,45 @@ export default function EnggComplaintDetails() {
 
           if (responseJson.status === "success") {
             console.log("🚩 CHECKPOINT 9: Server update SUCCESSFUL");
+
+            // Check if email should be sent
+            const mailAddress = getParam("mailaddcallrpt");
+            if (mailAddress && mailAddress.trim() !== "") {
+              console.log(
+                "🚩 CHECKPOINT 9.1: Sending email with PDF attachment"
+              );
+              try {
+                const { downloadPdfFromUrl, sendEmailWithAttachment } =
+                  await import("../engineer/componenet/EmailSender");
+
+                // Step 1: Download PDF
+                const localUri = await downloadPdfFromUrl({
+                  secureUrl,
+                  complaintNo: getParam("complaintNo"),
+                });
+
+                if (localUri) {
+                  // Step 2: Send email with attachment
+                  const emailSent = await sendEmailWithAttachment({
+                    localUri,
+                    complaintNo: getParam("complaintNo"),
+                    clientName: getParam("clientName"),
+                    mailaddcallrpt: mailAddress,
+                  });
+
+                  if (emailSent) {
+                    console.log("✅ Email sent successfully");
+                  } else {
+                    console.log("⚠️ Email sending failed");
+                  }
+                } else {
+                  console.log("⚠️ PDF download failed");
+                }
+              } catch (emailError) {
+                console.error("❌ Email error:", emailError);
+              }
+            }
+
             Alert.alert("Success", "Data sent successfully!", [
               {
                 text: "OK",

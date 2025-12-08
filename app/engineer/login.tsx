@@ -133,7 +133,7 @@ export default function EngineerLogin() {
       );
 
       const data = await response.json();
-      //console.log("que be", response);
+      console.log("que be", response);
 
       if (data?.status === "success") {
         if (rememberMe) {

@@ -11,3 +11,6 @@ android/
 
 .expo/
 .expo-shared/
+
+# Custom ignores
+app/engineer/componenet/EmailSender.tsx

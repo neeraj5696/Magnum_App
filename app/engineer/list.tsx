@@ -33,6 +33,7 @@ interface Complaint {
   COMP_ADD3?: string;
   COMP_TEL?: string;
   AMC_Status?: string;
+  mailaddcallrpt?:string;
 }
 
 const EngineerList: FC = () => {
@@ -223,6 +224,7 @@ const EngineerList: FC = () => {
                     COMP_ADD2: item.COMP_ADD2 || "",
                     COMP_ADD3: item.COMP_ADD3 || "",
                     COMP_TEL: item.COMP_TEL || "",
+                    mailaddcallrpt:item.mailaddcallrpt,
                     
                   },
                 });
