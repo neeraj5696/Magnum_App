@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity, Text, View } from "react-native";
+import { Image, StyleSheet, TouchableOpacity, Text, View, Linking } from "react-native";
 import { SafeAreaView } from "react-native";
 import LogoHeader from "./components/LogoHeader";
 import Footer from "./components/footer";
@@ -12,6 +12,8 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.background}>
       <View style= {styles.innercontainer}>
+      <TouchableOpacity style={styles.circle} onPress={() => Linking.openURL('https://hma.magnum.org.in/MagnumAttendance/')}>
+      </TouchableOpacity>
       <LogoHeader />
         <View style={styles.container}>
           {/* Manager and Area Manager Section */}
@@ -71,7 +73,11 @@ export default function HomeScreen() {
           {/* Admin and Check In/Out Section */}
           <View style={styles.buttonGrid}>
             {/* Admin Image */}
-            <TouchableOpacity style={styles.buttonSmall}>
+            <TouchableOpacity 
+            onPress={() =>
+                router.push("/Attendance/Attendance")
+              }
+            style={styles.buttonSmall}>
               <Image
                 source={require("../assets/images/admin.png")}
                 style={styles.buttonImageSmall}
@@ -115,6 +121,7 @@ const styles = StyleSheet.create({
   innercontainer: {
     justifyContent: "space-between",
     flex: 1,
+    position: "relative",
   },
   headingContainer: {
     alignItems: "center",
@@ -152,5 +159,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
+  },
+  circle: {
+    position: "absolute",
+    top: +130,
+    alignSelf: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgb(72, 118, 167)",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    zIndex: 10,
   },
 });
