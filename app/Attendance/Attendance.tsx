@@ -1,4 +1,6 @@
-import { Text, StyleSheet, View, FlatList, TextInput, Platform, TouchableOpacity, Alert, ScrollView, RefreshControl } from 'react-native';
+import { Text, StyleSheet, View, FlatList, TextInput, Platform, TouchableOpacity, Alert, ScrollView, RefreshControl, Animated, ActivityIndicator, Modal } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import { useState, useEffect } from 'react';
 import * as Device from 'expo-device';
@@ -9,7 +11,7 @@ import { add } from 'date-fns';
 interface DeviceInfo {
   deviceName: string,
   deviceId: string,
-  uniqueId: string,
+  UniqueID: string,
   systemName: string,
   systemVersion: string,
   brand: string,
@@ -21,19 +23,34 @@ interface AttendanceRecord {
   EMPCODE: string;
 }
 
+interface AttendanceViewRecord {
+  EMPNUM: string;
+  EMPNAME: string;
+  ATT_DATE: string;
+  LOCATION: string;
+}
+
 
 
 function Attendance() {
+  const submitScale = new Animated.Value(1);
+  const viewScale = new Animated.Value(1);
+
+  const pressIn = (anim: Animated.Value) => Animated.spring(anim, { toValue: 0.95, useNativeDriver: true }).start();
+  const pressOut = (anim: Animated.Value) => Animated.spring(anim, { toValue: 1, useNativeDriver: true }).start();
   const [list, setList] = useState<AttendanceRecord[]>([]);
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>({} as DeviceInfo);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('');
-  const [locationData, setLocationData] = useState<{latitude: number, longitude: number, locationName: string} | null>(null);
+  const [locationData, setLocationData] = useState<{ latitude: number, longitude: number, locationName: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingView, setLoadingView] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
   const [showDeviceInfo, setShowDeviceInfo] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceViewRecord[]>([]);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
 
   useEffect(() => {
     const loadDeviceInfo = async () => {
@@ -49,8 +66,6 @@ function Attendance() {
       };
 
       setDeviceInfo(info);
-      console.log('Device Info:', info);
-      console.log('Android ID:', androidId);
     };
 
     loadDeviceInfo();
@@ -68,7 +83,6 @@ function Attendance() {
       const data = listresult.data?.data;
       setList(data || []);
     } catch (err) {
-      console.log(err);
       Alert.alert('Error', 'Failed to load employees');
     } finally {
       setLoadingList(false);
@@ -104,7 +118,6 @@ function Attendance() {
 
       return data;
     } catch (err) {
-      console.log(err);
       Alert.alert('Error', 'Failed to get location');
       return null;
     }
@@ -116,13 +129,13 @@ function Attendance() {
     setRefreshing(false);
   };
 
+
+
   const filteredList = list.filter(item =>
     item.ENG_NAME.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSubmit = async () => {
-    console.log('⏱️ Submit started');
-    
     if (!selectedEmployee) {
       Alert.alert('Error', 'Please select an employee');
       return;
@@ -134,40 +147,77 @@ function Attendance() {
     }
 
     setLoading(true);
-    
+
+    const now = new Date();
+    const formatted =
+      now.getFullYear() + "-" +
+      String(now.getMonth() + 1).padStart(2, "0") + "-" +
+      String(now.getDate()).padStart(2, "0") + " " +
+      String(now.getHours()).padStart(2, "0") + ":" +
+      String(now.getMinutes()).padStart(2, "0") + ":" +
+      String(now.getSeconds()).padStart(2, "0");
+
     const formData = new URLSearchParams();
-    formData.append('EMPCODE', selectedEmployee); 
+    formData.append('EMPCODE', selectedEmployee);
+    formData.append('Location', location);
     formData.append('DeviceName', deviceInfo.deviceName);
-    formData.append('deviceId', deviceInfo.deviceId);
+    formData.append('UniqueID', deviceInfo.deviceId);
     formData.append('OS', deviceInfo.systemName);
-    formData.append('systemVersion', deviceInfo.systemVersion);
+    formData.append('Aattdatetime', formatted);
     formData.append('Brand', deviceInfo.brand);
-    formData.append('model', deviceInfo.model);
-    formData.append('Aattdatetime', new Date().toISOString());
-    formData.append('latitude', locationData.latitude.toString());
-    formData.append('longitude', locationData.longitude.toString());
-    console.log('⏱️ Form data ready');
 
     try {
-      console.log('⏱️ Sending API request...');
-      const startAPI = Date.now();
       const result = await axios.post('https://hma.magnum.org.in/appAttendance.php', formData.toString(), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
-      console.log(`⏱️ API responded in ${Date.now() - startAPI}ms`);
-      console.log('✅ Response:', result.data);
-      
-      Alert.alert('Success', 'Attendance submitted successfully');
-      setSelectedEmployee('');
-      setSearchQuery('');
+
+      if (result.data?.status === "success") {
+        Alert.alert('Success', result.data.reason);
+        setSelectedEmployee('');
+        setSearchQuery('');
+      }
+      else {
+        Alert.alert('Error', result.data.reason);
+      }
+
     } catch (err) {
-      console.log('❌ Error:', err);
       Alert.alert('Error', 'Failed to submit attendance');
     } finally {
       setLoading(false);
-      console.log('⏱️ Submit completed');
+    }
+  };
+
+  const handleViewAttendance = async () => {
+    if (!selectedEmployee) {
+      Alert.alert('Error', 'Please select an employee');
+      return;
+    }
+    setLoadingView(true);
+    const formData = new URLSearchParams();
+    formData.append('EMPCODE', selectedEmployee);
+    try {
+      const result = await axios.post('https://hma.magnum.org.in/appAttendanceview.php', formData.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+      if (result.status === 200 && result.data.data) {
+      
+        const sorted = [...result.data.data].sort(
+          (a, b) => new Date(b.ATT_DATE).getTime() - new Date(a.ATT_DATE).getTime()
+        );
+        setAttendanceRecords(sorted);
+        setShowAttendanceModal(true);
+      
+      } else {
+        Alert.alert('Error', 'No attendance records found');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to fetch attendance');
+    } finally {
+      setLoadingView(false);
     }
   };
 
@@ -278,15 +328,130 @@ function Attendance() {
         ))
       )}
 
-      <TouchableOpacity
-        style={[styles.submitButton, (!location || loading) && styles.submitButtonDisabled]}
-        onPress={handleSubmit}
-        disabled={!location || loading}
-      >
-        <Text style={styles.submitButtonText}>
-          {loading ? 'Submitting...' : 'Submit Attendance'}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+
+        {/* ✅ Submit Attendance Button */}
+        <Animated.View style={[styles.btnWrapper, { transform: [{ scale: submitScale }] }]}>
+          <TouchableOpacity
+            style={[styles.premiumBtn, (!location || loading) && styles.btnDisabled]}
+            onPress={handleSubmit}
+            onPressIn={() => pressIn(submitScale)}
+            onPressOut={() => pressOut(submitScale)}
+            disabled={!location || loading}
+            activeOpacity={1}
+          >
+            <LinearGradient colors={(!location || loading) ? ['#B0BEC5', '#90A4AE'] : ['#1E88E5', '#1565C0']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.btnGradient}>
+              <View style={styles.btnInner}>
+                {loading
+                  ? <ActivityIndicator color="#fff" size={24} />
+                  : <MaterialCommunityIcons name="check-circle" size={28} color="#fff" />}
+                <View>
+                  <Text style={styles.btnLabel}>{loading ? 'Submitting...' : 'Submit'}</Text>
+                  <Text style={styles.btnSub}>Mark Attendance</Text>
+                </View>
+              </View>
+              <View style={styles.btnShine} />
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* 📋 View Attendance Button */}
+        <Animated.View style={[styles.btnWrapper, { transform: [{ scale: viewScale }] }]}>
+          <TouchableOpacity
+            style={[styles.premiumBtn, (!location || loadingView) && styles.btnDisabled]}
+            onPress={handleViewAttendance}
+            onPressIn={() => pressIn(viewScale)}
+            onPressOut={() => pressOut(viewScale)}
+           
+            activeOpacity={1}
+          >
+            <LinearGradient colors={( loadingView) ? ['#B0BEC5', '#90A4AE'] : ['#21b3a4', '#0b8b7d']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.btnGradient}>
+              <View style={styles.btnInner}>
+                {loadingView
+                  ? <ActivityIndicator color="#fff" size={24} />
+                  : <MaterialCommunityIcons name="clipboard-text" size={28} color="#fff" />}
+                <View>
+                  <Text style={styles.btnLabel}>{loadingView ? 'Loading...' : 'View'}</Text>
+                  <Text style={styles.btnSub}>Attendance Log</Text>
+                </View>
+              </View>
+              <View style={styles.btnShine} />
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+
+      </View>
+
+      {/* Attendance Records Modal */}
+      <Modal visible={showAttendanceModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+
+            {/* Handle bar */}
+            <View style={styles.modalHandle} />
+
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleRow}>
+                <LinearGradient colors={['#1E88E5','#1565C0']} style={styles.modalIconBadge}>
+                  <MaterialCommunityIcons name="clipboard-text" size={20} color="#fff" />
+                </LinearGradient>
+                <View>
+                  <Text style={styles.modalTitle}>Attendance Log</Text>
+                  <Text style={styles.modalSub}>{attendanceRecords[0]?.EMPNAME ?? ''}</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setShowAttendanceModal(false)} style={styles.modalCloseBtn}>
+                <MaterialCommunityIcons name="close" size={20} color="#555" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Count badge */}
+            <View style={styles.countBadge}>
+              <MaterialCommunityIcons name="calendar-check" size={14} color="#1976D2" />
+              <Text style={styles.countText}>{attendanceRecords.length} records found</Text>
+            </View>
+
+            <FlatList
+              data={attendanceRecords}
+              keyExtractor={(_, i) => i.toString()}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 16 }}
+              renderItem={({ item, index }) => (
+                <View style={styles.recordCard}>
+                  {/* Left accent + index */}
+                  <LinearGradient colors={['#1E88E5','#1565C0']} style={styles.recordAccent}>
+                    <Text style={styles.recordIndex}>{index + 1}</Text>
+                  </LinearGradient>
+
+                  <View style={styles.recordBody}>
+                    <View style={styles.recordTopRow}>
+                      <MaterialCommunityIcons name="clock-outline" size={14} color="#1976D2" />
+                      <Text style={styles.recordDate}>{item.ATT_DATE}</Text>
+                    </View>
+                    <View style={styles.recordBottomRow}>
+                      <MaterialCommunityIcons name="map-marker-outline" size={14} color="#43A047" />
+                      <Text style={styles.recordLocation}>{item.LOCATION}</Text>
+                    </View>
+                  </View>
+
+                  {index === 0 && (
+                    <View style={styles.latestBadge}>
+                      <Text style={styles.latestText}>Latest</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <MaterialCommunityIcons name="calendar-remove" size={48} color="#ccc" />
+                  <Text style={styles.emptyText}>No records found</Text>
+                </View>
+              }
+            />
+          </View>
+        </View>
+      </Modal>
 
     </ScrollView>
   );
@@ -302,6 +467,12 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingTop: 50,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 20,
   },
 
 
@@ -498,22 +669,223 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  submitButton: {
-    backgroundColor: '#2196F3',
+  btnWrapper: {
+    flex: 1,
+    borderRadius: 20,
+    shadowColor: '#1565C0',
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
+  },
+
+  premiumBtn: {
     borderRadius: 10,
-    padding: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+
+  btnGradient: {
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    overflow: 'hidden',
+  },
+
+  btnDisabled: {
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+
+  btnInner: {
+    flexDirection: 'row',
     alignItems: 'center',
-
+    gap: 10,
   },
 
-  submitButtonDisabled: {
-    backgroundColor: '#BDBDBD',
-  },
-
-  submitButtonText: {
+  btnLabel: {
     color: '#fff',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+
+  btnSub: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+
+  btnShine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+
+  modalCard: {
+    backgroundColor: '#F4F6F8',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 20,
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 20,
+  },
+
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D0D0D0',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  modalTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  modalIconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  modalTitle: {
     fontSize: 16,
+    fontWeight: '800',
+    color: '#111',
+  },
+
+  modalSub: {
+    fontSize: 11,
+    color: '#888',
+    marginTop: 1,
+  },
+
+  modalCloseBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#ECECEC',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  countBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#E3F2FD',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginBottom: 14,
+  },
+
+  countText: {
+    fontSize: 12,
+    color: '#1976D2',
+    fontWeight: '600',
+  },
+
+  recordCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginBottom: 10,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+
+  recordAccent: {
+    width: 44,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  recordIndex: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+
+  recordBody: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    gap: 5,
+  },
+
+  recordTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+
+  recordBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+
+  recordDate: {
+    fontSize: 13,
     fontWeight: '700',
+    color: '#1A1A1A',
+  },
+
+  recordLocation: {
+    fontSize: 12,
+    color: '#555',
+  },
+
+  latestBadge: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+
+  latestText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#2E7D32',
   },
 });
 

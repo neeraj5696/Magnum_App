@@ -44,7 +44,8 @@ export default {
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
     ],
     experiments: {
       typedRoutes: true
