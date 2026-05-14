@@ -32,10 +32,10 @@ function Applyleave() {
     const [startDuration, setStartDuration] = useState('');
     const [endDate, setEndDate] = useState('');
     const [endDuration, setEndDuration] = useState('');
-    const isFormValid = selectedEmployee && leaveType.trim() && startDate.trim() && startDuration && endDate.trim() && endDuration;
+    const isFormValid = leaveType.trim() && startDate.trim() && startDuration && endDate.trim() && endDuration;
 
     const filledFields = [leaveType.trim(), startDate.trim(), startDuration, endDate.trim(), endDuration].filter(Boolean).length;
-    const totalFields =  [leaveType.trim(), startDate.trim(), startDuration, endDate.trim(), endDuration].length;
+    const totalFields = [leaveType.trim(), startDate.trim(), startDuration, endDate.trim(), endDuration].length;
     const progress = (filledFields / totalFields) * 100;
     const [remark, setRemark] = useState('');
     const [successModalVisible, setSuccessModalVisible] = useState(false);
@@ -94,11 +94,11 @@ function Applyleave() {
     };
 
 
-  
+
 
     const onRefresh = async () => {
         setRefreshing(true);
-      
+
         setRefreshing(false);
     };
 
@@ -107,7 +107,7 @@ function Applyleave() {
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
-        if (!selectedEmployee) newErrors.employee = 'Please select an employee';
+
         if (!leaveType.trim()) newErrors.leaveType = 'Leave type is required';
         if (!startDate.trim()) newErrors.startDate = 'Start date is required';
         if (!startDuration) newErrors.startDuration = 'Start duration is required';
@@ -127,23 +127,60 @@ function Applyleave() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (validateForm()) {
-            // Simulate API call
             setLoading(true);
-            setTimeout(() => {
+            try {
+                const formData = new URLSearchParams();
+                formData.append('EMPCODE', username);
+                formData.append('Leavetype', leaveType);
+                formData.append('Leavedate', startDate);
+                formData.append('remarks', remark);
+                formData.append('Leavestartdate', startDate);
+                formData.append('Fulldayhalfday1', startDuration === 'full' ? 'FULL DAY' : 'HALF DAY');
+                formData.append('Leaveenddate', endDate);
+                formData.append('Fulldayhalfday2', endDuration === 'full' ? 'FULL DAY' : 'HALF DAY');
+
+                const response = await axios.post(
+                    'https://hma.magnum.org.in/appleaveapply.php',
+                    formData.toString(),
+                    {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                    }
+                );
+
+                const data = response.data;
+                console.log(data);
+                if (data?.status === 'success') {
+                    Alert.alert(
+                        'Success',
+                        data?.reason || data?.message || 'Leave applied successfully.'
+                    );
+                    setSuccessModalVisible(true);
+                    setLeaveType('');
+                    setStartDate('');
+                    setStartDuration('');
+                    setEndDate('');
+                    setEndDuration('');
+                    setRemark('');
+                    setErrors({});
+                } else {
+                    Alert.alert(
+                        'Submission failed',
+                        data?.reason || data?.message || 'Unable to submit leave. Please try again.'
+                    );
+                }
+            } catch (error: any) {
+                console.error('Leave submission error:', error);
+                Alert.alert(
+                    'Network error',
+                    'Unable to submit leave request. Please check your connection and try again.'
+                );
+            } finally {
                 setLoading(false);
-                setSuccessModalVisible(true);
-                // Clear form
-                setSelectedEmployee('');
-                setLeaveType('');
-                setStartDate('');
-                setStartDuration('');
-                setEndDate('');
-                setEndDuration('');
-                setRemark('');
-                setErrors({});
-            }, 1500);
+            }
         }
     };
 
@@ -184,7 +221,7 @@ function Applyleave() {
             </View>
 
             {/* Employee and Leave Type */}
-            <View style={styles.sectionCard}>
+            <View style={[styles.sectionCard, Platform.OS === 'ios' ? { zIndex: 3000 } : { elevation: 3, zIndex: 3000 }]}>
                 <View style={styles.sectionHeader}>
                     <MaterialCommunityIcons name="account-cog" size={20} color="#2196F3" />
                     <Text style={styles.sectionTitle}>Employee & Leave Details</Text>
@@ -195,7 +232,7 @@ function Applyleave() {
                     <Text style={styles.fieldLabel}>Select Employee *</Text>
                     <TextInput
                         style={[styles.input]}
-                      
+
                         value={username}
 
                         editable={false}
@@ -206,7 +243,7 @@ function Applyleave() {
                 </View>
 
                 {/* Leave Type */}
-                <View style={styles.fieldContainer}>
+                <View style={[styles.fieldContainer, Platform.OS === 'ios' ? { zIndex: 3000 } : {}]}>
                     <Text style={styles.fieldLabel}>Leave Type *</Text>
                     <DropDownPicker
                         open={leaveTypeOpen}
@@ -234,12 +271,12 @@ function Applyleave() {
             </View>
 
             {/* Leave Period */}
-            <View style={styles.sectionCard}>
+            <View style={[styles.sectionCard, Platform.OS === 'ios' ? { zIndex: 2000 } : { elevation: 2, zIndex: 2000 }]}>
                 <View style={styles.sectionHeader}>
                     <MaterialCommunityIcons name="calendar-range" size={20} color="#2196F3" />
                     <Text style={styles.sectionTitle}>Leave Period *</Text>
                 </View>
-                <View style={styles.dateRow}>
+                <View style={[styles.dateRow, Platform.OS === 'ios' ? { zIndex: 2000 } : {}]}>
                     {/* Start Date */}
                     <View style={styles.dateColumn}>
                         <Text style={styles.dateLabel}>Start Date</Text>
@@ -280,7 +317,7 @@ function Applyleave() {
                     </View>
                 </View>
 
-                <View style={styles.dateRow}>
+                <View style={[styles.dateRow, Platform.OS === 'ios' ? { zIndex: 1000 } : {}]}>
                     {/* End Date */}
                     <View style={styles.dateColumn}>
                         <Text style={styles.dateLabel}>End Date</Text>
@@ -323,7 +360,7 @@ function Applyleave() {
             </View>
 
             {/* Additional Information */}
-            <View style={styles.sectionCard}>
+            <View style={[styles.sectionCard, Platform.OS === 'ios' ? { zIndex: 1000 } : { elevation: 1, zIndex: 1000 }]}>
                 <View style={styles.sectionHeader}>
                     <MaterialCommunityIcons name="information-outline" size={20} color="#2196F3" />
                     <Text style={styles.sectionTitle}>Additional Information</Text>
@@ -635,14 +672,14 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#ddd',
         borderRadius: 10,
-        minHeight: 40,       
+        minHeight: 40,
     },
 
     dropdownContainer: {
         backgroundColor: '#fff',
         borderWidth: 1,
         borderColor: '#ddd',
-        borderRadius: 10,       
+        borderRadius: 10,
         zIndex: 11000,
 
     },

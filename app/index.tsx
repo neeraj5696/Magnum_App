@@ -1,6 +1,7 @@
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity, Text, View, Linking } from "react-native";
+import { Image, StyleSheet, TouchableOpacity, Text, View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import LogoHeader from "./components/LogoHeader";
 import Footer from "./components/footer";
 import { useRouter } from "expo-router";
@@ -8,122 +9,56 @@ import { useRouter } from "expo-router";
 export default function HomeScreen() {
   const router = useRouter();
 
+  const MODULES = [
+    { name: "Manager", image: require("../assets/images/manager.png"), route: "/manager/login" },
+    { name: "Area Manager", image: require("../assets/images/boss.png"), route: "/areamanager/alogin" },
+    { name: "Engineer", image: require("../assets/images/engineer.png"), route: "/engineer/login" },
+    { name: "Partner", image: require("../assets/images/collaboration.png"), route: "/partner/login" },
+    { name: "Attendance", image: require("../assets/images/admin.png"), route: "/Attendance/Attendance" },
+    { name: "Check In/Out", image: require("../assets/images/checkinout.png"), route: "/engineer_checkinout/checkinout_login" },
+    { name: "Leave", image: require("../assets/images/leave.png"), route: "/Leave/login" },
+     { name: "Approve Leave", image: require("../assets/images/leave.png"), route: "/Leave/Mlogin" },
+  ];
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.background}>
-        <View style={styles.outercontainer} >
+      <LinearGradient
+        colors={["#E8F0F9", "#D4E0F0"]}
+        style={styles.background}
+      >
+        <View style={styles.outercontainer}>
           <View style={styles.innercontainer}>
             <LogoHeader />
 
-
-            <View style={styles.container}>
-              {/* Manager and Area Manager Section */}
-              <View style={styles.buttonGrid}>
-                {/* Manager Image */}
-                <TouchableOpacity
-                  style={styles.buttonSmall}
-                  onPress={() => router.push("/manager/login")}
-                >
-                  <Image
-                    source={require("../assets/images/manager.png")}
-                    style={styles.buttonImageSmall}
-                  />
-                  <Text style={styles.buttonTextSmall}>Manager</Text>
-                </TouchableOpacity>
-
-                {/* Area Manager Image */}
-                <TouchableOpacity
-                  style={styles.buttonSmall}
-                  onPress={() => router.push("/areamanager/alogin")}
-                >
-                  <Image
-                    source={require("../assets/images/boss.png")}
-                    style={styles.buttonImageSmall}
-                  />
-                  <Text style={styles.buttonTextSmall}>Area Manager</Text>
-                </TouchableOpacity>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+            >
+              <View style={styles.container}>
+                {MODULES.map((module, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.buttonSmall}
+                    onPress={() => router.push(module.route as any)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.imageContainer}>
+                      <Image
+                        source={module.image}
+                        style={styles.buttonImageSmall}
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <Text style={styles.buttonTextSmall}>{module.name}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-
-              {/* Engineer and Partner Section */}
-              <View style={styles.buttonGrid}>
-                {/* Engineer Image */}
-                <TouchableOpacity
-                  style={styles.buttonSmall}
-                  onPress={() => router.push("/engineer/login")}
-                >
-                  <Image
-                    source={require("../assets/images/engineer.png")}
-                    style={styles.buttonImageSmall}
-                  />
-                  <Text style={styles.buttonTextSmall}>Engineer</Text>
-                </TouchableOpacity>
-
-                {/* Partner Image */}
-                <TouchableOpacity
-                  style={styles.buttonSmall}
-                  onPress={() => router.push("/partner/login")}
-                >
-                  <Image
-                    source={require("../assets/images/collaboration.png")}
-                    style={styles.buttonImageSmall}
-                  />
-                  <Text style={styles.buttonTextSmall}>Partner</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Admin and Check In/Out Section */}
-              <View style={styles.buttonGrid}>
-                {/* Admin Image */}
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push("/Attendance/Attendance")
-                  }
-                  style={styles.buttonSmall}>
-                  <Image
-                    source={require("../assets/images/admin.png")}
-                    style={styles.buttonImageSmall}
-                  />
-                  <Text style={styles.buttonTextSmall}>Attendance</Text>
-                </TouchableOpacity>
-
-                {/* Check In/Out Image */}
-                <TouchableOpacity
-                  style={styles.buttonSmall}
-                  onPress={() =>
-                    router.push("/engineer_checkinout/checkinout_login")
-                  }
-                >
-                  <Image
-                    source={require("../assets/images/checkinout.png")}
-                    style={styles.buttonImageSmall}
-                  />
-                  <Text style={styles.buttonTextSmall}>Check In/Out</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Leave  */}
-              <View style={styles.buttonGrid}>
-                {/* Apply for Leave */}
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push("/Leave/login")
-                  }
-                  style={styles.buttonSmall}>
-                  <Image
-                    source={require("../assets/images/leave.png")}
-                    style={styles.buttonImageSmall}
-                  />
-                  <Text style={styles.buttonTextSmall}>Leave</Text>
-                </TouchableOpacity>
-
-
-              </View>
-            </View>
+            </ScrollView>
 
           </View>
           <Footer />
         </View>
-      </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -131,87 +66,71 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "rgb(226, 234, 243)",
-
+    backgroundColor: "#E8F0F9",
   },
   background: {
     flex: 1,
-    padding: 16,
+    padding: 0,
     justifyContent: "space-between",
-
   },
   outercontainer: {
-    borderRadius: 10,
-    backgroundColor: "#c1d3d8",
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
     flex: 1,
-    elevation: 4,
-   
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 2,
   },
   innercontainer: {
     flex: 1,
     position: "relative",
-
   },
-  headingContainer: {
-    alignItems: "center",
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
+  scrollContent: {
+    paddingBottom: 24,
   },
   container: {
-    marginTop: 10,
-  },
-  buttonGrid: {
     flexDirection: "row",
-    margin: 4,
-    gap: 16,
-    justifyContent: "center",
-
+    flexWrap: "wrap",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    justifyContent: "space-between",
+    rowGap: 16,
   },
   buttonSmall: {
     alignItems: "center",
-    backgroundColor: "white",
-    paddingVertical: 3,
-    paddingHorizontal: 3,
-    borderRadius: 10,
-    width: "45%",
-
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: "#F4F7FC",
+    paddingVertical: 20,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    width: "47%",
+    shadowColor: "#000000ff",
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  imageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 5,
+
   },
   buttonImageSmall: {
-    width: 120,
-    height: 120,
-
-
-
+    width: 100,
+    height: 100,
   },
-
-
   buttonTextSmall: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-
-  circle: {
-    position: "absolute",
-    top: +130,
-    alignSelf: "center",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgb(72, 118, 167)",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    zIndex: 10,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#2C3E50",
+    textAlign: "center",
+    letterSpacing: 0.3,
   },
 });
