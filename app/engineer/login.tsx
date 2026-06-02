@@ -191,7 +191,7 @@ export default function EngineerLogin() {
   };
 
   return (
-    <LinearGradient colors={["#e0eafc", "#cfdef3"]} style={styles.gradient}>
+    <LinearGradient colors={["#0f2952", "#1a4a8a", "#2d6cc0"]} style={styles.gradient}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -200,8 +200,11 @@ export default function EngineerLogin() {
           <View style={styles.innercontainer}>
             <LogoHeader />
             <View style={styles.formContainer}>
-              <Text style={styles.title}>ENGINEER LOGIN</Text>
-
+              <View style={styles.titleRow}>
+                <View style={styles.titleAccent} />
+                <Text style={styles.title}>Employee Login</Text>
+              </View>
+              <Text style={styles.subtitle} >Enter your credentials to continue</Text>
               <View
                 style={[
                   styles.inputContainer,
@@ -287,12 +290,7 @@ export default function EngineerLogin() {
                 <Text style={styles.rememberMeText}>Remember Me</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.forgotPasswordContainer}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
+
 
               {errorMessage ? (
                 <View style={styles.errorBox}>
@@ -350,27 +348,19 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 16,
+    paddingHorizontal: "2%",
   },
 
   innercontainer: {
     flex: 1,
-    height: "auto",
-    justifyContent: "space-between",
-    borderWidth: 0,
     borderRadius: 18,
-    marginTop: 20,
-    backgroundColor: "white",
-    elevation: 2,
+    backgroundColor: "transparent",
+    justifyContent: "center",
   },
   formContainer: {
     width: "100%",
-    maxWidth: 380,
-    marginBottom: "auto",
     backgroundColor: "white",
     padding: 28,
-
     shadowColor: "#000",
     shadowOffset: {
       width: 4,
@@ -379,13 +369,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 8.0,
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+
+  },
+  titleAccent: {
+    width: 4,
+    height: 22,
+    borderRadius: 2,
+    backgroundColor: "#1a4a8a",
+    marginRight: 10,
+
+  },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#222",
-    marginBottom: 24,
     textAlign: "center",
     letterSpacing: 1.2,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: "#7a8a9a",
+    marginBottom: 28,
+    marginLeft: 14,
   },
   inputContainer: {
     flexDirection: "row",
@@ -466,15 +475,7 @@ const styles = StyleSheet.create({
     color: "#444",
     fontWeight: "500",
   },
-  forgotPasswordContainer: {
-    alignSelf: "flex-end",
-    marginBottom: 10,
-  },
-  forgotPasswordText: {
-    color: "#0288d1",
-    fontSize: 15,
-    textDecorationLine: "underline",
-  },
+
   buttonContainer: {
     height: "auto",
   },

@@ -7,7 +7,7 @@ export default {
     icon: "./assets/images/icon.png",
     scheme: "magnumcare",
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
+    newArchEnabled: false,
     splash: {
       image: "./assets/images/splash-icon.png",
       resizeMode: "contain",

@@ -18,6 +18,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import LogoHeader from "../components/LogoHeader";
 import Footer from "../components/footer";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EngineerLogin() {
   const router = useRouter();
@@ -42,10 +43,10 @@ export default function EngineerLogin() {
   useEffect(() => {
     const loadCredentials = async () => {
       try {
-        const savedRememberMe = await SecureStore.getItemAsync("engg_rememberMe");
+        const savedRememberMe = await SecureStore.getItemAsync("leave_engg_rememberMe");
         if (savedRememberMe === "true") {
-          setUsername((await SecureStore.getItemAsync("engg_username")) || "");
-          setPassword((await SecureStore.getItemAsync("engg_password")) || "");
+          setUsername((await SecureStore.getItemAsync("leave_engg_username")) || "");
+          setPassword((await SecureStore.getItemAsync("leave_engg_password")) || "");
           setRememberMe(true);
         }
       } catch (error) {
@@ -85,23 +86,24 @@ export default function EngineerLogin() {
       formData.append("username", username);
       formData.append("password", password);
 
-      const response = await fetch("https://hma.magnum.org.in/appLeaveview.php", {
+      const response = await fetch("https://hma.magnum.org.in/appEmpleavedetails.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData.toString(),
       });
 
       const data = await response.json();
+      console.log('hello login response', 'ya mujhety payar hua allha miyae',response.status, data.data,  data.status)
 
-      if (response.status === 200) {
+      if (data.status === "success" ) {
         if (rememberMe) {
-          await SecureStore.setItemAsync("engg_username", username);
-          await SecureStore.setItemAsync("engg_password", password);
-          await SecureStore.setItemAsync("engg_rememberMe", "true");
+          await SecureStore.setItemAsync("leave_engg_username", username);
+          await SecureStore.setItemAsync("leave_engg_password", password);
+          await SecureStore.setItemAsync("leave_engg_rememberMe", "true");
         } else {
-          await SecureStore.deleteItemAsync("engg_username");
-          await SecureStore.deleteItemAsync("engg_password");
-          await SecureStore.deleteItemAsync("engg_rememberMe");
+          await SecureStore.deleteItemAsync("leave_engg_username");
+          await SecureStore.deleteItemAsync("leave_engg_password");
+          await SecureStore.deleteItemAsync("leave_engg_rememberMe");
         }
 
         setLoginSuccess(true);
@@ -109,16 +111,13 @@ export default function EngineerLogin() {
         setTimeout(() => {
           shimmerLoopRef.current?.stop();
           shimmerLoopRef.current = null;
-
-          {
-            router.push({
-              pathname: "/Leave/Viewleave",
-              params: { username, password },
-            });
-          }
+          router.push({
+            pathname: "/Leave/Viewleave",
+            params: { username, password },
+          });
         }, 1500);
       } else {
-        setErrorMessage(data?.message || "Login failed. Please check your credentials.");
+        setErrorMessage(data?.reason || data?.message || "Login failed. Please check your credentials.");
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -158,7 +157,7 @@ export default function EngineerLogin() {
               {/* Header */}
               <View style={styles.titleRow}>
                 <View style={styles.titleAccent} />
-                <Text style={styles.title}>Engineer Sign In</Text>
+                <Text style={styles.title}>Employee Sign In</Text>
               </View>
               <Text style={styles.subtitle}>Enter your credentials to continue</Text>
 

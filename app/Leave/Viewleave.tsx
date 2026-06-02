@@ -13,7 +13,7 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import LogoHeader from "../components/LogoHeader";
 import Footer from "../components/footer";
 
@@ -53,32 +53,26 @@ function isSameDay(start: string, end: string) {
 
 export default function Viewleave() {
     const router = useRouter();
-    const [leaveData, setLeaveData]     = useState<LeaveItem[]>([]);
-    const [isLoading, setIsLoading]     = useState(true);
+    const params = useLocalSearchParams<{ username: string; password: string }>();
+    const username = Array.isArray(params.username) ? params.username[0] ?? "" : params.username ?? "";
+    const password = Array.isArray(params.password) ? params.password[0] ?? "" : params.password ?? "";
+
+    const [leaveData, setLeaveData]       = useState<LeaveItem[]>([]);
+    const [isLoading, setIsLoading]       = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    const [credentials, setCredentials] = useState({ username: "", password: "" });
 
     useEffect(() => {
-        const loadCredentials = async () => {
-            try {
-                const username = (await SecureStore.getItemAsync("engg_username")) || "";
-                const password = (await SecureStore.getItemAsync("engg_password")) || "";
-                setCredentials({ username, password });
-            } catch (error) {
-                console.error("Error loading credentials:", error);
-                setErrorMessage("Failed to load credentials.");
-                setIsLoading(false);
-            }
-        };
-        loadCredentials();
-    }, []);
-
-    useEffect(() => {
-        if (credentials.username && credentials.password) {
+        // Persist credentials so SecureStore-based pages (Applyleave) can also use them
+        if (username && password) {
+            SecureStore.setItemAsync("leave_engg_username", username);
+            SecureStore.setItemAsync("leave_engg_password", password);
             fetchLeaves();
+        } else {
+            setIsLoading(false);
+            setErrorMessage("Session expired. Please log in again.");
         }
-    }, [credentials]);
+    }, []);
 
     const fetchLeaves = async (isRefresh = false) => {
         if (isRefresh) setIsRefreshing(true);
@@ -87,8 +81,8 @@ export default function Viewleave() {
 
         try {
             const formData = new URLSearchParams();
-            formData.append("username", credentials.username);
-            formData.append("password", credentials.password);
+            formData.append("username", username);
+            formData.append("password", password);
 
             const response = await axios.post(
                 "https://hma.magnum.org.in/appEmpleavedetails.php",
@@ -109,7 +103,7 @@ export default function Viewleave() {
     const handleRedirect = () => {
         router.push({
             pathname: "/Leave/Applyleave",
-            params: credentials,
+            params: { username, password },
         });
     };
 

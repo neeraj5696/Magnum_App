@@ -10,12 +10,16 @@ import {
   ActivityIndicator,
   Animated,
   Pressable,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import LogoHeader from "../components/LogoHeader";
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Footer from "../components/footer";
+import { LinearGradient } from "expo-linear-gradient";
+import { Line } from "react-native-svg";
 
 export default function CheckInOut() {
   const router = useRouter();
@@ -177,126 +181,130 @@ export default function CheckInOut() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.innercontainer}>
-        <LogoHeader />
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>CHECK IN/OUT LOGIN</Text>
+    <LinearGradient colors={["#0f2952", "#1a4a8a", "#2d6cc0"]} style={styles.gradient}>
 
-          <View style={styles.inputContainer}>
-            <MaterialIcons
-              name="person"
-              size={20}
-              color="#666"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-              editable={!isLoading}
-            />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS == 'ios' ? 'padding' : undefined}>
+
+        <View style={styles.innercontainer}>
+          <LogoHeader />
+          <View style={styles.formContainer}>
+            <View style={styles.titlecontainer}>
+              <Text style={styles.title}>EMPLOYEE LOGIN</Text>
+              <Text style={styles.subtitle}>
+                Please enter your credentials to check in or out
+              </Text>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <MaterialIcons
+                name="person"
+                size={20}
+                color="#666"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+                editable={!isLoading}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <MaterialIcons
+                name="lock"
+                size={20}
+                color="#666"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!isPasswordVisible}
+                editable={!isLoading}
+                onFocus={() => setInputFocus((f) => ({ ...f, password: true }))}
+                onBlur={() => {
+                  setInputFocus((f) => ({ ...f, password: false }));
+                  setIsPasswordVisible(false);
+                }}
+              />
+
+              <Text>
+                <Pressable onPress={() => setIsPasswordVisible((prev) => !prev)}>
+                  <MaterialIcons
+                    name={isPasswordVisible ? "visibility" : "visibility-off"}
+                    size={22}
+                    color={inputFocus.password ? "#0066CC" : "#666"}
+                    style={styles.inputIcon}
+                  />
+                </Pressable>
+              </Text>
+            </View>
+
+            {errorMessage ? (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            ) : null}
+
+            <TouchableOpacity
+              style={styles.rememberMeContainer}
+              onPress={() => setRememberMe(!rememberMe)}
+            >
+              <MaterialIcons
+                name={rememberMe ? "check-box" : "check-box-outline-blank"}
+                size={24}
+                color="#0066CC"
+              />
+              <Text style={styles.rememberMeText}>Remember Me</Text>
+            </TouchableOpacity>
+
+            <View style={styles.buttonContainer}>
+              {loginSuccess ? (
+                <View style={styles.successContainer}>
+                  <Animated.View style={[styles.shimmer, shimmerStyle]} />
+                  <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
+                  <Text style={styles.successText}>Login Successful!</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.loginButton,
+                    isLoading && styles.loginButtonDisabled,
+                  ]}
+                  onPress={handleLogin}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.loginButtonText}>Login</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-
-          <View style={styles.inputContainer}>
-            <MaterialIcons
-              name="lock"
-              size={20}
-              color="#666"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!isPasswordVisible}
-              editable={!isLoading}
-              onFocus={() => setInputFocus((f) => ({ ...f, password: true }))}
-              onBlur={() => {
-                setInputFocus((f) => ({ ...f, password: false }));
-                setIsPasswordVisible(false);
-              }}
-            />
-
-            <Text>
-              <Pressable onPress={() => setIsPasswordVisible((prev) => !prev)}>
-                <MaterialIcons
-                  name={isPasswordVisible ? "visibility" : "visibility-off"}
-                  size={22}
-                  color={inputFocus.password ? "#0066CC" : "#666"}
-                  style={styles.inputIcon}
-                />
-              </Pressable>
-            </Text>
-          </View>
-
-          {errorMessage ? (
-            <Text style={styles.errorText}>{errorMessage}</Text>
-          ) : null}
-
-          <TouchableOpacity
-            style={styles.rememberMeContainer}
-            onPress={() => setRememberMe(!rememberMe)}
-          >
-            <MaterialIcons
-              name={rememberMe ? "check-box" : "check-box-outline-blank"}
-              size={24}
-              color="#0066CC"
-            />
-            <Text style={styles.rememberMeText}>Remember Me</Text>
-          </TouchableOpacity>
-
-          <View style={styles.buttonContainer}>
-            {loginSuccess ? (
-              <View style={styles.successContainer}>
-                <Animated.View style={[styles.shimmer, shimmerStyle]} />
-                <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
-                <Text style={styles.successText}>Login Successful!</Text>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={[
-                  styles.loginButton,
-                  isLoading && styles.loginButtonDisabled,
-                ]}
-                onPress={handleLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text style={styles.loginButtonText}>Login</Text>
-                )}
-              </TouchableOpacity>
-            )}
-          </View>
+          <Footer />
         </View>
-        <Footer />
-      </View>
-    </View>
+
+
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  gradient: {
     flex: 1,
-    backgroundColor: "rgb(226, 234, 243)",
-    paddingHorizontal: 8,
-    paddingVertical: 16,
-    justifyContent: "space-between",
   },
+
   innercontainer: {
     flex: 1,
-    height: "auto",
-    justifyContent: "space-between",
-    borderWidth: 0,
-    borderRadius: 18,
-    marginTop: 20,
-    backgroundColor: "white",
-    elevation: 2,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
   },
 
   logoContainer: {
@@ -305,88 +313,118 @@ const styles = StyleSheet.create({
 
   formContainer: {
     backgroundColor: "white",
-
-    marginBottom: "auto",
-    padding: 20,
-    borderRadius: 0,
+    padding: 28,
+   
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+  },
+  titlecontainer: {
+    marginBottom: 28,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 20,
-    textAlign: "center",
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#0f2952",
+    textAlign: "left",
+    borderLeftWidth: 4,
+    borderLeftColor: "#0066CC",
+    paddingLeft: 12,
+    letterSpacing: 0.5,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: "#666",
+    textAlign: "left",
+    paddingLeft: 16,
+    marginTop: 8,
+    lineHeight: 18,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#ddd",
+    backgroundColor: "#f5f7fa",
+    borderRadius: 10,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: "#e0e5eb",
+    paddingHorizontal: 12,
   },
   inputIcon: {
-    padding: 12,
+    padding: 10,
+    marginRight: 4,
   },
   input: {
     flex: 1,
-    padding: 12,
-    fontSize: 16,
+    padding: 14,
+    fontSize: 15,
+    color: "#0f2952",
   },
   errorText: {
-    color: "#FF3B30",
-    fontSize: 14,
-    marginBottom: 15,
-    textAlign: "center",
+    color: "#E63946",
+    fontSize: 13,
+    marginBottom: 16,
+    marginTop: -8,
+    textAlign: "left",
+    paddingLeft: 4,
+    fontWeight: "500",
   },
   loginButton: {
     backgroundColor: "#0066CC",
-    padding: 14,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 10,
     alignItems: "center",
-    marginTop: 5,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
+    marginTop: 8,
+    elevation: 3,
+    shadowColor: "#0066CC",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4.65,
   },
   loginButtonDisabled: {
-    backgroundColor: "#999",
+    backgroundColor: "#B0B0B0",
   },
   loginButtonText: {
     color: "white",
-    fontSize: 14,
-    fontWeight: "bold",
+    fontSize: 15,
+    fontWeight: "600",
+    letterSpacing: 0.4,
   },
   rememberMeContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 22,
+    marginTop: 8,
   },
   rememberMeText: {
-    marginLeft: 8,
+    marginLeft: 10,
     fontSize: 14,
-    color: "#666",
+    color: "#555",
+    fontWeight: "500",
   },
   buttonContainer: {
     height: "auto",
+    marginTop: 4,
   },
   successContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgb(232, 244, 253)",
-    padding: 14,
-    borderRadius: 8,
+    backgroundColor: "#E8F5E9",
+    padding: 16,
+    borderRadius: 10,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#4CAF50",
   },
   successText: {
     color: "#2E7D32",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
-    marginLeft: 8,
+    marginLeft: 10,
+    letterSpacing: 0.3,
   },
   shimmer: {
     position: "absolute",
@@ -394,7 +432,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 172, 237, 0.25)",
+    backgroundColor: "rgba(76, 175, 80, 0.2)",
     width: 200,
   },
 });

@@ -56,6 +56,7 @@ export default function Viewleave() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [credentials, setCredentials] = useState({ username: "", password: "" });
+    const [credentialsLoaded, setCredentialsLoaded] = useState(false);
     const [processingId, setProcessingId] = useState<number | null>(null);
 
     // Toast
@@ -78,12 +79,15 @@ export default function Viewleave() {
     useEffect(() => {
         const loadCredentials = async () => {
             try {
-                const username = (await SecureStore.getItemAsync("engg_username")) || "";
-                const password = (await SecureStore.getItemAsync("engg_password")) || "";
+                const username = (await SecureStore.getItemAsync("leave_mgr_username")) || "";
+                const password = (await SecureStore.getItemAsync("leave_mgr_password")) || "";
+                console.log('credential loaded, ', username, password)
                 setCredentials({ username, password });
+                setCredentialsLoaded(true);
             } catch (error) {
                 console.error("Error loading credentials:", error);
                 setErrorMessage("Failed to load credentials.");
+                setCredentialsLoaded(true);
                 setIsLoading(false);
             }
         };
@@ -91,10 +95,14 @@ export default function Viewleave() {
     }, []);
 
     useEffect(() => {
+        if (!credentialsLoaded) return;
         if (credentials.username && credentials.password) {
             fetchLeaves();
+        } else {
+            setIsLoading(false);
+            setErrorMessage("Session expired. Please log in again.");
         }
-    }, [credentials]);
+    }, [credentialsLoaded]);
 
     const fetchLeaves = async (isRefresh = false) => {
         if (isRefresh) setIsRefreshing(true);
@@ -113,6 +121,8 @@ export default function Viewleave() {
             );
 
             setLeaveData(response.data.data || []);
+
+            console.log('hello baby', response.data.status)
         } catch (err) {
             console.error("Error fetching leaves:", err);
             setErrorMessage("Failed to load leave requests. Pull down to retry.");

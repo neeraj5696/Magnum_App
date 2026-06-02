@@ -42,10 +42,10 @@ export default function EngineerLogin() {
     useEffect(() => {
         const loadCredentials = async () => {
             try {
-                const savedRememberMe = await SecureStore.getItemAsync("engg_rememberMe");
+                const savedRememberMe = await SecureStore.getItemAsync("leave_mgr_rememberMe");
                 if (savedRememberMe === "true") {
-                    setUsername((await SecureStore.getItemAsync("engg_username")) || "");
-                    setPassword((await SecureStore.getItemAsync("engg_password")) || "");
+                    setUsername((await SecureStore.getItemAsync("leave_mgr_username")) || "");
+                    setPassword((await SecureStore.getItemAsync("leave_mgr_password")) || "");
                     setRememberMe(true);
                 }
             } catch (error) {
@@ -91,17 +91,18 @@ export default function EngineerLogin() {
                 body: formData.toString(),
             });
 
-            const data = await response.json();
+            const data = await response.json();        
 
-            if (response.status === 200) {
+            if (data?.status === "success") {
+
+            
+                // Always save for the current session
+                await SecureStore.setItemAsync("leave_mgr_username", username);
+                await SecureStore.setItemAsync("leave_mgr_password", password);
                 if (rememberMe) {
-                    await SecureStore.setItemAsync("engg_username", username);
-                    await SecureStore.setItemAsync("engg_password", password);
-                    await SecureStore.setItemAsync("engg_rememberMe", "true");
+                    await SecureStore.setItemAsync("leave_mgr_rememberMe", "true");
                 } else {
-                    await SecureStore.deleteItemAsync("engg_username");
-                    await SecureStore.deleteItemAsync("engg_password");
-                    await SecureStore.deleteItemAsync("engg_rememberMe");
+                    await SecureStore.deleteItemAsync("leave_mgr_rememberMe");
                 }
 
                 setLoginSuccess(true);
@@ -110,11 +111,9 @@ export default function EngineerLogin() {
                     shimmerLoopRef.current?.stop();
                     shimmerLoopRef.current = null;
                     router.push("/Leave/Approveleave");
-
-
-                }, 1500);
+                }, 1000);
             } else {
-                setErrorMessage(data?.message || "Login failed. Please check your credentials.");
+                setErrorMessage(data?.reason || data?.message || "Login failed. Please check your credentials.");
             }
         } catch (error) {
             console.error("Login error:", error);

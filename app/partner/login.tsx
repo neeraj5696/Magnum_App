@@ -7,8 +7,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Animated,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import LogoHeader from "../components/LogoHeader";
@@ -166,6 +169,12 @@ export default function PartnerLogin() {
   };
 
   return (
+    <LinearGradient colors={["#0f2952", "#1a4a8a", "#2d6cc0"]} style={styles.gradient}>
+      <KeyboardAvoidingView style={{ flex: 1 }}  behavior={Platform.OS === "ios" ? "padding" : undefined}>
+
+     
+
+   
     <View style={styles.container}>
       <View style={styles.innercontainer}>
         <LogoHeader />
@@ -246,35 +255,31 @@ export default function PartnerLogin() {
         <Footer />
       </View>
     </View>
+     </KeyboardAvoidingView>
+     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: "rgb(226, 234, 243)",
-    paddingHorizontal: 8,
-    paddingVertical: 16,
-    justifyContent: "space-between",
+    paddingHorizontal: '2%',      
   },
 
   innercontainer: {
-    flex: 1,
-    height: "auto",
-    justifyContent: "space-between",
-
-    borderRadius: 18,
-    marginTop: 20,
-    backgroundColor: "white",
-    elevation: 2,
+    flex: 1,   
+    justifyContent: "center",
+    borderRadius: 18,    
+    
   },
 
   formContainer: {
     backgroundColor: "white",
     padding: 20,
-    marginTop: 10,
-
-    marginBottom: "auto",
+   
   },
   title: {
     fontSize: 24,

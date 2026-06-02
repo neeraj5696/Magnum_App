@@ -7,11 +7,14 @@ import {
   Pressable,
   ActivityIndicator,
   Image,
+  ScrollView,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import LogoHeader from "../components/LogoHeader";
 import Footer from "../components/footer";
+import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Complaint {
   S_SERVNO: string;
@@ -33,10 +36,11 @@ interface Complaint {
   COMP_ADD3?: string;
   COMP_TEL?: string;
   AMC_Status?: string;
-  mailaddcallrpt?:string;
+  mailaddcallrpt?: string;
 }
 
 const EngineerList: FC = () => {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -60,9 +64,9 @@ const EngineerList: FC = () => {
           body: formData.toString(),
         }
       );
-      
+
       const responseText = await response.text();
-      console.log("responseText yahi bhejna hai", responseText);
+    
       let data;
       try {
         data = JSON.parse(responseText);
@@ -73,11 +77,11 @@ const EngineerList: FC = () => {
 
       if (data?.status === "success" && data?.data) {
         // Debug: Check the first item to see what fields are available
-        if (data.data.length > 0) {
-          console.log("🔍 First complaint item:", JSON.stringify(data.data[0], null, 2));
-          console.log("🔍 SystemName in first item:", data.data[0].SystemName);
-          console.log("🔍 COMP_TYPE in first item:", data.data[0].COMP_TYPE);
-        }
+        // if (data.data.length > 0) {
+        //   console.log("🔍 First complaint item:", JSON.stringify(data.data[0], null, 2));
+        //   console.log("🔍 SystemName in first item:", data.data[0].SystemName);
+        //   console.log("🔍 COMP_TYPE in first item:", data.data[0].COMP_TYPE);
+        // }
         setComplaints(data.data);
       }
     } catch (error) {
@@ -224,8 +228,8 @@ const EngineerList: FC = () => {
                     COMP_ADD2: item.COMP_ADD2 || "",
                     COMP_ADD3: item.COMP_ADD3 || "",
                     COMP_TEL: item.COMP_TEL || "",
-                    mailaddcallrpt:item.mailaddcallrpt,
-                    
+                    mailaddcallrpt: item.mailaddcallrpt,
+
                   },
                 });
               }}
@@ -239,36 +243,42 @@ const EngineerList: FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* <LogoHeader /> */}
-      {renderHeader()}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0066CC" />
-        </View>
-      ) : filteredComplaints.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <MaterialIcons name="info-outline" size={48} color="#666" />
-          <Text style={styles.emptyText}>No complaints found</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredComplaints}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.S_SERVNO}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={true}
-        />
-      )}
-      {/* <Footer /> */}
-    </View>
+    <LinearGradient colors={["#0f2952", "#1a4a8a", "#2d6cc0"]} style={styles.gradient} >
+      <View style={styles.container}>
+
+        {renderHeader()}
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#0066CC" />
+          </View>
+        ) : filteredComplaints.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <MaterialIcons name="info-outline" size={48} color="#666" />
+            <Text style={styles.emptyText}>No complaints found</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredComplaints}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.S_SERVNO}
+            contentContainerStyle={{ ...styles.listContainer, paddingBottom: insets.bottom + 120, paddingTop: insets.top, }}
+            showsVerticalScrollIndicator={true}
+
+          />
+        )}
+
+      </View>
+
+    </LinearGradient>
+
   );
 };
 
 const styles = StyleSheet.create({
+  gradient:
+    { flex: 1 },
+
   container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
     padding: 8,
     justifyContent: "space-between",
     marginTop: 40,

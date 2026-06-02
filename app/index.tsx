@@ -1,6 +1,6 @@
 import React from "react";
 import { Image, StyleSheet, TouchableOpacity, Text, View, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import LogoHeader from "./components/LogoHeader";
 import Footer from "./components/footer";
