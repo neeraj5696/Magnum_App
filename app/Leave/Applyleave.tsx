@@ -15,10 +15,6 @@ interface AttendanceRecord {
     username: string;
 }
 
-
-
-
-
 function Applyleave() {
     const insets = useSafeAreaInsets();
     const submitScale = new Animated.Value(1);
@@ -34,12 +30,13 @@ function Applyleave() {
     const [startDuration, setStartDuration] = useState('');
     const [endDate, setEndDate] = useState('');
     const [endDuration, setEndDuration] = useState('');
-    const isFormValid = leaveType.trim() && startDate.trim() && startDuration && endDate.trim() && endDuration;
-
-    const filledFields = [leaveType.trim(), startDate.trim(), startDuration, endDate.trim(), endDuration].filter(Boolean).length;
-    const totalFields = [leaveType.trim(), startDate.trim(), startDuration, endDate.trim(), endDuration].length;
-    const progress = (filledFields / totalFields) * 100;
     const [remark, setRemark] = useState('');
+    const isFormValid = leaveType.trim() && startDate.trim() && startDuration && endDate.trim() && endDuration && remark.trim();;
+
+    const filledFields = [leaveType.trim(), startDate.trim(), startDuration, endDate.trim(), endDuration, remark.trim()].filter(Boolean).length;
+    const totalFields = [leaveType.trim(), startDate.trim(), startDuration, endDate.trim(), endDuration, remark.trim()].length;
+    const progress = (filledFields / totalFields) * 100;
+
     const [successModalVisible, setSuccessModalVisible] = useState(false);
     const [datePickerVisible, setDatePickerVisible] = useState(false);
     const [currentDateField, setCurrentDateField] = useState<'start' | 'end'>('start');
@@ -115,9 +112,13 @@ function Applyleave() {
         if (!startDuration) newErrors.startDuration = 'Start duration is required';
         if (!endDate.trim()) newErrors.endDate = 'End date is required';
         if (!endDuration) newErrors.endDuration = 'End duration is required';
+        if (remark.length > 200) newErrors.remark = 'Remark cannot exceed 200 characters';
+        if (!remark.trim()) newErrors.remark = 'Remark is required'
 
         // Date validation
         if (startDate && endDate) {
+            const today = new Date();
+
             const start = new Date(startDate);
             const end = new Date(endDate);
             if (end < start) {
@@ -154,7 +155,7 @@ function Applyleave() {
                 );
 
                 const data = response.data;
-                console.log(data);
+                console.log(data.status, 'aur he data', data);
                 if (data?.status === 'success') {
                     Alert.alert(
                         'Success',
@@ -196,7 +197,7 @@ function Applyleave() {
         >
             <ScrollView
                 style={styles.container}
-                contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom  }]}
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom }]}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }
@@ -375,7 +376,7 @@ function Applyleave() {
 
                     {/* Remark */}
                     <View style={styles.fieldContainer}>
-                        <Text style={styles.fieldLabel}>Remark (Optional)</Text>
+                        <Text style={styles.fieldLabel}>Remark (Mandatory)</Text>
                         <TextInput
                             style={[styles.input, { height: 80 }]}
                             placeholder="Enter any additional remarks"

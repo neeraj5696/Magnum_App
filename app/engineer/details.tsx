@@ -19,10 +19,7 @@ import {
 } from "react-native";
 import PrefixedMultilineInput from "./PrefixedMultilineInput";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { generatePdfFromHtml } from "../src/utils/documentGenerator";
 import { createComplaintReportTemplate } from "../src/utils/complaintReportTemplate";
 import uploadPDFToCloudinary from "../src/utils/cloudinaryUpload";
@@ -31,7 +28,7 @@ import ViewShot from "react-native-view-shot";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { Ionicons } from "@expo/vector-icons";
 import { submitComplaintUpdate } from "../src/utils/submitComplaintUpdate";
-import { Picker } from "@react-native-picker/picker";
+import DropDownPicker from "react-native-dropdown-picker";
 import { getEpbaxData, getEpbaxAndPowerSupplyData } from "./componenet/Epbax";
 import { getAccessControlData } from "./componenet/AccessControl";
 import { getVpdDdlData } from "./componenet/VpdDdl";
@@ -143,6 +140,9 @@ export default function EnggComplaintDetails() {
   const [attendingengineer, setAttendingengineer] = useState("");
   const [assignedengineer, setAssignedengineer] = useState("");
   const [engineerUpdateBy, setEngineerUpdateBy] = useState("");
+  const [rnaForm, setRnaForm] = useState('');
+  const [rnaOpen, setRnaOpen] = useState(false);
+
 
   // Fetch both EPABX and Power Supply data on mount
   useEffect(() => {
@@ -311,7 +311,7 @@ export default function EnggComplaintDetails() {
 
   // Handle final submission with document generation
   const handleFinalSubmit = async () => {
-   // console.log("🚩 CHECKPOINT 1: Starting form submission process");
+    // console.log("🚩 CHECKPOINT 1: Starting form submission process");
 
     const headerImageDataUri = await getHeaderImageDataUri();
     const formData = {
@@ -389,7 +389,7 @@ export default function EnggComplaintDetails() {
     //   AMC_Status: getParam("AMC_Status"),
     // });
 
-   // console.log(      "🚩 CHECKPOINT 2: Form data prepared, beginning PDF generation"    );
+    // console.log(      "🚩 CHECKPOINT 2: Form data prepared, beginning PDF generation"    );
 
     // Generate document from form data with the specialized template
     try {
@@ -724,555 +724,473 @@ export default function EnggComplaintDetails() {
 
   return (
     <LinearGradient colors={["#0f2952", "#1a4a8a", "#2d6cc0"]} style={styles.gradient}>
-     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-     <SafeAreaView style={[styles.container]}>
-        <StatusBar />
-        <ScrollView>
-          <View style={styles.divider} />
-          {/* Info Section */}
-          <View style={styles.infoSectionBox}>
-            <Text style={styles.complaintNo}>
-              Complaint No. - {getParam("complaintNo")}
-            </Text>
-            <View style={styles.infoRow}>
-              <Ionicons
-                name="person-outline"
-                size={18}
-                color="#1976D2"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.label}>Customer Name:</Text>
-              <Text style={styles.value}>{getParam("clientName")}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Ionicons
-                name="calendar-outline"
-                size={18}
-                color="#1976D2"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.label}>Assigin Date:</Text>
-              <Text style={styles.value}>{getParam("S_assigndate")}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Ionicons
-                name="layers-outline"
-                size={18}
-                color="#1976D2"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.label}>System Name:</Text>
-              <Text style={styles.value}>
-                {getParam("SystemName") + " ,  " + getParam("SYSTEM_NAME")}
+      {/* Header bar — sits on the gradient */}
+      <View style={[styles.headerBar, { paddingTop: insets.top + 8 }]}>
+        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={24} color="#fff" />
+        </Pressable>
+        <Text style={styles.pageTitle}>Complaint Details</Text>
+        <View style={styles.complaintChip}>
+          <Text style={styles.complaintChipText} numberOfLines={1}>
+            {getParam("complaintNo")}
+          </Text>
+        </View>
+      </View>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <View style={styles.sheet}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
+            {/* Info Section */}
+            <View style={styles.infoSectionBox}>
+              <Text style={styles.complaintNo}>
+                Complaint No. - {getParam("complaintNo")}
               </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Ionicons
-                name="briefcase-outline"
-                size={18}
-                color="#1976D2"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.label}>Complaint type:</Text>
-              <Text style={styles.value}>{getParam("COMP_TYPE")}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Ionicons
-                name="briefcase-outline"
-                size={18}
-                color="#1976D2"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.label}>System Status:</Text>
-              <Text style={styles.value}>{getParam("AMC_Status")}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Ionicons
-                name="location-outline"
-                size={18}
-                color="#1976D2"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.label}>Address:</Text>
-              <Text style={styles.value}>{getParam("location")}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Ionicons
-                name="chatbubble-ellipses-outline"
-                size={18}
-                color="#1976D2"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.label}>Remark1:</Text>
-              <Text style={styles.value}>{getParam("S_REMARK1")}</Text>
-            </View>
-          </View>
-          <View style={styles.divider} />
-          {/* Form Section */}
-          <View style={styles.formSectionBox}>
-            <Text style={styles.sectionTitle}>Update Status</Text>
-
-            {/* Fault Reported */}
-            <Text style={styles.formLabel}>Fault Reported:</Text>
-            <View style={[styles.dateTimeInput]}>
-              <Ionicons name="time-outline" size={18} color="#666" />
-              <Text style={[styles.dateTimeText, { color: "#666" }]}>
-                {" "}
-                {getParam("S_SERVDT") || "Not available"}
-              </Text>
-            </View>
-
-            {/* Type of Call Dropdown */}
-            <Text style={styles.formLabel}>Type of Call:</Text>
-            <View style={[styles.dropdownButton]}>
-              <Text style={[styles.dropdownButtonText, { color: "#666" }]}>
-                {getParam("S_TASK_TYPE") || "Not available"}
-              </Text>
-            </View>
-
-            {/* Call Attended Date and Time */}
-            <View style={styles.dateTimeGroup}>
-              <Text style={styles.formLabel}>Call Attended On:</Text>
-              <View style={[styles.dateTimeInput]}>
-                <Ionicons name="time-outline" size={18} color="#666" />
-                <Text style={[styles.dateTimeText, { color: "#666" }]}>
-                  {getParam("S_assigndate") || "Not available"}
-                </Text>
-              </View>
-            </View>
-
-            {/* Call Completed Date and Time */}
-            <View style={styles.dateTimeGroup}>
-              <Text style={styles.formLabel}>Call Completed On:</Text>
-              <View style={[styles.dateTimeInput]}>
-                <Ionicons name="time-outline" size={18} color="#666" />
-                <Text style={[styles.dateTimeText, { color: "#666" }]}>
-                  {new Date().toISOString().slice(0, 19).replace("T", " ")}
-                </Text>
-              </View>
-            </View>
-
-            {/* Cause of Problem */}
-            <Text style={styles.formLabel}>Cause of Problem:</Text>
-            <View style={[styles.dropdownButton]}>
-              <Text style={[styles.dropdownButtonText, { color: "#666" }]}>
-                {getParam("S_REMARK2")}
-              </Text>
-            </View>
-
-            {/* Part Replaced */}
-            <Text style={styles.formLabel}>Part Replaced/Stand by (if any):</Text>
-            <TextInput
-              style={[
-                styles.textInput,
-                partReplacedFocused ? styles.textInputFocused : null,
-              ]}
-              placeholder="Enter parts replaced..."
-              value={partReplaced}
-              onChangeText={setPartReplaced}
-              multiline={false}
-              onFocus={() => setPartReplacedFocused(true)}
-              onBlur={() => setPartReplacedFocused(false)}
-            />
-            <Text style={styles.helperText}>
-              List any parts replaced or stand-by provided to the client.
-            </Text>
-            {/* Diagnosis */}
-            <View style={{ marginBottom: 16 }}>
-              <Text style={styles.formLabel}>Diagnosis</Text>
-              <View style={{ position: "relative" }}>
+              <View style={styles.infoRow}>
                 <Ionicons
-                  name="medkit-outline"
+                  name="person-outline"
                   size={18}
-                  color="#1a73e8"
-                  style={{ position: "absolute", left: 12, top: 12, zIndex: 1 }}
+                  color="#1976D2"
+                  style={{ marginRight: 6 }}
                 />
+                <Text style={styles.label}>Customer Name:</Text>
+                <Text style={styles.value}>{getParam("clientName")}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons
+                  name="calendar-outline"
+                  size={18}
+                  color="#1976D2"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.label}>Assigin Date:</Text>
+                <Text style={styles.value}>{getParam("S_assigndate")}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons
+                  name="layers-outline"
+                  size={18}
+                  color="#1976D2"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.label}>System Name:</Text>
+                <Text style={styles.value}>
+                  {getParam("SystemName") + " ,  " + getParam("SYSTEM_NAME")}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons
+                  name="briefcase-outline"
+                  size={18}
+                  color="#1976D2"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.label}>Complaint type:</Text>
+                <Text style={styles.value}>{getParam("COMP_TYPE")}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons
+                  name="briefcase-outline"
+                  size={18}
+                  color="#1976D2"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.label}>System Status:</Text>
+                <Text style={styles.value}>{getParam("AMC_Status")}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons
+                  name="location-outline"
+                  size={18}
+                  color="#1976D2"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.label}>Address:</Text>
+                <Text style={styles.value}>{getParam("location")}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons
+                  name="chatbubble-ellipses-outline"
+                  size={18}
+                  color="#1976D2"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.label}>Remark1:</Text>
+                <Text style={styles.value}>{getParam("S_REMARK1")}</Text>
+              </View>
+            </View>
+            {/* Form Section */}
+            <View style={styles.formSectionBox}>
+              <Text style={styles.sectionTitle}>Update Status</Text>
+
+              {/* Fault Reported */}
+              <Text style={styles.formLabel}>Fault Reported:</Text>
+              <View style={[styles.dateTimeInput]}>
+                <Ionicons name="time-outline" size={18} color="#666" />
+                <Text style={[styles.dateTimeText, { color: "#666" }]}>
+                  {" "}
+                  {getParam("S_SERVDT") || "Not available"}
+                </Text>
+              </View>
+
+              {/* Type of Call Dropdown */}
+              <Text style={styles.formLabel}>Type of Call:</Text>
+              <View style={[styles.dropdownButton]}>
+                <Text style={[styles.dropdownButtonText, { color: "#666" }]}>
+                  {getParam("S_TASK_TYPE") || "Not available"}
+                </Text>
+              </View>
+
+              {/* Call Attended Date and Time */}
+              <View style={styles.dateTimeGroup}>
+                <Text style={styles.formLabel}>Call Attended On:</Text>
+                <View style={[styles.dateTimeInput]}>
+                  <Ionicons name="time-outline" size={18} color="#666" />
+                  <Text style={[styles.dateTimeText, { color: "#666" }]}>
+                    {getParam("S_assigndate") || "Not available"}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Call Completed Date and Time */}
+              <View style={styles.dateTimeGroup}>
+                <Text style={styles.formLabel}>Call Completed On:</Text>
+                <View style={[styles.dateTimeInput]}>
+                  <Ionicons name="time-outline" size={18} color="#666" />
+                  <Text style={[styles.dateTimeText, { color: "#666" }]}>
+                    {new Date().toISOString().slice(0, 19).replace("T", " ")}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Cause of Problem */}
+              <Text style={styles.formLabel}>Cause of Problem:</Text>
+              <View style={[styles.dropdownButton]}>
+                <Text style={[styles.dropdownButtonText, { color: "#666" }]}>
+                  {getParam("S_REMARK2")}
+                </Text>
+              </View>
+
+              {/* Part Replaced */}
+              <Text style={styles.formLabel}>Part Replaced/Stand by (if any):</Text>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  partReplacedFocused ? styles.textInputFocused : null,
+                ]}
+                placeholder="Enter parts replaced..."
+                value={partReplaced}
+                onChangeText={setPartReplaced}
+                multiline={false}
+                onFocus={() => setPartReplacedFocused(true)}
+                onBlur={() => setPartReplacedFocused(false)}
+              />
+              <Text style={styles.helperText}>
+                List any parts replaced or stand-by provided to the client.
+              </Text>
+              {/* Diagnosis */}
+              <View style={{ marginBottom: 16 }}>
+                <Text style={styles.formLabel}>Diagnosis</Text>
+                <View style={{ position: "relative" }}>
+                  <Ionicons
+                    name="medkit-outline"
+                    size={18}
+                    color="#1a73e8"
+                    style={{ position: "absolute", left: 12, top: 12, zIndex: 1 }}
+                  />
+                  <TextInput
+                    style={[
+                      styles.textInput,
+                      { paddingLeft: 38 },
+                      diagnosisFocused ? styles.textInputFocused : null,
+                      hasSubmitAttempt && !diagnosis ? styles.inputError : null,
+                    ]}
+                    placeholder="Enter diagnosis..."
+                    value={diagnosis}
+                    onChangeText={setDiagnosis}
+                    multiline={false}
+                    onFocus={() => setDiagnosisFocused(true)}
+                    onBlur={() => setDiagnosisFocused(false)}
+                  />
+                </View>
+                <Text style={styles.helperText}>
+                  Describe the technical diagnosis of the issue.
+                </Text>
+                {hasSubmitAttempt && !diagnosis && (
+                  <Text style={styles.errorText}>Diagnosis is required</Text>
+                )}
+              </View>
+
+              {/* Material Taken Out */}
+              <Text style={styles.formLabel}>Material Taken Out (if any):</Text>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  materialTakenOutFocused ? styles.textInputFocused : null,
+                ]}
+                placeholder="Enter materials taken out..."
+                value={materialTakenOut}
+                onChangeText={setMaterialTakenOut}
+                multiline={false}
+                onFocus={() => setMaterialTakenOutFocused(true)}
+                onBlur={() => setMaterialTakenOutFocused(false)}
+              />
+
+              {/* RNA FORM */}
+              <Text style={styles.formLabel}>Do You want to Add RNA Form</Text>
+              <DropDownPicker
+                open={rnaOpen}
+                value={rnaForm}
+                items={[
+                  { label: 'Yes', value: 'Yes' },
+                  { label: 'No', value: 'No' }
+                ]}
+                setValue={setRnaForm}
+                setOpen={setRnaOpen}
+                placeholder="Select"
+                style={[styles.dropdown]}
+                dropDownContainerStyle={styles.dropdownContainer}
+                textStyle={styles.dropdownButtonText1}
+                placeholderStyle={styles.placeholderText}
+                zIndex={1000}
+                zIndexInverse={3000}
+
+
+              />
+
+
+              {/* Customer Comment */}
+              <Text style={styles.formLabel}>Customer Comment:</Text>
+              <ScrollView
+                style={{ maxHeight: 120 }}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator
+                persistentScrollbar
+                indicatorStyle="white"
+              >
                 <TextInput
                   style={[
                     styles.textInput,
-                    { paddingLeft: 38 },
-                    diagnosisFocused ? styles.textInputFocused : null,
-                    hasSubmitAttempt && !diagnosis ? styles.inputError : null,
+                    { minHeight: 60, textAlignVertical: "top" },
+                    customerCommentFocused ? styles.textInputFocused : null,
                   ]}
-                  placeholder="Enter diagnosis..."
-                  value={diagnosis}
-                  onChangeText={setDiagnosis}
-                  multiline={false}
-                  onFocus={() => setDiagnosisFocused(true)}
-                  onBlur={() => setDiagnosisFocused(false)}
+                  placeholder="Enter customer's comment here..."
+                  value={customerComment}
+                  onChangeText={setCustomerComment}
+                  scrollEnabled={true}
+                  multiline={true}
+                  onFocus={() => setCustomerCommentFocused(true)}
+                  onBlur={() => setCustomerCommentFocused(false)}
+                  onContentSizeChange={(event) =>
+                    setInputHeight(event.nativeEvent.contentSize.height)
+                  }
                 />
-              </View>
-              <Text style={styles.helperText}>
-                Describe the technical diagnosis of the issue.
-              </Text>
-              {hasSubmitAttempt && !diagnosis && (
-                <Text style={styles.errorText}>Diagnosis is required</Text>
-              )}
-            </View>
+              </ScrollView>
 
-            {/* Material Taken Out */}
-            <Text style={styles.formLabel}>Material Taken Out (if any):</Text>
-            <TextInput
-              style={[
-                styles.textInput,
-                materialTakenOutFocused ? styles.textInputFocused : null,
-              ]}
-              placeholder="Enter materials taken out..."
-              value={materialTakenOut}
-              onChangeText={setMaterialTakenOut}
-              multiline={false}
-              onFocus={() => setMaterialTakenOutFocused(true)}
-              onBlur={() => setMaterialTakenOutFocused(false)}
-            />
+              {/* Engineer Comment */}
+              <Text style={styles.formLabel}>Engineer Comment:</Text>
+              <ScrollView
+                style={{ maxHeight: 120 }}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator
+                persistentScrollbar
+              >
+                <TextInput
+                  style={[
+                    styles.textInput,
+                    { minHeight: 60, textAlignVertical: "top" },
+                    engineerCommentFocused ? styles.textInputFocused : null,
+                  ]}
+                  placeholder="Enter engineer's comment here..."
+                  value={engineerComment}
+                  onChangeText={setEngineerComment}
+                  multiline={true}
+                  onFocus={() => setEngineerCommentFocused(true)}
+                  onBlur={() => setEngineerCommentFocused(false)}
+                />
+              </ScrollView>
 
-            {/* Customer Comment */}
-            <Text style={styles.formLabel}>Customer Comment:</Text>
-            <ScrollView
-              style={{ maxHeight: 120 }}
-              nestedScrollEnabled
-              showsVerticalScrollIndicator
-              persistentScrollbar
-              indicatorStyle="white"
-            >
-              <TextInput
-                style={[
-                  styles.textInput,
-                  { minHeight: 60, textAlignVertical: "top" },
-                  customerCommentFocused ? styles.textInputFocused : null,
-                ]}
-                placeholder="Enter customer's comment here..."
-                value={customerComment}
-                onChangeText={setCustomerComment}
-                scrollEnabled={true}
-                multiline={true}
-                onFocus={() => setCustomerCommentFocused(true)}
-                onBlur={() => setCustomerCommentFocused(false)}
-                onContentSizeChange={(event) =>
-                  setInputHeight(event.nativeEvent.contentSize.height)
-                }
-              />
-            </ScrollView>
-
-            {/* Engineer Comment */}
-            <Text style={styles.formLabel}>Engineer Comment:</Text>
-            <ScrollView
-              style={{ maxHeight: 120 }}
-              nestedScrollEnabled
-              showsVerticalScrollIndicator
-              persistentScrollbar
-            >
-              <TextInput
-                style={[
-                  styles.textInput,
-                  { minHeight: 60, textAlignVertical: "top" },
-                  engineerCommentFocused ? styles.textInputFocused : null,
-                ]}
-                placeholder="Enter engineer's comment here..."
-                value={engineerComment}
-                onChangeText={setEngineerComment}
-                multiline={true}
-                onFocus={() => setEngineerCommentFocused(true)}
-                onBlur={() => setEngineerCommentFocused(false)}
-              />
-            </ScrollView>
-
-            {/* Required Material input only if 'Due to Material' is selected */}
-            {pendingReason === "Due to Material" && (
-              <View style={{ marginTop: 16 }}>
-                {/* System Type Dropdown - only show if systemName is NOT present */}
-                {!(
-                  getParam("SystemName") && getParam("SystemName").trim() !== ""
-                ) && (
-                    <>
-                      <Text style={styles.formLabel}>System Type</Text>
-                      <Pressable
-                        style={styles.dropdownButton}
-                        onPress={() => setShowSystemModal(true)}
-                      >
-                        <Text style={styles.dropdownButtonText}>
-                          {selectedSystem || "Select System Type"}
-                        </Text>
-                        <Ionicons name="chevron-down" size={21} color="#666" />
-                      </Pressable>
-                      {/* System Type Modal list */}
-                      <Modal
-                        visible={showSystemModal}
-                        transparent
-                        animationType="slide"
-                        onRequestClose={() => setShowSystemModal(false)}
-                      >
-                        <View style={styles.modalContainer}>
-                          <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>
-                              Select System Type
-                            </Text>
-                            {["CCTV", "ACCESS CONTROL", "VDP", "EPABX"].map(
-                              (name) => (
-                                <Pressable
-                                  key={name}
-                                  style={styles.modalItem}
-                                  onPress={() => {
-                                    setSelectedSystem(name);
-                                    setShowSystemModal(false);
-                                    setSelectedParts([]);
-                                    setSelectedSystemName("");
-                                  }}
-                                >
-                                  <Text style={styles.modalItemText}>{name}</Text>
-                                </Pressable>
-                              )
-                            )}
-                            <Pressable
-                              style={styles.modalCloseButton}
-                              onPress={() => setShowSystemModal(false)}
-                            >
-                              <Text style={styles.modalCloseText}>Close</Text>
-                            </Pressable>
-                          </View>
-                        </View>
-                      </Modal>
-                    </>
-                  )}
-
-                {/* If CCTV, show free-text input */}
-                {selectedSystem === "CCTV" ? (
-                  <PrefixedMultilineInput
-                    label="Required Material (CCTV)"
-                    value={requiredMaterial}
-                    onChange={setRequiredMaterial}
-                  />
-                ) : selectedSystem ||
-                  (getParam("systemName") &&
-                    getParam("systemName").trim() !== "") ? (
-                  <>
-                    {/* System Name Dropdown - only show if modelnumber is NOT present */}
-                    {!(
-                      getParam("modelnumber") &&
-                      getParam("modelnumber").trim() !== ""
-                    ) && (
-                        <>
-                          <Text style={styles.formLabel}>System Name</Text>
-                          <Pressable
-                            style={styles.dropdownButton}
-                            onPress={() => setShowSystemNameModal(true)}
-                          >
-                            <Text style={styles.dropdownButtonText}>
-                              {selectedSystemName || "Select System Name"}
-                            </Text>
-                            <Ionicons name="chevron-down" size={20} color="#666" />
-                          </Pressable>
-                          <Modal
-                            visible={showSystemNameModal}
-                            transparent
-                            animationType="slide"
-                            onRequestClose={() => setShowSystemNameModal(false)}
-                          >
-                            <View style={styles.modalContainer}>
-                              <View style={styles.modalContent}>
-                                <Text style={styles.modalTitle}>
-                                  Select System Name
-                                </Text>
-                                <ScrollView style={{ maxHeight: 500 }}>
-                                  {systemNamesList.map((name) => (
-                                    <Pressable
-                                      key={name}
-                                      style={styles.modalItem}
-                                      onPress={() => {
-                                        setSelectedSystemName(name);
-                                        setShowSystemNameModal(false);
-                                        setSelectedParts([]);
-                                      }}
-                                    >
-                                      <Text style={styles.modalItemText}>
-                                        {name}
-                                      </Text>
-                                    </Pressable>
-                                  ))}
-                                </ScrollView>
-                                <Pressable
-                                  style={styles.modalCloseButton}
-                                  onPress={() => setShowSystemNameModal(false)}
-                                >
-                                  <Text style={styles.modalCloseText}>Close</Text>
-                                </Pressable>
-                              </View>
-                            </View>
-                          </Modal>
-                        </>
-                      )}
-                    {/* Parts No Dropdown (only if system name is selected) */}
-                    {selectedSystemName && (
+              {/* Required Material input only if 'Due to Material' is selected */}
+              {pendingReason === "Due to Material" && (
+                <View style={{ marginTop: 16 }}>
+                  {/* System Type Dropdown - only show if systemName is NOT present */}
+                  {!(
+                    getParam("SystemName") && getParam("SystemName").trim() !== ""
+                  ) && (
                       <>
-                        <Text style={styles.formLabel}>Parts No</Text>
+                        <Text style={styles.formLabel}>System Type</Text>
                         <Pressable
                           style={styles.dropdownButton}
-                          onPress={() => setShowPartsNoModal(true)}
+                          onPress={() => setShowSystemModal(true)}
                         >
                           <Text style={styles.dropdownButtonText}>
-                            {selectedParts.length > 0
-                              ? selectedParts.join(", ")
-                              : "Select Parts No"}
+                            {selectedSystem || "Select System Type"}
                           </Text>
-                          <Ionicons name="chevron-down" size={20} color="#666" />
+                          <Ionicons name="chevron-down" size={21} color="#666" />
                         </Pressable>
-
-                        {/* Parts No Modal window */}
+                        {/* System Type Modal list */}
                         <Modal
-                          visible={showPartsNoModal}
+                          visible={showSystemModal}
                           transparent
                           animationType="slide"
-                          onRequestClose={() => setShowPartsNoModal(false)}
+                          onRequestClose={() => setShowSystemModal(false)}
                         >
                           <View style={styles.modalContainer}>
                             <View style={styles.modalContent}>
                               <Text style={styles.modalTitle}>
-                                Select Parts No
+                                Select System Type
                               </Text>
-                              <ScrollView style={{ maxHeight: 500 }}>
-                                {(groupedData[selectedSystemName] || []).map(
-                                  (part) => {
-                                    const isSelected =
-                                      selectedParts.includes(part);
-                                    return (
-                                      <Pressable
-                                        key={part}
-                                        style={styles.modalItem}
-                                        onPress={() => {
-                                          if (isSelected) {
-                                            setSelectedParts(
-                                              selectedParts.filter(
-                                                (p) => p !== part
-                                              )
-                                            );
-                                            console.log(
-                                              "Part(s) selected:",
-                                              selectedParts.filter(
-                                                (p) => p !== part
-                                              )
-                                            );
-                                          } else {
-                                            setSelectedParts([
-                                              ...selectedParts,
-                                              part,
-                                            ]);
-                                            console.log("Part(s) selected:", [
-                                              ...selectedParts,
-                                              part,
-                                            ]);
-                                          }
-                                        }}
-                                      >
-                                        <View
-                                          style={{
-                                            flexDirection: "row",
-                                            alignItems: "center",
-                                          }}
-                                        >
-                                          <Ionicons
-                                            name={
-                                              isSelected
-                                                ? "checkbox"
-                                                : "square-outline"
-                                            }
-                                            size={22}
-                                            color={
-                                              isSelected ? "#1a73e8" : "#666"
-                                            }
-                                            style={{ marginRight: 10 }}
-                                          />
-                                          <Text
-                                            style={{
-                                              fontSize: 16,
-                                              color: "#333",
-                                            }}
-                                          >
-                                            {part}
-                                          </Text>
-                                        </View>
-                                      </Pressable>
-                                    );
-                                  }
-                                )}
-                              </ScrollView>
+                              {["CCTV", "ACCESS CONTROL", "VDP", "EPABX"].map(
+                                (name) => (
+                                  <Pressable
+                                    key={name}
+                                    style={styles.modalItem}
+                                    onPress={() => {
+                                      setSelectedSystem(name);
+                                      setShowSystemModal(false);
+                                      setSelectedParts([]);
+                                      setSelectedSystemName("");
+                                    }}
+                                  >
+                                    <Text style={styles.modalItemText}>{name}</Text>
+                                  </Pressable>
+                                )
+                              )}
                               <Pressable
                                 style={styles.modalCloseButton}
-                                onPress={() => {
-                                  setShowPartsNoModal(false);
-                                  setRequiredMaterial(selectedParts.join(", "));
-                                }}
+                                onPress={() => setShowSystemModal(false)}
                               >
-                                <Text style={styles.modalCloseText}>Done</Text>
+                                <Text style={styles.modalCloseText}>Close</Text>
                               </Pressable>
                             </View>
                           </View>
                         </Modal>
-                        {/* Power Supply Model No Dropdown (only if system and part are selected) */}
-                        {selectedParts.length >= 0 && (
+                      </>
+                    )}
+
+                  {/* If CCTV, show free-text input */}
+                  {selectedSystem === "CCTV" ? (
+                    <PrefixedMultilineInput
+                      label="Required Material (CCTV)"
+                      value={requiredMaterial}
+                      onChange={setRequiredMaterial}
+                    />
+                  ) : selectedSystem ||
+                    (getParam("systemName") &&
+                      getParam("systemName").trim() !== "") ? (
+                    <>
+                      {/* System Name Dropdown - only show if modelnumber is NOT present */}
+                      {!(
+                        getParam("modelnumber") &&
+                        getParam("modelnumber").trim() !== ""
+                      ) && (
                           <>
-                            <Text style={styles.formLabel}>
-                              Power Supply Model No
-                            </Text>
+                            <Text style={styles.formLabel}>System Name</Text>
                             <Pressable
                               style={styles.dropdownButton}
-                              onPress={() => setShowPowerSupplyModal(true)}
+                              onPress={() => setShowSystemNameModal(true)}
                             >
                               <Text style={styles.dropdownButtonText}>
-                                {selectedPowerSupplyModels.length > 0
-                                  ? selectedPowerSupplyModels.join(", ")
-                                  : "Select Power Supply "}
+                                {selectedSystemName || "Select System Name"}
                               </Text>
-                              <Ionicons
-                                name="chevron-down"
-                                size={20}
-                                color="#666"
-                              />
+                              <Ionicons name="chevron-down" size={20} color="#666" />
                             </Pressable>
                             <Modal
-                              visible={showPowerSupplyModal}
+                              visible={showSystemNameModal}
                               transparent
                               animationType="slide"
-                              onRequestClose={() =>
-                                setShowPowerSupplyModal(false)
-                              }
+                              onRequestClose={() => setShowSystemNameModal(false)}
                             >
                               <View style={styles.modalContainer}>
                                 <View style={styles.modalContent}>
                                   <Text style={styles.modalTitle}>
-                                    Power Supply Model No
+                                    Select System Name
                                   </Text>
                                   <ScrollView style={{ maxHeight: 500 }}>
-                                    {powerSupplyData.map((model) => {
+                                    {systemNamesList.map((name) => (
+                                      <Pressable
+                                        key={name}
+                                        style={styles.modalItem}
+                                        onPress={() => {
+                                          setSelectedSystemName(name);
+                                          setShowSystemNameModal(false);
+                                          setSelectedParts([]);
+                                        }}
+                                      >
+                                        <Text style={styles.modalItemText}>
+                                          {name}
+                                        </Text>
+                                      </Pressable>
+                                    ))}
+                                  </ScrollView>
+                                  <Pressable
+                                    style={styles.modalCloseButton}
+                                    onPress={() => setShowSystemNameModal(false)}
+                                  >
+                                    <Text style={styles.modalCloseText}>Close</Text>
+                                  </Pressable>
+                                </View>
+                              </View>
+                            </Modal>
+                          </>
+                        )}
+                      {/* Parts No Dropdown (only if system name is selected) */}
+                      {selectedSystemName && (
+                        <>
+                          <Text style={styles.formLabel}>Parts No</Text>
+                          <Pressable
+                            style={styles.dropdownButton}
+                            onPress={() => setShowPartsNoModal(true)}
+                          >
+                            <Text style={styles.dropdownButtonText}>
+                              {selectedParts.length > 0
+                                ? selectedParts.join(", ")
+                                : "Select Parts No"}
+                            </Text>
+                            <Ionicons name="chevron-down" size={20} color="#666" />
+                          </Pressable>
+
+                          {/* Parts No Modal window */}
+                          <Modal
+                            visible={showPartsNoModal}
+                            transparent
+                            animationType="slide"
+                            onRequestClose={() => setShowPartsNoModal(false)}
+                          >
+                            <View style={styles.modalContainer}>
+                              <View style={styles.modalContent}>
+                                <Text style={styles.modalTitle}>
+                                  Select Parts No
+                                </Text>
+                                <ScrollView style={{ maxHeight: 500 }}>
+                                  {(groupedData[selectedSystemName] || []).map(
+                                    (part) => {
                                       const isSelected =
-                                        selectedPowerSupplyModels.includes(model);
+                                        selectedParts.includes(part);
                                       return (
                                         <Pressable
-                                          key={model}
+                                          key={part}
                                           style={styles.modalItem}
                                           onPress={() => {
                                             if (isSelected) {
-                                              setSelectedPowerSupplyModels(
-                                                selectedPowerSupplyModels.filter(
-                                                  (m) => m !== model
+                                              setSelectedParts(
+                                                selectedParts.filter(
+                                                  (p) => p !== part
                                                 )
                                               );
                                               console.log(
-                                                "Power Supply Model(s) selected:",
-                                                selectedPowerSupplyModels.filter(
-                                                  (m) => m !== model
+                                                "Part(s) selected:",
+                                                selectedParts.filter(
+                                                  (p) => p !== part
                                                 )
                                               );
                                             } else {
-                                              setSelectedPowerSupplyModels([
-                                                ...selectedPowerSupplyModels,
-                                                model,
+                                              setSelectedParts([
+                                                ...selectedParts,
+                                                part,
                                               ]);
-                                              console.log(
-                                                "Power Supply Model(s) selected:",
-                                                [
-                                                  ...selectedPowerSupplyModels,
-                                                  model,
-                                                ]
-                                              );
+                                              console.log("Part(s) selected:", [
+                                                ...selectedParts,
+                                                part,
+                                              ]);
                                             }
                                           }}
                                         >
@@ -1300,562 +1218,729 @@ export default function EnggComplaintDetails() {
                                                 color: "#333",
                                               }}
                                             >
-                                              {model}
+                                              {part}
                                             </Text>
                                           </View>
                                         </Pressable>
                                       );
-                                    })}
-                                  </ScrollView>
-                                  <Pressable
-                                    style={styles.modalCloseButton}
-                                    onPress={() => setShowPowerSupplyModal(false)}
-                                  >
-                                    <Text style={styles.modalCloseText}>
-                                      Done
-                                    </Text>
-                                  </Pressable>
-                                </View>
+                                    }
+                                  )}
+                                </ScrollView>
+                                <Pressable
+                                  style={styles.modalCloseButton}
+                                  onPress={() => {
+                                    setShowPartsNoModal(false);
+                                    setRequiredMaterial(selectedParts.join(", "));
+                                  }}
+                                >
+                                  <Text style={styles.modalCloseText}>Done</Text>
+                                </Pressable>
                               </View>
-                            </Modal>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </>
-                ) : null}
-              </View>
-            )}
-
-            {/* Customer Signature */}
-            <View style={styles.customersectioncontainer}>
-              {/* New fields for customer name and contact */}
-              <View style={{ marginBottom: 10 }}>
-                <Text style={styles.formLabel}>Customer Name</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter customer name"
-                  value={customerName}
-                  onChangeText={setCustomerName}
-                />
-                <Text style={styles.formLabel}>Customer Contact No.</Text>
-
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter contact number"
-                  value={customerContact}
-                  onChangeText={setCustomerContact}
-                  keyboardType="phone-pad"
-                />
-                <Text style={styles.formLabel}>Customer Signature:</Text>
-              </View>
-              <Pressable
-                style={styles.signatureBox}
-                onPress={() => openSignaturePad("customer")}
-              >
-                {customerSignature ? (
-                  <View style={styles.signaturePreviewContainer}>
-                    <Image
-                      source={{ uri: customerSignature }}
-                      style={styles.signaturePreviewImage}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.signatureText}>Signature Saved ✓</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.signaturePlaceholder}>
-                    Tap to add signature
-                  </Text>
-                )}
-              </Pressable>
-            </View>
-
-            {/* Engineer Signature */}
-            <View style={styles.customersectioncontainer}>
-              {/* New Engineer Signature fields */}
-              <View style={{ marginBottom: 10 }}>
-                <Text style={styles.formLabel}>Update date by</Text>
-                <Pressable
-                  style={styles.dropdownButton}
-                  onPress={() => setShowUpdateEngineerModal(true)}
-                >
-                  <Text style={styles.dropdownButtonText}>
-                    {attendingengineer || "Select Engineer "}
-                  </Text>
-                  <Ionicons name="chevron-down" size={20} color={"#666"} />
-                </Pressable>
-
-                <Text style={styles.formLabel}>Engineer Signature:</Text>
-
-                {/* Complain attending engineer model */}
-
-                <Modal
-                  visible={showUpdateEngineerModal}
-                  transparent={true}
-                  animationType={"slide"}
-                  onRequestClose={() => setShowUpdateEngineerModal(false)}
-                >
-                  <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                      <Text style={styles.modalTitle}>Select Site Engineer</Text>
-                      {engineerlist(assignedengineer).map((Key) => (
-                        <Pressable
-                          key={Key}
-                          style={[
-                            styles.modalItem,
-                            {
-                              backgroundColor: "#f2f2f2",
-                              marginVertical: 5,
-                              borderRadius: 6,
-                            },
-                          ]}
-                          onPress={() => {
-                            setAttendingengineer(Key);
-                            setEngineerUpdateBy(Key);
-                            setShowUpdateEngineerModal(false);
-                          }}
-                        >
-                          <Text
-                            style={[
-                              styles.modalItemText,
-                              { padding: 8, fontSize: 16 },
-                            ]}
-                          >
-                            {Key}
-                          </Text>
-                        </Pressable>
-                      ))}
-                      <Pressable
-                        style={styles.modalCloseButton}
-                        onPress={() => setShowUpdateEngineerModal(false)}
-                      >
-                        <Text style={styles.modalCloseText}>Close</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                </Modal>
-
-                {/* system status model  */}
-                <Modal
-                  visible={showSystemStatusModal}
-                  transparent={true}
-                  animationType="slide"
-                  onRequestClose={() => setShowSystemStatusModal(false)}
-                >
-                  <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                      <Text style={styles.modalTitle}>System Status</Text>
-                      {["AMC", "Call Basis"].map((option) => (
-                        <Pressable
-                          key={option}
-                          style={styles.modalItem}
-                          onPress={() => {
-                            setSystemStatus(option);
-                            setShowSystemStatusModal(false);
-                          }}
-                        >
-                          <Text style={styles.modalItemText}>{option}</Text>
-                        </Pressable>
-                      ))}
-                      <Pressable
-                        style={styles.modalCloseButton}
-                        onPress={() => setShowSystemStatusModal(false)}
-                      >
-                        <Text style={styles.modalCloseText}>Close</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                </Modal>
-              </View>
-              <Pressable
-                style={styles.signatureBox}
-                onPress={() => openSignaturePad("engineer")}
-              >
-                {engineerSignature ? (
-                  <View style={styles.signaturePreviewContainer}>
-                    <Image
-                      source={{ uri: engineerSignature }}
-                      style={styles.signaturePreviewImage}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.signatureText}>Signature Saved ✓</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.signaturePlaceholder}>
-                    Tap to add signature
-                  </Text>
-                )}
-              </Pressable>
-            </View>
-            {/* Status Dropdown */}
-            <Text style={styles.formLabel}>Status:</Text>
-            <Pressable
-              style={[
-                styles.dropdownButton,
-                hasSubmitAttempt && !workStatus ? styles.inputError : null,
-              ]}
-              onPress={() => setShowStatusModal(true)}
-            >
-              <Text style={styles.dropdownButtonText}>
-                {workStatus === "Pending"
-                  ? pendingReason
-                    ? `Pending: ${pendingReason}`
-                    : "Pending: Select Reason"
-                  : workStatus || "Select Work Status"}
-              </Text>
-              <Ionicons name="chevron-down" size={20} color="#666" />
-            </Pressable>
-            {hasSubmitAttempt && !workStatus && (
-              <Text style={styles.errorText}>Please select a work status</Text>
-            )}
-            {hasSubmitAttempt && workStatus === "Pending" && !pendingReason && (
-              <Text style={styles.errorText}>Please select a pending reason</Text>
-            )}
-
-            {/* Combined Modal for Status and Pending Reason */}
-            <Modal
-              visible={showStatusModal}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowStatusModal(false)}
-            >
-              <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                  {!showPendingReasonModal ? (
-                    <>
-                      <Text style={styles.modalTitle}>Select Work Status</Text>
-                      {["Completed", "Pending"].map((status) => (
-                        <Pressable
-                          key={status}
-                          style={styles.modalItem}
-                          onPress={() => {
-                            setWorkStatus(status);
-                            if (status === "Pending") {
-                              fetchPendingReasons();
-                              setShowPendingReasonModal(true);
-                            } else {
-                              setPendingReason("");
-                              setShowStatusModal(false);
-                            }
-                          }}
-                        >
-                          <Text style={styles.modalItemText}>{status}</Text>
-                        </Pressable>
-                      ))}
-                      <Pressable
-                        style={styles.modalCloseButton}
-                        onPress={() => setShowStatusModal(false)}
-                      >
-                        <Text style={styles.modalCloseText}>Close</Text>
-                      </Pressable>
+                            </View>
+                          </Modal>
+                          {/* Power Supply Model No Dropdown (only if system and part are selected) */}
+                          {selectedParts.length >= 0 && (
+                            <>
+                              <Text style={styles.formLabel}>
+                                Power Supply Model No
+                              </Text>
+                              <Pressable
+                                style={styles.dropdownButton}
+                                onPress={() => setShowPowerSupplyModal(true)}
+                              >
+                                <Text style={styles.dropdownButtonText}>
+                                  {selectedPowerSupplyModels.length > 0
+                                    ? selectedPowerSupplyModels.join(", ")
+                                    : "Select Power Supply "}
+                                </Text>
+                                <Ionicons
+                                  name="chevron-down"
+                                  size={20}
+                                  color="#666"
+                                />
+                              </Pressable>
+                              <Modal
+                                visible={showPowerSupplyModal}
+                                transparent
+                                animationType="slide"
+                                onRequestClose={() =>
+                                  setShowPowerSupplyModal(false)
+                                }
+                              >
+                                <View style={styles.modalContainer}>
+                                  <View style={styles.modalContent}>
+                                    <Text style={styles.modalTitle}>
+                                      Power Supply Model No
+                                    </Text>
+                                    <ScrollView style={{ maxHeight: 500 }}>
+                                      {powerSupplyData.map((model) => {
+                                        const isSelected =
+                                          selectedPowerSupplyModels.includes(model);
+                                        return (
+                                          <Pressable
+                                            key={model}
+                                            style={styles.modalItem}
+                                            onPress={() => {
+                                              if (isSelected) {
+                                                setSelectedPowerSupplyModels(
+                                                  selectedPowerSupplyModels.filter(
+                                                    (m) => m !== model
+                                                  )
+                                                );
+                                                console.log(
+                                                  "Power Supply Model(s) selected:",
+                                                  selectedPowerSupplyModels.filter(
+                                                    (m) => m !== model
+                                                  )
+                                                );
+                                              } else {
+                                                setSelectedPowerSupplyModels([
+                                                  ...selectedPowerSupplyModels,
+                                                  model,
+                                                ]);
+                                                console.log(
+                                                  "Power Supply Model(s) selected:",
+                                                  [
+                                                    ...selectedPowerSupplyModels,
+                                                    model,
+                                                  ]
+                                                );
+                                              }
+                                            }}
+                                          >
+                                            <View
+                                              style={{
+                                                flexDirection: "row",
+                                                alignItems: "center",
+                                              }}
+                                            >
+                                              <Ionicons
+                                                name={
+                                                  isSelected
+                                                    ? "checkbox"
+                                                    : "square-outline"
+                                                }
+                                                size={22}
+                                                color={
+                                                  isSelected ? "#1a73e8" : "#666"
+                                                }
+                                                style={{ marginRight: 10 }}
+                                              />
+                                              <Text
+                                                style={{
+                                                  fontSize: 16,
+                                                  color: "#333",
+                                                }}
+                                              >
+                                                {model}
+                                              </Text>
+                                            </View>
+                                          </Pressable>
+                                        );
+                                      })}
+                                    </ScrollView>
+                                    <Pressable
+                                      style={styles.modalCloseButton}
+                                      onPress={() => setShowPowerSupplyModal(false)}
+                                    >
+                                      <Text style={styles.modalCloseText}>
+                                        Done
+                                      </Text>
+                                    </Pressable>
+                                  </View>
+                                </View>
+                              </Modal>
+                            </>
+                          )}
+                        </>
+                      )}
                     </>
+                  ) : null}
+                </View>
+              )}
+
+              {/* Customer Signature */}
+              <View style={styles.customersectioncontainer}>
+                {/* New fields for customer name and contact */}
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={styles.formLabel}>Customer Name</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter customer name"
+                    value={customerName}
+                    onChangeText={setCustomerName}
+                  />
+                  <Text style={styles.formLabel}>Customer Contact No.</Text>
+
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter contact number"
+                    value={customerContact}
+                    onChangeText={setCustomerContact}
+                    keyboardType="phone-pad"
+                  />
+                  <Text style={styles.formLabel}>Customer Signature:</Text>
+                </View>
+                <Pressable
+                  style={styles.signatureBox}
+                  onPress={() => openSignaturePad("customer")}
+                >
+                  {customerSignature ? (
+                    <View style={styles.signaturePreviewContainer}>
+                      <Image
+                        source={{ uri: customerSignature }}
+                        style={styles.signaturePreviewImage}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.signatureText}>Signature Saved ✓</Text>
+                    </View>
                   ) : (
-                    <>
-                      <Text style={styles.modalTitle}>Pending Reason</Text>
-                      {pendingReasons.length > 0 ? (
-                        pendingReasons.map((reason) => (
+                    <Text style={styles.signaturePlaceholder}>
+                      Tap to add signature
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+
+              {/* Engineer Signature */}
+              <View style={styles.customersectioncontainer}>
+                {/* New Engineer Signature fields */}
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={styles.formLabel}>Update date by</Text>
+                  <Pressable
+                    style={styles.dropdownButton}
+                    onPress={() => setShowUpdateEngineerModal(true)}
+                  >
+                    <Text style={styles.dropdownButtonText}>
+                      {attendingengineer || "Select Engineer "}
+                    </Text>
+                    <Ionicons name="chevron-down" size={20} color={"#666"} />
+                  </Pressable>
+
+                  <Text style={styles.formLabel}>Engineer Signature:</Text>
+
+                  {/* Complain attending engineer model */}
+
+                  <Modal
+                    visible={showUpdateEngineerModal}
+                    transparent={true}
+                    animationType={"slide"}
+                    onRequestClose={() => setShowUpdateEngineerModal(false)}
+                  >
+                    <View style={styles.modalContainer}>
+                      <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Select Site Engineer</Text>
+                        {engineerlist(assignedengineer).map((Key) => (
                           <Pressable
-                            key={reason}
-                            style={styles.modalItem}
+                            key={Key}
+                            style={[
+                              styles.modalItem,
+                              {
+                                backgroundColor: "#f2f2f2",
+                                marginVertical: 5,
+                                borderRadius: 6,
+                              },
+                            ]}
                             onPress={() => {
-                              setPendingReason(reason);
-                              setShowPendingReasonModal(false);
-                              setShowStatusModal(false);
+                              setAttendingengineer(Key);
+                              setEngineerUpdateBy(Key);
+                              setShowUpdateEngineerModal(false);
                             }}
                           >
-                            <Text style={styles.modalItemText}>{reason}</Text>
+                            <Text
+                              style={[
+                                styles.modalItemText,
+                                { padding: 8, fontSize: 16 },
+                              ]}
+                            >
+                              {Key}
+                            </Text>
                           </Pressable>
-                        ))
-                      ) : (
-                        <Text style={styles.modalNoDataText}>
-                          Loading pending reasons...
-                        </Text>
-                      )}
-                      <Pressable
-                        style={styles.modalCloseButton}
-                        onPress={() => {
-                          setShowPendingReasonModal(false);
-                          setShowStatusModal(false);
-                        }}
-                      >
-                        <Text style={styles.modalCloseText}>Close</Text>
-                      </Pressable>
-                    </>
+                        ))}
+                        <Pressable
+                          style={styles.modalCloseButton}
+                          onPress={() => setShowUpdateEngineerModal(false)}
+                        >
+                          <Text style={styles.modalCloseText}>Close</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  </Modal>
+
+                  {/* system status model  */}
+                  <Modal
+                    visible={showSystemStatusModal}
+                    transparent={true}
+                    animationType="slide"
+                    onRequestClose={() => setShowSystemStatusModal(false)}
+                  >
+                    <View style={styles.modalContainer}>
+                      <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>System Status</Text>
+                        {["AMC", "Call Basis"].map((option) => (
+                          <Pressable
+                            key={option}
+                            style={styles.modalItem}
+                            onPress={() => {
+                              setSystemStatus(option);
+                              setShowSystemStatusModal(false);
+                            }}
+                          >
+                            <Text style={styles.modalItemText}>{option}</Text>
+                          </Pressable>
+                        ))}
+                        <Pressable
+                          style={styles.modalCloseButton}
+                          onPress={() => setShowSystemStatusModal(false)}
+                        >
+                          <Text style={styles.modalCloseText}>Close</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  </Modal>
+                </View>
+                <Pressable
+                  style={styles.signatureBox}
+                  onPress={() => openSignaturePad("engineer")}
+                >
+                  {engineerSignature ? (
+                    <View style={styles.signaturePreviewContainer}>
+                      <Image
+                        source={{ uri: engineerSignature }}
+                        style={styles.signaturePreviewImage}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.signatureText}>Signature Saved ✓</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.signaturePlaceholder}>
+                      Tap to add signature
+                    </Text>
                   )}
+                </Pressable>
+              </View>
+              {/* Status Dropdown */}
+              <Text style={styles.formLabel}>Status:</Text>
+              <Pressable
+                style={[
+                  styles.dropdownButton,
+                  hasSubmitAttempt && !workStatus ? styles.inputError : null,
+                ]}
+                onPress={() => setShowStatusModal(true)}
+              >
+                <Text style={styles.dropdownButtonText}>
+                  {workStatus === "Pending"
+                    ? pendingReason
+                      ? `Pending: ${pendingReason}`
+                      : "Pending: Select Reason"
+                    : workStatus || "Select Work Status"}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#666" />
+              </Pressable>
+              {hasSubmitAttempt && !workStatus && (
+                <Text style={styles.errorText}>Please select a work status</Text>
+              )}
+              {hasSubmitAttempt && workStatus === "Pending" && !pendingReason && (
+                <Text style={styles.errorText}>Please select a pending reason</Text>
+              )}
+
+              {/* Combined Modal for Status and Pending Reason */}
+              <Modal
+                visible={showStatusModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowStatusModal(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalContent}>
+                    {!showPendingReasonModal ? (
+                      <>
+                        <Text style={styles.modalTitle}>Select Work Status</Text>
+                        {["Completed", "Pending"].map((status) => (
+                          <Pressable
+                            key={status}
+                            style={styles.modalItem}
+                            onPress={() => {
+                              setWorkStatus(status);
+                              if (status === "Pending") {
+                                fetchPendingReasons();
+                                setShowPendingReasonModal(true);
+                              } else {
+                                setPendingReason("");
+                                setShowStatusModal(false);
+                              }
+                            }}
+                          >
+                            <Text style={styles.modalItemText}>{status}</Text>
+                          </Pressable>
+                        ))}
+                        <Pressable
+                          style={styles.modalCloseButton}
+                          onPress={() => setShowStatusModal(false)}
+                        >
+                          <Text style={styles.modalCloseText}>Close</Text>
+                        </Pressable>
+                      </>
+                    ) : (
+                      <>
+                        <Text style={styles.modalTitle}>Pending Reason</Text>
+                        {pendingReasons.length > 0 ? (
+                          pendingReasons.map((reason) => (
+                            <Pressable
+                              key={reason}
+                              style={styles.modalItem}
+                              onPress={() => {
+                                setPendingReason(reason);
+                                setShowPendingReasonModal(false);
+                                setShowStatusModal(false);
+                              }}
+                            >
+                              <Text style={styles.modalItemText}>{reason}</Text>
+                            </Pressable>
+                          ))
+                        ) : (
+                          <Text style={styles.modalNoDataText}>
+                            Loading pending reasons...
+                          </Text>
+                        )}
+                        <Pressable
+                          style={styles.modalCloseButton}
+                          onPress={() => {
+                            setShowPendingReasonModal(false);
+                            setShowStatusModal(false);
+                          }}
+                        >
+                          <Text style={styles.modalCloseText}>Close</Text>
+                        </Pressable>
+                      </>
+                    )}
+                  </View>
+                </View>
+              </Modal>
+
+              <View style={styles.buttonstyleforpreviewsubmit}>
+                {/* Preview Button */}
+                <Pressable
+                  style={[styles.previewButton]}
+                  onPress={() => setShowPreviewModal(true)}
+                  disabled={isSubmitting}
+                >
+                  <Ionicons
+                    name="eye-outline"
+                    size={20}
+                    color="#084088ff"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.previewButtonText}>PDF</Text>
+                </Pressable>
+
+                <Pressable
+                  style={[
+                    styles.submitButton,
+                    isSubmitting && styles.submitButtonDisabled,
+                  ]}
+                  onPress={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <View style={styles.submitButtonContent}>
+                      <ActivityIndicator
+                        color="#fff"
+                        size="small"
+                        style={styles.submitButtonSpinner}
+                      />
+                      <Text style={styles.submitButtonText}>Submitting...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.submitButtonText}>Submit</Text>
+                  )}
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Customer Signature Pad Modal */}
+            <Modal
+              visible={showSignaturePad}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowSignaturePad(false)}
+            >
+              <View style={styles.modalContainer}>
+                <View style={styles.signatureModalContent}>
+                  <View style={styles.closebuttoncontainer}>
+                    <Text style={styles.modalTitle}>Customer Signature</Text>
+                    <Pressable onPress={() => setShowSignaturePad(false)}>
+                      <Ionicons name="close" size={30} color={"#1a4a8a"} />
+                    </Pressable>
+
+                  </View>
+                  <ViewShot
+                    ref={signatureRef}
+                    style={styles.signaturePad}
+                    options={{ format: "jpg", quality: 0.9, result: "data-uri" }}
+                  >
+                    <View
+                      ref={signatureBgRef}
+                      style={styles.signatureBackground}
+                      onLayout={updatePadLayout}
+                    >
+                      <Svg
+                        height={padLayout.height}
+                        width={padLayout.width}
+                        viewBox={`0 0 ${padLayout.width} ${padLayout.height}`}
+                      >
+                        <G>
+                          {/* Draw all saved paths */}
+                          {paths.map((path, index) => (
+                            <Path
+                              key={`path-${index}`}
+                              d={path}
+                              stroke="black"
+                              strokeWidth={2}
+                              fill="none"
+                            />
+                          ))}
+
+                          {/* Draw current path */}
+                          {currentPath ? (
+                            <Path
+                              d={currentPath}
+                              stroke="black"
+                              strokeWidth={2}
+                              fill="none"
+                            />
+                          ) : null}
+                        </G>
+                      </Svg>
+                    </View>
+                  </ViewShot>
+
+                  {/* Touch handler overlay for signature pad */}
+                  <View
+                    style={[styles.signatureOverlay]}
+                    {...panResponder.panHandlers}
+                  />
+
+                  <View style={styles.signatureButtonsSmall}>
+                    <TouchableOpacity
+                      style={styles.signatureButtonSmall}
+                      onPress={clearSignature}
+                    >
+                      <Text style={styles.signatureButtonTextSmall}>Clear</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.signatureButtonSmall,
+                        styles.signatureButtonPrimarySmall,
+                      ]}
+                      onPress={saveSignature}
+                    >
+                      <Text
+                        style={[styles.signatureButtonTextSmall, { color: "#fff" }]}
+                      >
+                        Save
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             </Modal>
 
-            <View style={styles.buttonstyleforpreviewsubmit}>
-              {/* Preview Button */}
-              <Pressable
-                style={[styles.previewButton]}
-                onPress={() => setShowPreviewModal(true)}
-                disabled={isSubmitting}
-              >
-                <Ionicons
-                  name="eye-outline"
-                  size={20}
-                  color="#fff"
-                  style={{ marginRight: 8 }}
-                />
-                <Text style={styles.previewButtonText}>PDF</Text>
-              </Pressable>
+            {/* Engineer Signature Pad Modal */}
+            <Modal
+              visible={showEngineerSignaturePad}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowEngineerSignaturePad(false)}
+            >
+              <View style={styles.modalContainer}>
+                <View style={styles.signatureModalContent}>
+                  <View style={styles.closebuttoncontainer}>
+                    <Text style={styles.modalTitle}>Engineer Signature</Text>
+                    <Pressable onPress={() => setShowEngineerSignaturePad(false)}>
+                      <Ionicons name="close" size={30} color={"#1a4a8a"} />
+                    </Pressable>
 
-              <Pressable
-                style={[
-                  styles.submitButton,
-                  isSubmitting && styles.submitButtonDisabled,
-                ]}
-                onPress={handleSubmit}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <View style={styles.submitButtonContent}>
-                    <ActivityIndicator
-                      color="#fff"
-                      size="small"
-                      style={styles.submitButtonSpinner}
-                    />
-                    <Text style={styles.submitButtonText}>Submitting...</Text>
                   </View>
-                ) : (
-                  <Text style={styles.submitButtonText}>Submit</Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
+                  <ViewShot
+                    ref={signatureRef}
+                    style={styles.signaturePad}
+                    options={{ format: "jpg", quality: 0.9, result: "data-uri" }}
+                  >
+                    <View
+                      ref={signatureBgRef}
+                      style={styles.signatureBackground}
+                      onLayout={updatePadLayout}
+                    >
+                      <Svg
+                        height={padLayout.height}
+                        width={padLayout.width}
+                        viewBox={`0 0 ${padLayout.width} ${padLayout.height}`}
+                      >
+                        <G>
+                          {/* Draw all saved paths */}
+                          {paths.map((path, index) => (
+                            <Path
+                              key={`path-${index}`}
+                              d={path}
+                              stroke="black"
+                              strokeWidth={2}
+                              fill="none"
+                            />
+                          ))}
 
-          {/* Customer Signature Pad Modal */}
-          <Modal
-            visible={showSignaturePad}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setShowSignaturePad(false)}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.signatureModalContent}>
-                <Text style={styles.modalTitle}>Customer Signature</Text>
-                <ViewShot
-                  ref={signatureRef}
-                  style={styles.signaturePad}
-                  options={{ format: "jpg", quality: 0.9, result: "data-uri" }}
-                >
+                          {/* Draw current path */}
+                          {currentPath ? (
+                            <Path
+                              d={currentPath}
+                              stroke="black"
+                              strokeWidth={2}
+                              fill="none"
+                            />
+                          ) : null}
+                        </G>
+                      </Svg>
+                    </View>
+                  </ViewShot>
+
+                  {/* Touch handler overlay for signature pad */}
                   <View
-                    ref={signatureBgRef}
-                    style={styles.signatureBackground}
-                    onLayout={updatePadLayout}
-                  >
-                    <Svg
-                      height={padLayout.height}
-                      width={padLayout.width}
-                      viewBox={`0 0 ${padLayout.width} ${padLayout.height}`}
-                    >
-                      <G>
-                        {/* Draw all saved paths */}
-                        {paths.map((path, index) => (
-                          <Path
-                            key={`path-${index}`}
-                            d={path}
-                            stroke="black"
-                            strokeWidth={2}
-                            fill="none"
-                          />
-                        ))}
+                    style={[styles.signatureOverlay]}
+                    {...panResponder.panHandlers}
+                  />
 
-                        {/* Draw current path */}
-                        {currentPath ? (
-                          <Path
-                            d={currentPath}
-                            stroke="black"
-                            strokeWidth={2}
-                            fill="none"
-                          />
-                        ) : null}
-                      </G>
-                    </Svg>
+                  <View style={styles.signatureButtonsSmall}>
+                    <TouchableOpacity
+                      style={styles.signatureButtonSmall}
+                      onPress={clearSignature}
+                    >
+                      <Text style={styles.signatureButtonTextSmall}>Clear</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.signatureButtonSmall,
+                        styles.signatureButtonPrimarySmall,
+                      ]}
+                      onPress={saveSignature}
+                    >
+                      <Text
+                        style={[styles.signatureButtonTextSmall, { color: "#fff" }]}
+                      >
+                        Save
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                </ViewShot>
-
-                {/* Touch handler overlay for signature pad */}
-                <View
-                  style={[styles.signatureOverlay]}
-                  {...panResponder.panHandlers}
-                />
-
-                <View style={styles.signatureButtonsSmall}>
-                  <TouchableOpacity
-                    style={styles.signatureButtonSmall}
-                    onPress={clearSignature}
-                  >
-                    <Text style={styles.signatureButtonTextSmall}>Clear</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.signatureButtonSmall,
-                      styles.signatureButtonPrimarySmall,
-                    ]}
-                    onPress={saveSignature}
-                  >
-                    <Text
-                      style={[styles.signatureButtonTextSmall, { color: "#fff" }]}
-                    >
-                      Save
-                    </Text>
-                  </TouchableOpacity>
                 </View>
               </View>
-            </View>
-          </Modal>
-
-          {/* Engineer Signature Pad Modal */}
-          <Modal
-            visible={showEngineerSignaturePad}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setShowEngineerSignaturePad(false)}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.signatureModalContent}>
-                <Text style={styles.modalTitle}>Engineer Signature</Text>
-                <ViewShot
-                  ref={signatureRef}
-                  style={styles.signaturePad}
-                  options={{ format: "jpg", quality: 0.9, result: "data-uri" }}
-                >
-                  <View
-                    ref={signatureBgRef}
-                    style={styles.signatureBackground}
-                    onLayout={updatePadLayout}
-                  >
-                    <Svg
-                      height={padLayout.height}
-                      width={padLayout.width}
-                      viewBox={`0 0 ${padLayout.width} ${padLayout.height}`}
-                    >
-                      <G>
-                        {/* Draw all saved paths */}
-                        {paths.map((path, index) => (
-                          <Path
-                            key={`path-${index}`}
-                            d={path}
-                            stroke="black"
-                            strokeWidth={2}
-                            fill="none"
-                          />
-                        ))}
-
-                        {/* Draw current path */}
-                        {currentPath ? (
-                          <Path
-                            d={currentPath}
-                            stroke="black"
-                            strokeWidth={2}
-                            fill="none"
-                          />
-                        ) : null}
-                      </G>
-                    </Svg>
-                  </View>
-                </ViewShot>
-
-                {/* Touch handler overlay for signature pad */}
-                <View
-                  style={[styles.signatureOverlay]}
-                  {...panResponder.panHandlers}
-                />
-
-                <View style={styles.signatureButtonsSmall}>
-                  <TouchableOpacity
-                    style={styles.signatureButtonSmall}
-                    onPress={clearSignature}
-                  >
-                    <Text style={styles.signatureButtonTextSmall}>Clear</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.signatureButtonSmall,
-                      styles.signatureButtonPrimarySmall,
-                    ]}
-                    onPress={saveSignature}
-                  >
-                    <Text
-                      style={[styles.signatureButtonTextSmall, { color: "#fff" }]}
-                    >
-                      Save
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+            </Modal>
+            {/* Loading overlay */}
+            {isSubmitting && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color="#1976D2" />
               </View>
-            </View>
-          </Modal>
-          {/* Loading overlay */}
-          {isSubmitting && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#1976D2" />
-            </View>
-          )}
+            )}
 
-          <SimplePreviewModal
-            visible={showPreviewModal}
-            onClose={() => setShowPreviewModal(false)}
-            formData={{
-              complaintNo: getParam("complaintNo"),
-              clientName: getParam("clientName"),
-              workStatus,
-              remark,
-              faultReported: getParam("S_SERVDT"),
-              typeOfCall: getParam("S_TASK_TYPE"),
-              callAttendedDate,
-              callAttendedTime,
-              callCompletedDate,
-              callCompletedTime,
-              partReplaced,
-              causeProblem,
-              diagnosis,
-              materialTakenOut,
-              customerComment,
-              customerSignature,
-              systemName: getParam("SYSTEM_NAME"),
-              SystemName: getParam("SystemName"),
-              assignDate: getParam("S_assigndate"),
-              location: getParam("location"),
-              taskType: getParam("S_TASK_TYPE"),
-              status: getParam("status"),
-              S_SERVDT: getParam("S_SERVDT"),
-              S_assignedengg: getParam("S_assignedengg"),
-              COMP_TYPE: getParam("COMP_TYPE"),
-              AMC_Status: getParam("AMC_Status"),
-              pendingReason: workStatus === "Pending" ? pendingReason : "",
-              submittedAt: new Date().toISOString(),
-              engineerComment,
-              engineerSignature,
-              material: getMaterialSummary(),
-              customerName,
-              customerContact,
-              showUpdateEngineerModal,
-              systemStatus,
-              attendingengineer,
-              assignedengineer,
-              engineerUpdateBy,
-            }}
-          />
-        </ScrollView>
-      </SafeAreaView>
-     </KeyboardAvoidingView>
+            <SimplePreviewModal
+              visible={showPreviewModal}
+              onClose={() => setShowPreviewModal(false)}
+              formData={{
+                complaintNo: getParam("complaintNo"),
+                clientName: getParam("clientName"),
+                workStatus,
+                remark,
+                faultReported: getParam("S_SERVDT"),
+                typeOfCall: getParam("S_TASK_TYPE"),
+                callAttendedDate,
+                callAttendedTime,
+                callCompletedDate,
+                callCompletedTime,
+                partReplaced,
+                causeProblem,
+                diagnosis,
+                materialTakenOut,
+                customerComment,
+                customerSignature,
+                systemName: getParam("SYSTEM_NAME"),
+                SystemName: getParam("SystemName"),
+                assignDate: getParam("S_assigndate"),
+                location: getParam("location"),
+                taskType: getParam("S_TASK_TYPE"),
+                status: getParam("status"),
+                S_SERVDT: getParam("S_SERVDT"),
+                S_assignedengg: getParam("S_assignedengg"),
+                COMP_TYPE: getParam("COMP_TYPE"),
+                AMC_Status: getParam("AMC_Status"),
+                pendingReason: workStatus === "Pending" ? pendingReason : "",
+                submittedAt: new Date().toISOString(),
+                engineerComment,
+                engineerSignature,
+                material: getMaterialSummary(),
+                customerName,
+                customerContact,
+                showUpdateEngineerModal,
+                systemStatus,
+                attendingengineer,
+                assignedengineer,
+                engineerUpdateBy,
+              }}
+            />
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
+
+  // ── Header bar on gradient ───────────────────────────────────────
+  headerBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  pageTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#fff",
+    letterSpacing: 0.3,
+  },
+  complaintChip: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    maxWidth: 140,
+  },
+  complaintChipText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+
+  // ── White rounded sheet ──────────────────────────────────────────
+  sheet: {
+    flex: 1,
+    backgroundColor: "#f0f4f8",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: "hidden",
+  },
+
   container: {
     flex: 1,
-
-    paddingTop: 0,
-    paddingBottom: 0,
-    paddingHorizontal: "4%", // responsive horizontal padding
-    marginTop: 0,
   },
   header: {
     backgroundColor: "#1a73e8",
@@ -1891,102 +1976,102 @@ const styles = StyleSheet.create({
     shadowRadius: 1.41,
   },
   complaintNo: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    fontFamily: "Roboto",
-    borderWidth: 2,
-    alignContent: "center",
-    justifyContent: "center",
-    borderColor: "#1976D2",
-    borderRadius: 16,
-    padding: 15,
-    marginBottom: 20,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1a4a8a",
+    backgroundColor: "rgba(26,74,138,0.08)",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginBottom: 14,
+    alignSelf: "flex-start",
   },
   infoSectionBox: {
-    backgroundColor: "#F0F6FF", // very light blue
-    borderRadius: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: "#1976D2",
-    padding: 20,
-    marginBottom: 0,
-    elevation: 2,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 18,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 12,
+    elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.07,
     shadowRadius: 8,
-    marginHorizontal: "2%", // responsive card margin
   },
   sectionTitle: {
-    fontSize: 18, // larger
-    fontWeight: "bold",
-    marginBottom: 12,
-    color: "#1976D2",
-    fontFamily: "Roboto",
+    fontSize: 12,
+    fontWeight: "800",
+    marginBottom: 14,
+    color: "#1a4a8a",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   infoRow: {
     flexDirection: "row",
-    marginBottom: 8,
+    alignItems: "flex-start",
+    marginBottom: 10,
   },
   label: {
-    width: "40%",
+    width: "42%",
     fontWeight: "600",
-    color: "#555",
-    fontFamily: "Roboto",
+    color: "#888",
+    fontSize: 13,
   },
   value: {
     flex: 1,
-    color: "#333",
-    fontFamily: "Roboto",
+    color: "#1a1a2e",
+    fontSize: 13,
+    fontWeight: "500",
   },
   formSectionBox: {
-    backgroundColor: "#F0F6FF",
-    borderRadius: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: "#1976D2",
-    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 18,
+    marginHorizontal: 16,
     marginBottom: 20,
-    elevation: 2,
+    elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.07,
     shadowRadius: 8,
-    marginHorizontal: "2%", // responsive card margin
   },
 
   customersectioncontainer: {
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: "#FAFAFA",
+    borderWidth: 1.5,
+    borderColor: "#E8EEF8",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+    backgroundColor: "#FAFBFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
   },
   formLabel: {
-    fontSize: 15,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "800",
     marginBottom: 6,
-    color: "#1976D2",
-    marginTop: 0, // ensure no extra top margin
-    fontFamily: "Roboto",
+    marginTop: 6,
+    color: "#1a4a8a",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
   },
 
   formLabel1: {
-    fontSize: 16,
+    fontSize: 15,
   },
   textInput: {
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 10,
-    paddingLeft: 10,
-    backgroundColor: "#FAFAFA",
-    color: "#333",
-    fontSize: 15,
-    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: "#E0E8F5",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: "#FAFCFF",
+    color: "#222",
+    fontSize: 14,
+    marginBottom: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
@@ -1994,14 +2079,15 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   textInput2: {
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 10,
-    paddingLeft: 10,
-    backgroundColor: "#FAFAFA",
-    color: "#333",
-    fontSize: 15,
-    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: "#E0E8F5",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: "#FAFCFF",
+    color: "#222",
+    fontSize: 14,
+    marginBottom: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
@@ -2010,34 +2096,79 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   textInputFocused: {
-    borderColor: "#1976D2",
-    shadowColor: "#1976D2",
-    shadowOpacity: 0.15,
+    borderColor: "#1a4a8a",
+    borderWidth: 2,
+    shadowColor: "#1a4a8a",
+    shadowOpacity: 0.12,
     shadowRadius: 4,
     elevation: 2,
   },
   helperText: {
-    fontSize: 12,
-    color: "#888",
-    marginTop: -12,
-    marginBottom: 12,
-    fontFamily: "Roboto",
+    fontSize: 11,
+    color: "#aaa",
+    marginTop: -8,
+    marginBottom: 10,
   },
   dropdownButton: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    backgroundColor: "#f9f9f9",
+    borderWidth: 1.5,
+    borderColor: "#E0E8F5",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: "#FAFCFF",
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16, // uniform margin for dropdowns
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  dropdown: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: '#D9E2EC',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   dropdownButtonText: {
-    color: "#555",
-    fontFamily: "Roboto",
+    color: "#444",
+    fontSize: 14,
+    flex: 1,
   },
+  dropdownContainer: {
+    borderWidth: 1,
+    borderColor: '#D9E2EC',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    marginTop: 4,
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  dropdownButtonText1: {
+
+    borderRadius: 10,
+    zIndex: 11000
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#9CA3AF'
+  },
+
   modalContainer: {
     flex: 1,
     justifyContent: "center",
@@ -2045,23 +2176,23 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    width: "80%",
+    width: "88%",
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    elevation: 5,
+    borderRadius: 20,
+    padding: 22,
+    elevation: 6,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 15,
+    fontWeight: "800",
     marginBottom: 16,
-    color: "#333",
-    textAlign: "center",
-    fontFamily: "Roboto",
+    color: "#1a4a8a",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
   },
   modalItem: {
     paddingVertical: 12,
@@ -2074,58 +2205,52 @@ const styles = StyleSheet.create({
     fontFamily: "Roboto",
   },
   modalCloseButton: {
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
+    marginTop: 14,
+    padding: 13,
+    backgroundColor: "#1a4a8a",
+    borderRadius: 12,
     alignItems: "center",
   },
   modalCloseText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#555",
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#fff",
   },
   previewButton: {
-    backgroundColor: "#1976D2",
-
-    borderColor: "#1976D2",
-    borderRadius: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    borderWidth: 2,
+    borderColor: "#1a4a8a",
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     alignItems: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 2,
     flexDirection: "row",
     justifyContent: "center",
-
-    marginRight: 8,
+    backgroundColor: "transparent",
+    marginRight: 10,
   },
   previewButtonText: {
-    color: "#fff",
-    fontSize: 17,
-    fontWeight: "bold",
-    fontFamily: "Roboto",
+    color: "#1a4a8a",
+    fontSize: 15,
+    fontWeight: "700",
   },
   submitButton: {
-    backgroundColor: "#1976D2",
-    borderRadius: 10,
-    paddingVertical: 16,
+    backgroundColor: "#1a4a8a",
+    borderRadius: 14,
+    paddingVertical: 14,
     paddingHorizontal: 24,
     alignItems: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 2,
+    elevation: 5,
+    shadowColor: "#1a4a8a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
     flex: 1,
-    marginLeft: 8,
+    marginLeft: 0,
   },
   submitButtonDisabled: {
-    backgroundColor: "#1a73e8aa",
-    opacity: 0.8,
+    backgroundColor: "#1a4a8aaa",
+    opacity: 0.7,
+    elevation: 0,
   },
   submitButtonContent: {
     flexDirection: "row",
@@ -2137,9 +2262,9 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: "#fff",
-    fontSize: 17,
-    fontWeight: "bold",
-    fontFamily: "Roboto",
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
   dateTimeContainer: {
     flexDirection: "row",
@@ -2149,22 +2274,24 @@ const styles = StyleSheet.create({
   dateTimeInput: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    backgroundColor: "#f9f9f9",
+    borderWidth: 1.5,
+    borderColor: "#E0E8F5",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: "#FAFCFF",
     flex: 1,
-    marginBottom: 16, // uniform margin for date/time fields
+    marginBottom: 12,
   },
   inputError: {
     borderColor: "#E53935",
     borderWidth: 1.5,
   },
   errorText: {
-    color: "red",
-    marginTop: -12,
+    color: "#E53935",
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: -8,
     marginBottom: 8,
   },
   modalOverlay: {
@@ -2244,13 +2371,14 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   signatureBox: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: "#C8D9F0",
+    borderStyle: "dashed",
+    borderRadius: 14,
     padding: 12,
-    marginBottom: 16,
-    backgroundColor: "#f9f9f9",
-    height: 110, // fixed height
+    marginBottom: 12,
+    backgroundColor: "#F5F9FF",
+    height: 210,
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
@@ -2262,8 +2390,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   signaturePlaceholder: {
-    color: "#666",
-    fontSize: 14,
+    color: "#aaa",
+    fontSize: 13,
+    textAlign: "center",
   },
   signatureModalContent: {
     backgroundColor: "#fff",
@@ -2271,14 +2400,21 @@ const styles = StyleSheet.create({
     padding: 20,
     width: "100%",
   },
+  closebuttoncontainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+
+  },
+
   signaturePad: {
     height: 200,
     width: "100%",
     backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    marginVertical: 20,
+    borderWidth: 1.5,
+    borderColor: "#E0E8F5",
+    borderRadius: 14,
+    marginVertical: 16,
     overflow: "hidden",
   },
   signatureBackground: {
@@ -2310,8 +2446,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   signatureButtonPrimarySmall: {
-    backgroundColor: "#1a73e8",
-    borderColor: "#1a73e8",
+    backgroundColor: "#1a4a8a",
+    borderColor: "#1a4a8a",
   },
   signatureButtonTextSmall: {
     fontSize: 14,
@@ -2320,14 +2456,14 @@ const styles = StyleSheet.create({
   },
   signaturePreviewContainer: {
     width: "100%",
-    height: 80, // fixed preview height
+    height: 200, // fixed preview height
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "column",
   },
   signaturePreviewImage: {
     width: "100%",
-    height: 80, // fixed image height
+    height: 170, // fixed image height
   },
   pickerContainer: {
     backgroundColor: "white",
@@ -2536,9 +2672,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   divider: {
-    height: 2,
-    backgroundColor: "#E0E7EF",
-    marginVertical: 10,
+    height: 1,
+    backgroundColor: "#EEF2F8",
+    marginVertical: 8,
+    marginHorizontal: 16,
     borderRadius: 1,
   },
   loadingOverlay: {
