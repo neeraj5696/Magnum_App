@@ -244,7 +244,7 @@ export default function EnggComplaintDetails() {
   // Set selectedSystem from params.systemName if present and not already set
   useEffect(() => {
     const paramSystemName = getParam("SystemName");
-    console.log( ' Debug, checking thesystem, ', paramSystemName)
+    console.log(' Debug, checking thesystem, ', paramSystemName)
     if (!selectedSystem && paramSystemName && paramSystemName.trim() !== "") {
       setSelectedSystem(paramSystemName);
     }
@@ -552,38 +552,44 @@ export default function EnggComplaintDetails() {
 
         let rmaResponseJson1: any = null;
         if (shouldCreateRma) {
-
           console.log('🚩 CHECKPOINT 6.1: Preparing to submit RMA update with the following data:', getParam('SystemName'), getParam('customer'), getParam('complaintNo'), getRMAItems());
-          // Call the submitRMAcomplaintUpdate function to submit RMA update
-          rmaResponseJson1 = await submitRMAcomplaintUpdate({
-            enggname: getParam("S_assignedengg"),
-            secureUrl: rmaSecureUrl!,
-            customer: getParam("customer"),
-            complaintNo: getParam("complaintNo"),
-            items: getRMAItems(),
-            product: getParam("SystemName"),
-          });
-
-          let reasonrpart = String(rmaResponseJson1?.reason ?? "").split(',');
-          const reasonresponse = Number(reasonrpart[0]?.trim());
-
-          if (rmaResponseJson1 && reasonresponse == 0) {
-            console.warn("RMA submission failed with reason:", rmaResponseJson1.reason);
+          
+          try {
+            // Call the submitRMAcomplaintUpdate function to submit RMA update
+            rmaResponseJson1 = await submitRMAcomplaintUpdate({
+              enggname: getParam("S_assignedengg"),
+              secureUrl: rmaSecureUrl!,
+              customer: getParam("customer"),
+              complaintNo: getParam("complaintNo"),
+              items: getRMAItems(),
+              product: getParam("SystemName"),
+            });
+          } catch (rmaNetworkError) {
+            console.error("RMA submission network/request failed:", rmaNetworkError);
             setShowRmaErrorModal(true);
-            return;
+            return; // ⛔ HALT: Stop entire handleFinalSubmit on RMA network error
           }
 
-          // Normalize status to lowercase and compare explicitly. The original
-          // `if (rmaResponseJson1?.status === "fail" || "failed" ...)`
-          // always evaluated to true because non-empty strings are truthy.
-          const statusStr = String(rmaResponseJson1?.status ?? "").toLowerCase();
-          if (statusStr === "fail" || statusStr === "failed") {
-            console.warn("RMA submission failed with reason second val:", rmaResponseJson1.status);
-            setShowRmaErrorModal(true);
-            return;
+          console.log("RMA submission response:", rmaResponseJson1);
+
+          // Verify RMA submission was strictly successful
+          const statusStr = String(rmaResponseJson1?.status ?? "").toLowerCase().trim();
+
+          let reasonFailed = false;
+          if (rmaResponseJson1?.reason !== undefined && rmaResponseJson1?.reason !== null && rmaResponseJson1?.reason !== "") {
+            const reasonrpart = String(rmaResponseJson1.reason).split(',');
+            const reasonresponse = Number(reasonrpart[0]?.trim());
+            if (!isNaN(reasonresponse) && reasonresponse === 0) {
+              reasonFailed = true;
+            }
           }
 
-
+          // Whitelist check: If RMA did not return "success" or reason failed or response is empty, HALT EVERYTHING
+          if (!rmaResponseJson1 || statusStr !== "success" || reasonFailed) {
+            console.warn("RMA submission failed. Halting entire submission process:", rmaResponseJson1);
+            setShowRmaErrorModal(true);
+            return; // ⛔ HALT: Stop handleFinalSubmit completely! Second API will NOT be called.
+          }
         }
 
         // Call the submitComplaintUpdate function to update the complaint status
@@ -601,17 +607,11 @@ export default function EnggComplaintDetails() {
           material: getMaterialSummary(),
         });
 
-       
         const checkresponse = JSON.stringify(responseJson)
 
-         console.log(
+        console.log(
           "🚩 CHECKPOINT 8: Server response received:", checkresponse
-          
         );
-
-        if (shouldCreateRma && rmaResponseJson1 && rmaResponseJson1.status !== "success") {
-          console.warn("RMA submission response:", JSON.stringify(rmaResponseJson1));
-        }
 
         if (responseJson.status === "success") {
           console.log("🚩 CHECKPOINT 9: Server update SUCCESSFUL");
@@ -826,7 +826,7 @@ export default function EnggComplaintDetails() {
     // console.log("🔍 Debug - selectedSystemName:", selectedSystemName);
 
     if (model && !selectedSystemName) {
-      console.log("🔍 Setting selectedSystemName to:",  system);
+      console.log("🔍 Setting selectedSystemName to:", system);
       setSelectedSystemName(system);
     }
   }, [selectedSystemName, params]);
@@ -2596,30 +2596,30 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   systemNameInfoRow: {
-    paddingHorizontal:4,
+    paddingHorizontal: 4,
     paddingVertical: 4,
     borderRadius: 10,
     marginBottom: 10,
-   
-   
+
+
   },
   systemNameInfoRowExpanded: {
     backgroundColor: "#F7FAFF",
     borderWidth: 1,
     borderColor: "#dee2e8",
     height: 300,
-     
+
   },
   systemNameInfoRowPressed: {
     backgroundColor: "#EEF5FF",
-    
+
   },
   systemNameHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     minHeight: 28,
     width: "100%",
-    
+
   },
   systemNameChevron: {
     marginLeft: "auto",

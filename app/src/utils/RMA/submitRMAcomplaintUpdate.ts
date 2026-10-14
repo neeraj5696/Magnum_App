@@ -39,7 +39,7 @@ export async function submitRMAcomplaintUpdate({
 
     try {
         const response = await fetch(
-            "https://hma.magnum.org.in/appEnggRMAdata.php",
+            "https://hma.magnum.org.in/NewappEnggRMAdata.php",
             {
                 method: "POST",
                 headers: {
@@ -50,9 +50,13 @@ export async function submitRMAcomplaintUpdate({
         );
 
         const responseText = await response.text();
+
+
+        console.log(responseText, "response")
         let responseJson;
         try {
             responseJson = JSON.parse(responseText);
+            console.log('try me aa gaya ', responseJson)
         } catch (e) {
             responseJson = {};
         }
