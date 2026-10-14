@@ -22,18 +22,23 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { generatePdfFromHtml } from "../src/utils/documentGenerator";
 import { createComplaintReportTemplate } from "../src/utils/complaintReportTemplate";
+import { rmacomplaintReportTemplate } from "../src/utils/RMA/rmacomplaintReportTemplate";
 import uploadPDFToCloudinary from "../src/utils/cloudinaryUpload";
 import Svg, { Path, G } from "react-native-svg";
 import ViewShot from "react-native-view-shot";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { Ionicons } from "@expo/vector-icons";
 import { submitComplaintUpdate } from "../src/utils/submitComplaintUpdate";
+import { submitRMAcomplaintUpdate } from "../src/utils/RMA/submitRMAcomplaintUpdate";
 import DropDownPicker from "react-native-dropdown-picker";
 import { getEpbaxData, getEpbaxAndPowerSupplyData } from "./componenet/Epbax";
 import { getAccessControlData } from "./componenet/AccessControl";
 import { getVpdDdlData } from "./componenet/VpdDdl";
 import SimplePreviewModal from "./componenet/SimplePreviewModal";
+import SimplePreviewRmaModal from "./componenet/SimplePreviewRmaModal";
+import ReadMoreText from "./componenet/ReadMoreText";
 import { getHeaderImageDataUri } from "../src/utils/getHeaderImageDataUri";
+import { getHeaderImageDataUri as getHeaderImageDataUriRma } from "../src/utils/RMA/getHeaderImageDataUri";
 import { LinearGradient } from "expo-linear-gradient";
 
 interface UploadResult {
@@ -59,7 +64,7 @@ export default function EnggComplaintDetails() {
   };
 
   // Debug: Log the problematic parameters immediately
-  console.log("🔍 IMMEDIATE DEBUG - SystemName:", getParam("SystemName"));
+  // console.log("🔍 IMMEDIATE DEBUG - SystemName:", getParam("SystemName"));
   // console.log("🔍 IMMEDIATE DEBUG - COMP_TYPE:", getParam("COMP_TYPE"));
   // console.log("🔍 IMMEDIATE DEBUG - All params:", params);
 
@@ -136,13 +141,79 @@ export default function EnggComplaintDetails() {
   const [customerContact, setCustomerContact] = useState("");
   const [systemStatus, setSystemStatus] = useState("");
   const [showSystemStatusModal, setShowSystemStatusModal] = useState(false);
+  const [showSystemName, setShowSystemName] = useState(false);
   const [showUpdateEngineerModal, setShowUpdateEngineerModal] = useState(false);
   const [attendingengineer, setAttendingengineer] = useState("");
   const [assignedengineer, setAssignedengineer] = useState("");
   const [engineerUpdateBy, setEngineerUpdateBy] = useState("");
   const [rnaForm, setRnaForm] = useState('');
   const [rnaOpen, setRnaOpen] = useState(false);
+  const [showRmaModal, setShowRmaModal] = useState(false);
+  const [rnaModalVisible, setRnaModalVisible] = useState(false);
+  const [rnaFormSubmitted, setRnaFormSubmitted] = useState(false);
+  const [showRmaErrorModal, setShowRmaErrorModal] = useState(false);
+  const [rnaRows, setRnarows] = useState([
+    {
+      Sr: '1',
+      Model: '',
+      Serial_No: '',
+      Reason_for_RMA_Fault: '',
+    }
+  ])
 
+  const normalizeRnaRows = (rows: Array<{ Sr?: string; Model: string; Serial_No: string; Reason_for_RMA_Fault: string }>) =>
+    rows.map((row, index) => ({
+      ...row,
+      Sr: String(index + 1),
+    }));
+
+  //add the row
+  const addRow = () => {
+    setRnarows((prevRows) =>
+      normalizeRnaRows([
+        ...prevRows,
+        {
+          Sr: '',
+          Model: '',
+          Serial_No: '',
+          Reason_for_RMA_Fault: '',
+        },
+      ])
+    );
+  }
+
+  // update the Row;
+  const updateRow = (
+    index: number,
+    field: 'Model' | 'Serial_No' | 'Reason_for_RMA_Fault',
+    value: string
+  ) => {
+    const newRows = [...rnaRows];
+    newRows[index] = { ...newRows[index], [field]: value };
+    setRnarows(normalizeRnaRows(newRows));
+  }
+
+  const isRnaRowComplete = (row: {
+    Model: string;
+    Reason_for_RMA_Fault: string;
+  }) => {
+    return [row.Model, row.Reason_for_RMA_Fault].every(
+      (value) => value?.trim() !== ""
+    );
+  };
+
+  const canSubmitRnaForm = () => {
+    return rnaRows.length > 0 && rnaRows.every(isRnaRowComplete);
+  };
+
+  const handleRnaFormSave = () => {
+    setRnaFormSubmitted(true);
+    if (!canSubmitRnaForm()) {
+      Alert.alert("Error", "Please complete all RMA fields before saving.");
+      return;
+    }
+    setRnaModalVisible(false);
+  };
 
   // Fetch both EPABX and Power Supply data on mount
   useEffect(() => {
@@ -173,6 +244,7 @@ export default function EnggComplaintDetails() {
   // Set selectedSystem from params.systemName if present and not already set
   useEffect(() => {
     const paramSystemName = getParam("SystemName");
+    console.log( ' Debug, checking thesystem, ', paramSystemName)
     if (!selectedSystem && paramSystemName && paramSystemName.trim() !== "") {
       setSelectedSystem(paramSystemName);
     }
@@ -309,13 +381,11 @@ export default function EnggComplaintDetails() {
     }
   };
 
-  // Handle final submission with document generation
   const handleFinalSubmit = async () => {
-    // console.log("🚩 CHECKPOINT 1: Starting form submission process");
+    console.log("🚩 CHECKPOINT 1: Starting form submission process");
 
     const headerImageDataUri = await getHeaderImageDataUri();
     const formData = {
-      // Basic complaint information
       complaintNo: getParam("complaintNo"),
       clientName: getParam("clientName"),
       faultReported: getParam("S_SERVDT"),
@@ -352,7 +422,6 @@ export default function EnggComplaintDetails() {
       customerSignature,
       engineerSignature,
       mailaddcallrpt: getParam("mailaddcallrpt"),
-
       pendingReason: workStatus === "Pending" ? pendingReason : "",
       submittedAt: new Date().toISOString(),
       engineerComment,
@@ -378,168 +447,248 @@ export default function EnggComplaintDetails() {
       attendingengineer: attendingengineer || "",
     };
 
-    // console.log("🔍 DEBUG formData after creation:", {
-    //   SystemName: formData.SystemName,
-    //   AMC_Status: formData.AMC_Status,
-    //   COMP_TYPE: formData.COMP_TYPE,
-    // });
+    const formData1 = {
+      complaintNo: getParam("complaintNo"),
+      clientName: getParam("clientName"),
+      workStatus,
+      remark,
+      faultReported: getParam("S_SERVDT"),
+      typeOfCall: getParam("S_TASK_TYPE"),
+      callAttendedDate,
+      callAttendedTime,
+      callCompletedDate,
+      callCompletedTime,
+      partReplaced,
+      causeProblem,
+      diagnosis,
+      materialTakenOut,
+      customerComment,
+      customerSignature,
+      engineerSignature,
+      systemName: getParam("SYSTEM_NAME"),
+      SystemName: getParam("SystemName"),
+      assignDate: getParam("S_assigndate"),
+      location: getParam("location"),
+      taskType: getParam("S_TASK_TYPE"),
+      status: getParam("status"),
+      S_SERVDT: getParam("S_SERVDT"),
+      S_assignedengg: getParam("S_assignedengg"),
+      COMP_TYPE: getParam("COMP_TYPE"),
+      AMC_Status: getParam("AMC_Status"),
+      pendingReason: workStatus === "Pending" ? pendingReason : "",
+      submittedAt: new Date().toISOString(),
+      engineerComment,
+      material: getMaterialSummary(),
+      customerName,
+      customerContact,
+      attendingengineer: attendingengineer || "",
+      assignedengineer: assignedengineer || "",
+      engineerUpdateBy: engineerUpdateBy || "",
+      systemStatus,
+      items: rnaRows.map((row, index) => ({
+        modelNo: row.Model,
+        serialNo: row.Serial_No || (index + 1).toString(),
+        reason: row.Reason_for_RMA_Fault,
+      })),
+    };
 
-    // console.log("🔍 DEBUG - Raw params for SystemName and AMC_Status:", {
-    //   SystemName: getParam("SystemName"),
-    //   AMC_Status: getParam("AMC_Status"),
-    // });
 
-    // console.log(      "🚩 CHECKPOINT 2: Form data prepared, beginning PDF generation"    );
+    console.log("🚩 CHECKPOINT 2: Form data prepared, beginning PDF generation");
 
     // Generate document from form data with the specialized template
     try {
       const templateData = {
         ...formData,
         headerImageDataUri,
-        // Explicitly ensure these fields are included
         SystemName: formData.SystemName || getParam("SystemName"),
         AMC_Status: formData.AMC_Status || getParam("AMC_Status"),
         COMP_TYPE: formData.COMP_TYPE || getParam("COMP_TYPE"),
       };
 
-      // console.log("🔍 DEBUG - Final template data:", {
-      //   SystemName: templateData.SystemName,
-      //   AMC_Status: templateData.AMC_Status,
-      //   COMP_TYPE: templateData.COMP_TYPE
-      // });
+      const htmlContent1 = createComplaintReportTemplate(templateData);
+      const fileName1 = `complaint_${getParam("complaintNo")}_report_${Date.now()}`;
+      const shouldCreateRma = rnaForm === "Yes";
 
-      const htmlContent = createComplaintReportTemplate(templateData);
-      const fileName = `complaint_${getParam("complaintNo")}_report`;
+      const complaintPdfResult = await generatePdfFromHtml(htmlContent1, fileName1, { share: true });
+      if (!complaintPdfResult.success || !complaintPdfResult.localUri) {
+        throw new Error("Failed to generate complaint PDF");
+      }
 
-      console.log("🚩 CHECKPOINT 3: HTML template created, generating PDF");
-      const result = await generatePdfFromHtml(htmlContent, fileName);
+      let rmaSecureUrl: string | null = null;
+      let complaintSecureUrl: string;
 
-      console.log(
-        "🚩 CHECKPOINT 4: PDF generation result:",
-        result.success ? "SUCCESS" : "FAILED"
-      );
-      3;
+      try {
+        console.log("🚩 CHECKPOINT 5: Starting Cloudinary upload for complaint PDF");
+        const complaintUploadResult = (await uploadPDFToCloudinary(
+          complaintPdfResult.localUri
+        )) as UploadResult;
+        complaintSecureUrl = complaintUploadResult.secure_url;
+        console.log("Complaint upload result:", complaintUploadResult);
+        console.log("Complaint Secure URL:", complaintSecureUrl.substring(0, 50) + "...");
 
-      if (result.success && result.localUri) {
-        try {
-          console.log("🚩 CHECKPOINT 5: Starting Cloudinary upload");
-          const uploadResult = (await uploadPDFToCloudinary(
-            result.localUri
+        if (shouldCreateRma) {
+          const headerImageDataUriRma = await getHeaderImageDataUriRma();
+          const templateData1 = {
+            ...formData1,
+            headerImageDataUri: headerImageDataUriRma || headerImageDataUri,
+          };
+          const rmaHtmlContent = rmacomplaintReportTemplate(templateData1);
+          const rmaFileName = `rma_${getParam("complaintNo")}_report_${Date.now()}`;
+
+          const rmaPdfResult = await generatePdfFromHtml(rmaHtmlContent, rmaFileName, { share: false });
+          if (!rmaPdfResult.success || !rmaPdfResult.localUri) {
+            throw new Error("Failed to generate RMA PDF");
+          }
+
+          const rmaUploadResult = (await uploadPDFToCloudinary(
+            rmaPdfResult.localUri
           )) as UploadResult;
-          const secureUrl = uploadResult.secure_url;
-          console.log("Upload Result:", uploadResult);
-          console.log(
-            "🚩 CHECKPOINT 6: Cloudinary upload successful, secure URL obtained"
-          );
-          console.log("Secure URL:", secureUrl.substring(0, 50) + "...");
+          rmaSecureUrl = rmaUploadResult.secure_url;
+          console.log("RMA upload result:", rmaUploadResult);
+          console.log("RMA Secure URL:", rmaSecureUrl.substring(0, 50) + "...");
+        }
 
+        console.log("🚩 CHECKPOINT 6: PDF upload complete");
 
-          // Call the submitComplaintUpdate function to update the complaint status
-          console.log(
-            "🚩 CHECKPOINT 7: Starting server API call with form data"
-          );
+        let rmaResponseJson1: any = null;
+        if (shouldCreateRma) {
 
-          const responseJson = await submitComplaintUpdate({
+          console.log('🚩 CHECKPOINT 6.1: Preparing to submit RMA update with the following data:', getParam('SystemName'), getParam('customer'), getParam('complaintNo'), getRMAItems());
+          // Call the submitRMAcomplaintUpdate function to submit RMA update
+          rmaResponseJson1 = await submitRMAcomplaintUpdate({
             enggname: getParam("S_assignedengg"),
-            remark: `D-${diagnosis} E-${engineerComment}`,
-            report: secureUrl,
-            status: workStatus === "Completed" ? "1" : "0",
-            pendingreason: workStatus === "Completed" ? "NULL" : pendingReason,
+            secureUrl: rmaSecureUrl!,
+            customer: getParam("customer"),
             complaintNo: getParam("complaintNo"),
-            material: getMaterialSummary(),
+            items: getRMAItems(),
+            product: getParam("SystemName"),
           });
 
-          console.log(
-            "🚩 CHECKPOINT 8: Server response received:",
-            JSON.stringify(responseJson)
-          );
+          let reasonrpart = String(rmaResponseJson1?.reason ?? "").split(',');
+          const reasonresponse = Number(reasonrpart[0]?.trim());
 
-          if (responseJson.status === "success") {
-            console.log("🚩 CHECKPOINT 9: Server update SUCCESSFUL");
+          if (rmaResponseJson1 && reasonresponse == 0) {
+            console.warn("RMA submission failed with reason:", rmaResponseJson1.reason);
+            setShowRmaErrorModal(true);
+            return;
+          }
 
-            // Check if email should be sent
-            const mailAddress = getParam("mailaddcallrpt");
-            if (mailAddress && mailAddress.trim() !== "") {
-              console.log(
-                "🚩 CHECKPOINT 9.1: Sending email with PDF attachment"
-              );
-              try {
-                const { downloadPdfFromUrl, sendEmailWithAttachment } =
-                  await import("../engineer/componenet/EmailSender");
+          // Normalize status to lowercase and compare explicitly. The original
+          // `if (rmaResponseJson1?.status === "fail" || "failed" ...)`
+          // always evaluated to true because non-empty strings are truthy.
+          const statusStr = String(rmaResponseJson1?.status ?? "").toLowerCase();
+          if (statusStr === "fail" || statusStr === "failed") {
+            console.warn("RMA submission failed with reason second val:", rmaResponseJson1.status);
+            setShowRmaErrorModal(true);
+            return;
+          }
 
-                // Step 1: Download PDF
-                const localUri = await downloadPdfFromUrl({
-                  secureUrl,
+
+        }
+
+        // Call the submitComplaintUpdate function to update the complaint status
+        console.log(
+          "🚩 CHECKPOINT 7: Starting server API call with form data"
+        );
+
+        const responseJson = await submitComplaintUpdate({
+          enggname: getParam("S_assignedengg"),
+          remark: `D-${diagnosis} E-${engineerComment}`,
+          report: complaintSecureUrl,
+          status: workStatus === "Completed" ? "1" : "0",
+          pendingreason: workStatus === "Completed" ? "NULL" : pendingReason,
+          complaintNo: getParam("complaintNo"),
+          material: getMaterialSummary(),
+        });
+
+       
+        const checkresponse = JSON.stringify(responseJson)
+
+         console.log(
+          "🚩 CHECKPOINT 8: Server response received:", checkresponse
+          
+        );
+
+        if (shouldCreateRma && rmaResponseJson1 && rmaResponseJson1.status !== "success") {
+          console.warn("RMA submission response:", JSON.stringify(rmaResponseJson1));
+        }
+
+        if (responseJson.status === "success") {
+          console.log("🚩 CHECKPOINT 9: Server update SUCCESSFUL");
+
+          // Check if email should be sent
+          const mailAddress = getParam("mailaddcallrpt");
+          if (mailAddress && mailAddress.trim() !== "") {
+            console.log("🚩 CHECKPOINT 9.1: Sending email with PDF attachment");
+            try {
+              const { downloadPdfFromUrl, sendEmailWithAttachment } =
+                await import("../engineer/componenet/EmailSender");
+
+              // Step 1: Download PDF
+              const localUri = await downloadPdfFromUrl({
+                secureUrl: complaintSecureUrl,
+                complaintNo: getParam("complaintNo"),
+              });
+
+              if (localUri) {
+                // Step 2: Send email with attachment
+                const emailSent = await sendEmailWithAttachment({
+                  localUri,
                   complaintNo: getParam("complaintNo"),
+                  clientName: getParam("clientName"),
+                  mailaddcallrpt: mailAddress,
                 });
 
-                if (localUri) {
-                  // Step 2: Send email with attachment
-                  const emailSent = await sendEmailWithAttachment({
-                    localUri,
-                    complaintNo: getParam("complaintNo"),
-                    clientName: getParam("clientName"),
-                    mailaddcallrpt: mailAddress,
-                  });
-
-                  if (emailSent) {
-                    console.log("✅ Email sent successfully");
-                  } else {
-                    console.log("⚠️ Email sending failed");
-                  }
+                if (emailSent) {
+                  console.log("✅ Email sent successfully");
                 } else {
-                  console.log("⚠️ PDF download failed");
+                  console.log("⚠️ Email sending failed");
                 }
-              } catch (emailError) {
-                console.error("❌ Email error:", emailError);
+              } else {
+                console.log("⚠️ PDF download failed");
               }
+            } catch (emailError) {
+              console.error("❌ Email error:", emailError);
             }
-
-            Alert.alert("Success", "Data sent successfully!", [
-              {
-                text: "OK",
-                onPress: () => {
-                  console.log("🚩 CHECKPOINT 10: Navigating back to list");
-                  router.push({
-                    pathname: "/engineer/list",
-                    params: {
-                      username: getParam("username"),
-                      password: getParam("password"),
-                    },
-                  });
-                },
-              },
-            ]);
-          } else {
-            console.log(
-              "🚩 CHECKPOINT 9: Server update FAILED:",
-              responseJson.reason
-            );
-            Alert.alert(
-              "Error",
-              responseJson.reason || "Failed to send data. Please try again."
-            );
           }
-        } catch (uploadError) {
+
+          Alert.alert("Success", "Data sent successfully! Redirecting...", [
+            {
+              text: "OK",
+              onPress: () => {
+                console.log("🚩 CHECKPOINT 10: Navigating back to list");
+                router.push({
+                  pathname: "/engineer/list",
+                  params: {
+                    username: getParam("username"),
+                    password: getParam("password"),
+                  },
+                });
+              },
+            },
+          ]);
+        } else {
           console.log(
-            "🚩 ERROR: Cloudinary upload or server communication failed",
-            uploadError
-          );
-          console.error(
-            "Error uploading to Cloudinary or posting to server:",
-            uploadError
+            "🚩 CHECKPOINT 9: Server update FAILED:",
+            responseJson.reason
           );
           Alert.alert(
-            "Warning",
-            "PDF generated but failed to upload to Cloudinary or post to server. Please try again later."
+            "Error",
+            responseJson.reason || "Main API failed. Please try again."
           );
         }
-      } else {
-        console.log("🚩 ERROR: PDF generation failed");
-        console.error("Failed to generate PDF");
+      } catch (uploadError) {
+        console.log(
+          "🚩 ERROR: Cloudinary upload or server communication failed",
+          uploadError
+        );
+        console.error(
+          "Error uploading to Cloudinary or posting to server:",
+          uploadError
+        );
         Alert.alert(
-          "Error",
-          "Failed to generate PDF document. Please try again."
+          "Warning",
+          "PDF generated but failed to upload to Cloudinary or post to server. Please try again later."
         );
       }
     } catch (error) {
@@ -677,8 +826,8 @@ export default function EnggComplaintDetails() {
     // console.log("🔍 Debug - selectedSystemName:", selectedSystemName);
 
     if (model && !selectedSystemName) {
-      console.log("🔍 Setting selectedSystemName to:", model);
-      setSelectedSystemName(model);
+      console.log("🔍 Setting selectedSystemName to:",  system);
+      setSelectedSystemName(system);
     }
   }, [selectedSystemName, params]);
 
@@ -690,13 +839,7 @@ export default function EnggComplaintDetails() {
     }
   }, [workStatus]);
 
-  // Debug: log keys and selected system name before rendering modal
-  useEffect(() => {
-    console.log(
-      "PowerSupplyData  fetched, for more information got to details.tsx 556"
-    ); // (powerSupplyData));
-    console.log("selectedSystemName:", selectedSystemName);
-  }, [powerSupplyData, selectedSystemName]);
+
 
   //to get the all data at one place , easier to send
   const getMaterialSummary = () => {
@@ -712,9 +855,18 @@ export default function EnggComplaintDetails() {
         ", "
       )}`;
     }
-    console.log("Material Summary:", summary);
+    console.log("Material Summary coming from getMaterialSummary:", summary);
     return summary;
   };
+
+  const getRMAItems = () =>
+    rnaRows.map((row, index) => ({
+      srNo: row.Sr || String(index + 1),
+      jobNo: getParam("complaintNo") || "",
+      modelNo: row.Model || "",
+      serialNo: row.Serial_No && row.Serial_No.trim() !== "" ? row.Serial_No : String(index + 1),
+      reason: row.Reason_for_RMA_Fault || "",
+    }));
 
   // Where you load params, after initializing useState:
   useEffect(() => {
@@ -738,7 +890,11 @@ export default function EnggComplaintDetails() {
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <View style={styles.sheet}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ overflow: 'visible' }}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 32, overflow: 'visible' }}
+          >
             {/* Info Section */}
             <View style={styles.infoSectionBox}>
               <Text style={styles.complaintNo}>
@@ -752,7 +908,12 @@ export default function EnggComplaintDetails() {
                   style={{ marginRight: 6 }}
                 />
                 <Text style={styles.label}>Customer Name:</Text>
-                <Text style={styles.value}>{getParam("clientName")}</Text>
+                <ReadMoreText
+                  fieldName="Customer Name"
+                  text={getParam("clientName")}
+                  sliceLength={10}
+                  textStyle={styles.value}
+                />
               </View>
               <View style={styles.infoRow}>
                 <Ionicons
@@ -772,9 +933,12 @@ export default function EnggComplaintDetails() {
                   style={{ marginRight: 6 }}
                 />
                 <Text style={styles.label}>System Name:</Text>
-                <Text style={styles.value}>
-                  {getParam("SystemName") + " ,  " + getParam("SYSTEM_NAME")}
-                </Text>
+                <ReadMoreText
+                  fieldName="System Name"
+                  text={Array.from(new Set([getParam("SystemName"), getParam("SYSTEM_NAME")].filter(Boolean))).join(" , ")}
+                  sliceLength={10}
+                  textStyle={styles.value}
+                />
               </View>
               <View style={styles.infoRow}>
                 <Ionicons
@@ -784,7 +948,12 @@ export default function EnggComplaintDetails() {
                   style={{ marginRight: 6 }}
                 />
                 <Text style={styles.label}>Complaint type:</Text>
-                <Text style={styles.value}>{getParam("COMP_TYPE")}</Text>
+                <ReadMoreText
+                  fieldName="Complaint Type"
+                  text={getParam("COMP_TYPE")}
+                  sliceLength={10}
+                  textStyle={styles.value}
+                />
               </View>
               <View style={styles.infoRow}>
                 <Ionicons
@@ -794,7 +963,12 @@ export default function EnggComplaintDetails() {
                   style={{ marginRight: 6 }}
                 />
                 <Text style={styles.label}>System Status:</Text>
-                <Text style={styles.value}>{getParam("AMC_Status")}</Text>
+                <ReadMoreText
+                  fieldName="System Status"
+                  text={getParam("AMC_Status")}
+                  sliceLength={10}
+                  textStyle={styles.value}
+                />
               </View>
               <View style={styles.infoRow}>
                 <Ionicons
@@ -804,7 +978,12 @@ export default function EnggComplaintDetails() {
                   style={{ marginRight: 6 }}
                 />
                 <Text style={styles.label}>Address:</Text>
-                <Text style={styles.value}>{getParam("location")}</Text>
+                <ReadMoreText
+                  fieldName="Address"
+                  text={getParam("location")}
+                  sliceLength={10}
+                  textStyle={styles.value}
+                />
               </View>
               <View style={styles.infoRow}>
                 <Ionicons
@@ -814,7 +993,12 @@ export default function EnggComplaintDetails() {
                   style={{ marginRight: 6 }}
                 />
                 <Text style={styles.label}>Remark1:</Text>
-                <Text style={styles.value}>{getParam("S_REMARK1")}</Text>
+                <ReadMoreText
+                  fieldName="Remark 1"
+                  text={getParam("S_REMARK1")}
+                  sliceLength={10}
+                  textStyle={styles.value}
+                />
               </View>
             </View>
             {/* Form Section */}
@@ -825,18 +1009,25 @@ export default function EnggComplaintDetails() {
               <Text style={styles.formLabel}>Fault Reported:</Text>
               <View style={[styles.dateTimeInput]}>
                 <Ionicons name="time-outline" size={18} color="#666" />
-                <Text style={[styles.dateTimeText, { color: "#666" }]}>
-                  {" "}
-                  {getParam("S_SERVDT") || "Not available"}
-                </Text>
+                <ReadMoreText
+                  fieldName="Fault Reported"
+                  text={getParam("S_SERVDT")}
+                  sliceLength={10}
+                  emptyText="Not available"
+                  textStyle={[styles.dateTimeText, { color: "#666" }]}
+                />
               </View>
 
               {/* Type of Call Dropdown */}
               <Text style={styles.formLabel}>Type of Call:</Text>
               <View style={[styles.dropdownButton]}>
-                <Text style={[styles.dropdownButtonText, { color: "#666" }]}>
-                  {getParam("S_TASK_TYPE") || "Not available"}
-                </Text>
+                <ReadMoreText
+                  fieldName="Type of Call"
+                  text={getParam("S_TASK_TYPE")}
+                  sliceLength={10}
+                  emptyText="Not available"
+                  textStyle={[styles.dropdownButtonText, { color: "#666" }]}
+                />
               </View>
 
               {/* Call Attended Date and Time */}
@@ -844,9 +1035,13 @@ export default function EnggComplaintDetails() {
                 <Text style={styles.formLabel}>Call Attended On:</Text>
                 <View style={[styles.dateTimeInput]}>
                   <Ionicons name="time-outline" size={18} color="#666" />
-                  <Text style={[styles.dateTimeText, { color: "#666" }]}>
-                    {getParam("S_assigndate") || "Not available"}
-                  </Text>
+                  <ReadMoreText
+                    fieldName="Call Attended On"
+                    text={getParam("S_assigndate")}
+                    sliceLength={10}
+                    emptyText="Not available"
+                    textStyle={[styles.dateTimeText, { color: "#666" }]}
+                  />
                 </View>
               </View>
 
@@ -864,9 +1059,13 @@ export default function EnggComplaintDetails() {
               {/* Cause of Problem */}
               <Text style={styles.formLabel}>Cause of Problem:</Text>
               <View style={[styles.dropdownButton]}>
-                <Text style={[styles.dropdownButtonText, { color: "#666" }]}>
-                  {getParam("S_REMARK2")}
-                </Text>
+                <ReadMoreText
+                  fieldName="Cause of Problem"
+                  text={getParam("S_REMARK2")}
+                  sliceLength={10}
+                  emptyText="Not available"
+                  textStyle={[styles.dropdownButtonText, { color: "#666" }]}
+                />
               </View>
 
               {/* Part Replaced */}
@@ -934,28 +1133,280 @@ export default function EnggComplaintDetails() {
                 onBlur={() => setMaterialTakenOutFocused(false)}
               />
 
-              {/* RNA FORM */}
-              <Text style={styles.formLabel}>Do You want to Add RNA Form</Text>
-              <DropDownPicker
-                open={rnaOpen}
-                value={rnaForm}
-                items={[
-                  { label: 'Yes', value: 'Yes' },
-                  { label: 'No', value: 'No' }
-                ]}
-                setValue={setRnaForm}
-                setOpen={setRnaOpen}
-                placeholder="Select"
-                style={[styles.dropdown]}
-                dropDownContainerStyle={styles.dropdownContainer}
-                textStyle={styles.dropdownButtonText1}
-                placeholderStyle={styles.placeholderText}
-                zIndex={1000}
-                zIndexInverse={3000}
+              {/* ═══════════════════════════════════════════════════════ */}
+              {/* RNA FORM — Premium Card Section                       */}
+              {/* ═══════════════════════════════════════════════════════ */}
+              <View style={styles.rnaFormContainer}>
+
+                {/* Header badge + label */}
+                <View style={styles.rnaHeaderRow}>
+                  <View style={styles.rnaBadge}>
+                    <Ionicons name="document-text-outline" size={14} color="#fff" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rnaHeaderTitle}>RMA Form</Text>
+                    <Text style={styles.rnaHeaderSubtitle}>Return / Non-Acceptable Material</Text>
+                  </View>
+
+                  {/* Active button */}
+                  {rnaForm === "Yes" && (
+                    <View style={styles.rnaActivePill}>
+                      <View style={styles.rnaActiveDot} />
+                      <Text style={styles.rnaActivePillText}>Active</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Divider */}
+                <View style={styles.rnaDivider} />
+
+                <Text style={styles.formLabel}>Do You Want to Add RMA Form?</Text>
+
+                <View style={[styles.dropdownWrapper, Platform.OS === 'ios' ? { zIndex: 9999 } : { zIndex: 9999, elevation: 30 }]}>
+                  <DropDownPicker
+                    listMode="SCROLLVIEW"
+                    open={rnaOpen}
+                    value={rnaForm}
+                    items={[
+                      { label: 'Yes', value: 'Yes' },
+                      { label: 'No', value: 'No' }
+                    ]}
+                    setValue={(callback) => {
+                      const value = callback(rnaForm);
+                      setRnaForm(value);
+                      if (value == "Yes") {
+                        setRnaModalVisible(true);
+                      } else {
+                        setRnaModalVisible(false);
+                        setShowRmaModal(false);
+                      }
+                    }}
+                    setOpen={setRnaOpen}
+                    placeholder="Select an option"
+                    style={styles.dropdown}
+                    dropDownContainerStyle={styles.dropdownContainer}
+                    textStyle={styles.dropdownButtonText1}
+                    placeholderStyle={styles.placeholderText}
+                    zIndex={9999}
+                    zIndexInverse={1000}
+                  />
+                </View>
+
+                {/* Info banner when Yes is selected */}
+                {rnaForm === "Yes" && (
+                  <View style={styles.rnaInfoBanner}>
+                    <Ionicons name="checkmark-circle" size={16} color="#16a34a" style={{ marginRight: 8 }} />
+                    <Text style={styles.rnaInfoBannerText}>
+                      RMA form activated. Tap <Text style={{ fontWeight: "800" }}>Edit Details</Text> to manage entries.
+                    </Text>
+                  </View>
+                )}
+
+                {/* Action row when Yes is selected */}
+                {rnaForm === "Yes" && (
+                  <View style={styles.rnaActionRow}>
+                    {/* Edit / Re-open modal */}
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.rnaEditBtn,
+                        pressed && { opacity: 0.82, transform: [{ scale: 0.97 }] },
+                      ]}
+                      onPress={() => setRnaModalVisible(true)}
+                    >
+                      <Ionicons name="create-outline" size={16} color="#1a4a8a" style={{ marginRight: 6 }} />
+                      <Text style={styles.rnaEditBtnText}>Edit Details</Text>
+                    </Pressable>
+
+                    {/* Preview button */}
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.rnaPreviewBtn,
+                        pressed && { opacity: 0.82, transform: [{ scale: 0.97 }] },
+                      ]}
+                      onPress={() => setShowRmaModal(true)}
+                      disabled={isSubmitting}
+                    >
+                      <Ionicons name="eye-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                      <Text style={styles.rnaPreviewBtnText}>Preview</Text>
+                    </Pressable>
+                  </View>
+                )}
+
+                {/* ───  RNA MODAL ─────────────────────────────────────────── */}
+                <Modal
+                  animationType="slide"
+                  transparent
+                  visible={rnaModalVisible}
+                  onRequestClose={() => setRnaModalVisible(false)}
+                >
+                  <View style={styles.rnaModalOverlay}>
+                    <View style={styles.rnaModalSheet}>
+
+                      {/* Modal header */}
+                      <View style={styles.rnaModalHeader}>
+                        <View style={styles.rnaModalHeaderLeft}>
+                          <View style={styles.rnaModalIconBox}>
+                            <Ionicons name="document-text" size={18} color="#fff" />
+                          </View>
+                          <View>
+                            <Text style={styles.rnaModalTitle}>RMA Form Details</Text>
+                            <Text style={styles.rnaModalSubtitle}>Fill in material return entries</Text>
+                          </View>
+                        </View>
+                        <Pressable
+                          onPress={() => setRnaModalVisible(false)}
+                          style={styles.rnaModalCloseIcon}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Ionicons name="close" size={20} color="#64748b" />
+                        </Pressable>
+                      </View>
+
+                      {/* Progress pill */}
+                      <View style={styles.rnaProgressRow}>
+                        <Ionicons name="layers-outline" size={13} color="#1a4a8a" style={{ marginRight: 4 }} />
+                        <Text style={styles.rnaProgressText}>
+                          {rnaRows.length} {rnaRows.length === 1 ? "entry" : "entries"} added
+                        </Text>
+                      </View>
+
+                      {/* Scrollable rows */}
+                      <ScrollView
+                        style={{ maxHeight: 420 }}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ paddingBottom: 12 }}
+                      >
+                        {rnaRows.map((item, index) => (
+                          <View key={index} style={styles.rnaRowCard}>
+
+                            {/* Row header */}
+                            <View style={styles.rnaRowCardHeader}>
+                              <View style={styles.rnaRowBadge}>
+                                <Text style={styles.rnaRowBadgeText}>{index + 1}</Text>
+                              </View>
+                              <Text style={styles.rnaRowCardTitle}>Material Entry #{index + 1}</Text>
+                            </View>
+
+                            {/* Fields grid */}
 
 
-              />
+                            <View style={styles.rnaFieldGrid}>
+                              <View style={styles.rnaFieldHalf}>
+                                <Text style={styles.rnaFieldLabel}>
+                                  <Ionicons name="cube-outline" size={10} /> MODEL NO
+                                </Text>
+                                <TextInput
+                                  placeholder="e.g. MX-500"
+                                  placeholderTextColor="#b0bec5"
+                                  value={item.Model}
+                                  onChangeText={(text) => updateRow(index, "Model", text)}
+                                  style={styles.rnaTextInput}
+                                />
+                              </View>
 
+                              <View style={styles.rnaFieldHalf}>
+                                <Text style={styles.rnaFieldLabel}>
+                                  <Ionicons name="barcode-outline" size={10} /> SERIAL NO
+                                </Text>
+                                <TextInput
+                                  placeholder="e.g. SN-XXXX"
+                                  placeholderTextColor="#b0bec5"
+                                  value={item.Serial_No}
+                                  onChangeText={(text) => updateRow(index, "Serial_No", text)}
+                                  style={styles.rnaTextInput}
+                                />
+                              </View>
+
+
+                            </View>
+                            <View style={styles.rnaFieldHalf}>
+                              <Text style={styles.rnaFieldLabel}>
+                                <Ionicons name="list-outline" size={10} /> Reason for RMA Fault
+                              </Text>
+                              <TextInput
+                                placeholder="e.g. Defective"
+                                placeholderTextColor="#b0bec5"
+                                value={item.Reason_for_RMA_Fault}
+                                onChangeText={(text) => updateRow(index, "Reason_for_RMA_Fault", text)}
+                                style={styles.rnaTextInput}
+                              />
+                            </View>
+
+                            {/* Add row button — only show on last card */}
+                            {index === rnaRows.length - 1 && (
+                              <Pressable
+                                onPress={addRow}
+                                style={({ pressed }) => [
+                                  styles.rnaAddRowBtn,
+                                  pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] },
+                                ]}
+                              >
+                                <Ionicons name="add-circle-outline" size={16} color="#1a4a8a" style={{ marginRight: 6 }} />
+                                <Text style={styles.rnaAddRowBtnText}>Add Another Entry</Text>
+                              </Pressable>
+                            )}
+                          </View>
+                        ))}
+                      </ScrollView>
+
+                      {/* ── Footer: Cancel | Preview | Submit ── */}
+                      <View style={styles.rnaModalFooter}>
+
+                        {/* Cancel */}
+                        <Pressable
+                          onPress={() => setRnaModalVisible(false)}
+                          style={({ pressed }) => [
+                            styles.rnaFooterCancelBtn,
+                            pressed && { opacity: 0.8 },
+                          ]}
+                        >
+                          <Ionicons name="close-circle-outline" size={16} color="#64748b" style={{ marginRight: 4 }} />
+                          <Text style={styles.rnaFooterCancelText}>Cancel</Text>
+                        </Pressable>
+
+                        {/* Preview */}
+                        <Pressable
+                          onPress={() => setShowRmaModal(true)}
+                          disabled={isSubmitting}
+                          style={({ pressed }) => [
+                            styles.rnaFooterPreviewBtn,
+                            pressed && { opacity: 0.82, transform: [{ scale: 0.97 }] },
+                          ]}
+                        >
+                          <Ionicons name="eye-outline" size={16} color="#1a4a8a" style={{ marginRight: 4 }} />
+                          <Text style={styles.rnaFooterPreviewText}>Preview</Text>
+                        </Pressable>
+
+                        {/* Submit */}
+                        <Pressable
+                          onPress={handleRnaFormSave}
+                          disabled={!canSubmitRnaForm() || isSubmitting}
+                          style={({ pressed }) => [
+                            styles.rnaFooterSubmitBtn,
+                            (pressed || !canSubmitRnaForm() || isSubmitting) && { opacity: 0.75, transform: pressed ? [{ scale: 0.97 }] : [] },
+                          ]}
+                        >
+                          <LinearGradient
+                            colors={
+                              !canSubmitRnaForm() || isSubmitting
+                                ? ["#94a3b8", "#94a3b8"]
+                                : ["#1e40af", "#1a4a8a"]
+                            }
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.rnaFooterSubmitGradient}
+                          >
+                            <Ionicons name="checkmark-circle-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                            <Text style={styles.rnaFooterSubmitText}>Save</Text>
+                          </LinearGradient>
+                        </Pressable>
+
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
+
+              </View>
 
               {/* Customer Comment */}
               <Text style={styles.formLabel}>Customer Comment:</Text>
@@ -1884,9 +2335,122 @@ export default function EnggComplaintDetails() {
                 engineerUpdateBy,
               }}
             />
+
+            {/* RMA FORM MODAL */}
+
+            <SimplePreviewRmaModal
+              visible={showRmaModal}
+              onClose={() => setShowRmaModal(false)}
+              formData={{
+                complaintNo: getParam("complaintNo"),
+                clientName: getParam("clientName"),
+                workStatus,
+                remark,
+                faultReported: getParam("S_SERVDT"),
+                typeOfCall: getParam("S_TASK_TYPE"),
+                callAttendedDate,
+                callAttendedTime,
+                callCompletedDate,
+                callCompletedTime,
+                partReplaced,
+                causeProblem,
+                diagnosis,
+                materialTakenOut,
+                customerComment,
+                customerSignature,
+                systemName: getParam("SYSTEM_NAME"),
+                SystemName: getParam("SystemName"),
+                assignDate: getParam("S_assigndate"),
+                location: getParam("location"),
+                taskType: getParam("S_TASK_TYPE"),
+                status: getParam("status"),
+                S_SERVDT: getParam("S_SERVDT"),
+                S_assignedengg: getParam("S_assignedengg"),
+                COMP_TYPE: getParam("COMP_TYPE"),
+                AMC_Status: getParam("AMC_Status"),
+                pendingReason: workStatus === "Pending" ? pendingReason : "",
+                submittedAt: new Date().toISOString(),
+                engineerComment,
+                engineerSignature,
+                material: getMaterialSummary(),
+                customerName,
+                customerContact,
+                showUpdateEngineerModal,
+                systemStatus,
+                attendingengineer,
+                assignedengineer,
+                engineerUpdateBy,
+                items: rnaRows.map((row, index) => ({
+                  Sr: row.Sr || String(index + 1),
+                  Model: row.Model || "",
+                  Serial_No: row.Serial_No && row.Serial_No.trim() !== "" ? row.Serial_No : String(index + 1),
+                  Reason: row.Reason_for_RMA_Fault || "",
+                })),
+              }}
+            />
+
+
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
+
+      {/* ── RMA Error Modal ─────────────────────────────────────────── */}
+      <Modal
+        visible={showRmaErrorModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowRmaErrorModal(false)}
+        statusBarTranslucent
+      >
+        <View style={styles.rmaErrorOverlay}>
+          <View style={styles.rmaErrorCard}>
+            {/* Top accent bar */}
+            <View style={styles.rmaErrorAccentBar} />
+
+            {/* Icon circle */}
+            <View style={styles.rmaErrorIconCircle}>
+              <Ionicons name="alert-circle" size={48} color="#FF4D4F" />
+            </View>
+
+            {/* Title */}
+            <Text style={styles.rmaErrorTitle}>RMA Submission Failed</Text>
+
+            {/* Body */}
+            <Text style={styles.rmaErrorBody}>
+              Unable to submit the RMA request. The server did not return a
+              successful response.
+            </Text>
+
+            {/* Divider */}
+            <View style={styles.rmaErrorDivider} />
+
+            {/* Support hint */}
+            <View style={styles.rmaErrorHintRow}>
+              <Ionicons name="headset-outline" size={18} color="#1a4a8a" />
+              <Text style={styles.rmaErrorHint}>
+                Please contact the developer / support team for assistance.
+              </Text>
+            </View>
+
+            {/* Complaint ref */}
+            <View style={styles.rmaErrorRefBox}>
+              <Text style={styles.rmaErrorRefLabel}>Complaint No.</Text>
+              <Text style={styles.rmaErrorRefValue}>{getParam("complaintNo")}</Text>
+            </View>
+
+            {/* Dismiss button */}
+            <TouchableOpacity
+              style={styles.rmaErrorDismissBtn}
+              onPress={() => setShowRmaErrorModal(false)}
+              activeOpacity={0.82}
+            >
+              <Ionicons name="close-circle-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.rmaErrorDismissBtnText}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </LinearGradient>
   );
 }
@@ -1936,7 +2500,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f4f8",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    overflow: "hidden",
+    overflow: "visible",
+    zIndex: 0,
   },
 
   container: {
@@ -1986,6 +2551,24 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     alignSelf: "flex-start",
   },
+  closeButton: {
+    position: 'relative',
+    backgroundColor: 'grey',
+    right: 5,
+    top: 5,
+    padding: 5,
+    borderRadius: 50,
+  },
+  closeButtonText: {
+
+    color: 'white',
+
+    borderRadius: 50,
+  },
+
+  footer: {
+
+  },
   infoSectionBox: {
     backgroundColor: "#fff",
     borderRadius: 20,
@@ -2011,6 +2594,53 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     marginBottom: 10,
+  },
+  systemNameInfoRow: {
+    paddingHorizontal:4,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginBottom: 10,
+   
+   
+  },
+  systemNameInfoRowExpanded: {
+    backgroundColor: "#F7FAFF",
+    borderWidth: 1,
+    borderColor: "#dee2e8",
+    height: 300,
+     
+  },
+  systemNameInfoRowPressed: {
+    backgroundColor: "#EEF5FF",
+    
+  },
+  systemNameHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 28,
+    width: "100%",
+    
+  },
+  systemNameChevron: {
+    marginLeft: "auto",
+  },
+  systemNameExpandedScroll: {
+    minHeight: 140,
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#DCE7F5",
+  },
+  systemNameExpandedScrollContent: {
+    paddingHorizontal: 0,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  systemNameExpandedValue: {
+    width: "100%",
+    color: "#1a1a2e",
+    fontSize: 13,
+    fontWeight: "500",
+    lineHeight: 19,
   },
   label: {
     width: "42%",
@@ -2065,9 +2695,9 @@ const styles = StyleSheet.create({
   textInput: {
     borderWidth: 1.5,
     borderColor: "#E0E8F5",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: "#FAFCFF",
     color: "#222",
     fontSize: 14,
@@ -2078,6 +2708,370 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
+  rnaFormContainer: {
+    gap: 12,
+    borderWidth: 1.5,
+    borderColor: "#D3E0FF",
+    borderRadius: 20,
+    padding: 18,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#0d47a1",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.09,
+    shadowRadius: 16,
+    elevation: 4,
+    zIndex: 1000,
+  },
+
+  /* ── RNA Card Header ─────────────────────────── */
+  rnaHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  rnaBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "#2563eb",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#2563eb",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  rnaHeaderTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#1f2937",
+    letterSpacing: 0.35,
+  },
+  rnaHeaderSubtitle: {
+    fontSize: 11,
+    color: "#475569",
+    marginTop: 2,
+  },
+  rnaActivePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#dbeafe",
+    borderRadius: 22,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    gap: 6,
+  },
+  rnaActiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#2563eb",
+  },
+  rnaActivePillText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#2563eb",
+  },
+  rnaDivider: {
+    height: 1,
+    backgroundColor: "#E6EEFF",
+    marginVertical: 8,
+  },
+
+  /* ── Info Banner ──────────────────────────────── */
+  rnaInfoBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#eff6ff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  rnaInfoBannerText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#1d4ed8",
+    lineHeight: 18,
+  },
+
+  /* ── Action Row (Edit + Preview) ─────────────── */
+  rnaActionRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 12,
+  },
+  rnaEditBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#3B82F6",
+    borderRadius: 14,
+    paddingVertical: 12,
+    backgroundColor: "#eff6ff",
+  },
+  rnaEditBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1D4ED8",
+  },
+  rnaPreviewBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    paddingVertical: 12,
+    backgroundColor: "#2563eb",
+    shadowColor: "#2563eb",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  rnaPreviewBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#fff",
+  },
+
+  /* ── Modal Sheet ──────────────────────────────── */
+  rnaModalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(15, 23, 42, 0.42)",
+  },
+  rnaModalSheet: {
+    backgroundColor: "#F8FAFF",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: 22,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+    maxHeight: "92%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -5 },
+    shadowOpacity: 0.16,
+    shadowRadius: 20,
+    elevation: 22,
+  },
+  rnaModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  rnaModalHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  rnaModalIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#2563eb",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#2563eb",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  rnaModalTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: 0.35,
+  },
+  rnaModalSubtitle: {
+    fontSize: 12,
+    color: "#475569",
+    marginTop: 2,
+  },
+  rnaModalCloseIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "#f1f5f9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  /* ── Progress pill ───────────────────────────── */
+  rnaProgressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E0E7FF",
+    borderRadius: 22,
+    alignSelf: "flex-start",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    marginBottom: 14,
+  },
+  rnaProgressText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#1e3a8a",
+  },
+
+  /* ── Row Card ────────────────────────────────── */
+  rnaRowCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#dde7ff",
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#1d4ed8",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  rnaRowCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 14,
+    gap: 12,
+  },
+  rnaRowBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: "#2563eb",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  rnaRowBadgeText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#fff",
+  },
+  rnaRowCardTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#1e3a8a",
+  },
+
+  /* ── Field Grid (2-column) ───────────────────── */
+  rnaFieldGrid: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 14,
+  },
+  rnaFieldHalf: {
+    flex: 1,
+  },
+  rnaFieldLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#64748b",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+    marginBottom: 6,
+  },
+  rnaTextInput: {
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: "#f8fafc",
+    color: "#0f172a",
+    fontSize: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+
+  /* ── Add Row Button ──────────────────────────── */
+  rnaAddRowBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#3b82f6",
+    borderStyle: "dashed",
+    borderRadius: 14,
+    paddingVertical: 12,
+    marginTop: 6,
+    backgroundColor: "#eff6ff",
+  },
+  rnaAddRowBtnText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1d4ed8",
+  },
+
+  /* ── Modal Footer (Cancel | Preview | Submit) ── */
+  rnaModalFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 18,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e2e8f0",
+  },
+  rnaFooterCancelBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderRadius: 14,
+    paddingVertical: 12,
+    backgroundColor: "#f8fafc",
+  },
+  rnaFooterCancelText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#475569",
+  },
+  rnaFooterPreviewBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#2563eb",
+    borderRadius: 14,
+    paddingVertical: 12,
+    backgroundColor: "#eff6ff",
+  },
+  rnaFooterPreviewText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#2563eb",
+  },
+  rnaFooterSubmitBtn: {
+    flex: 1.2,
+    borderRadius: 14,
+    overflow: "hidden",
+  },
+  rnaFooterSubmitGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  rnaFooterSubmitText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#fff",
+    letterSpacing: 0.35,
+  },
+
   textInput2: {
     borderWidth: 1.5,
     borderColor: "#E0E8F5",
@@ -2136,7 +3130,9 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.06,
     shadowRadius: 6,
-    elevation: 2,
+    elevation: 14,
+
+    zIndex: 11000,
   },
   dropdownButtonText: {
     color: "#444",
@@ -2155,14 +3151,21 @@ const styles = StyleSheet.create({
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 24,
+
+    zIndex: 9999,
+  },
+  dropdownWrapper: {
+    position: 'relative',
+    zIndex: 9999,
+    elevation: 30,
+    overflow: 'visible',
   },
   dropdownButtonText1: {
-
     borderRadius: 10,
-    zIndex: 11000
+    zIndex: 11000,
   },
   placeholderText: {
     fontSize: 16,
@@ -2695,5 +3698,128 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 12,
+  },
+
+  // ── RMA Error Modal styles ────────────────────────────────────────
+  rmaErrorOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(5, 15, 40, 0.78)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  rmaErrorCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 22,
+    width: "100%",
+    maxWidth: 380,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.28,
+    shadowRadius: 24,
+    elevation: 18,
+    alignItems: "center",
+    paddingBottom: 28,
+  },
+  rmaErrorAccentBar: {
+    width: "100%",
+    height: 6,
+    backgroundColor: "#FF4D4F",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+  },
+  rmaErrorIconCircle: {
+    marginTop: 28,
+    marginBottom: 12,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "#FFF1F0",
+    borderWidth: 2.5,
+    borderColor: "#FFB3B3",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  rmaErrorTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#1a1a2e",
+    marginBottom: 10,
+    letterSpacing: 0.2,
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+  rmaErrorBody: {
+    fontSize: 14,
+    color: "#555",
+    textAlign: "center",
+    lineHeight: 22,
+    paddingHorizontal: 24,
+    marginBottom: 18,
+  },
+  rmaErrorDivider: {
+    width: "85%",
+    height: 1,
+    backgroundColor: "#EEF0F6",
+    marginBottom: 16,
+  },
+  rmaErrorHintRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingHorizontal: 24,
+    gap: 8,
+    marginBottom: 18,
+  },
+  rmaErrorHint: {
+    flex: 1,
+    fontSize: 13,
+    color: "#1a4a8a",
+    lineHeight: 20,
+    fontWeight: "500",
+  },
+  rmaErrorRefBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F6FC",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginBottom: 22,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "#D8E4F5",
+  },
+  rmaErrorRefLabel: {
+    fontSize: 12,
+    color: "#888",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  rmaErrorRefValue: {
+    fontSize: 14,
+    color: "#1a4a8a",
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  rmaErrorDismissBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a4a8a",
+    borderRadius: 50,
+    paddingVertical: 13,
+    paddingHorizontal: 32,
+    shadowColor: "#1a4a8a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  rmaErrorDismissBtnText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.4,
   },
 });

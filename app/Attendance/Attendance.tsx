@@ -1,17 +1,27 @@
-import { Text, StyleSheet, View, FlatList, TextInput, Platform, TouchableOpacity, Alert, ScrollView, RefreshControl, Animated, ActivityIndicator, Modal } from 'react-native';
+import { Text, StyleSheet, View, FlatList, useWindowDimensions, TextInput, Platform, TouchableOpacity, Alert, ScrollView, RefreshControl, Animated, ActivityIndicator, Modal, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
 import * as Device from 'expo-device';
 import * as Location from 'expo-location';
 import * as Application from 'expo-application';
-import { add } from 'date-fns';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DayNightButton from './NightButton';
+
+const QUICK_ATTENDANCE_EMPLOYEE_KEY = 'quickAttendanceEmployee';
+
+// API Endpoints for Day and Night shifts
+const DAY_ATTENDANCE_SUBMIT_API = 'https://hma.magnum.org.in/appAttendance.php';
+const NIGHT_ATTENDANCE_SUBMIT_API = 'https://hma.magnum.org.in/appNightAttendance.php';
+
+const DAY_ATTENDANCE_VIEW_API = 'https://hma.magnum.org.in/appAttendanceview.php';
+const NIGHT_ATTENDANCE_VIEW_API = 'https://hma.magnum.org.in/appNightAttendanceview.php';
 
 interface DeviceInfo {
   deviceName: string,
   deviceId: string,
-  UniqueID: string,
   systemName: string,
   systemVersion: string,
   brand: string,
@@ -30,14 +40,149 @@ interface AttendanceViewRecord {
   LOCATION: string;
 }
 
+// Light and Dark Theme Design Tokens
+const lightTheme = {
+  isDark: false,
+  statusBarStyle: 'dark-content' as const,
+  background: '#F4F6F8',
+  cardBg: '#FFFFFF',
+  cardBorder: '#E2E8F0',
+  textPrimary: '#1E293B',
+  textSecondary: '#64748B',
+  textMuted: '#94A3B8',
+  labelColor: '#64748B',
+  valueColor: '#1E293B',
+  rowBorder: '#F1F5F9',
 
+  // Header
+  headerTitle: '#1E293B',
+  headerSubtitle: '#64748B',
+
+  // Location Card
+  locationBg: '#FFFFFF',
+  locationLabel: '#4CAF50',
+  locationText: '#111827',
+  locationEmptyText: '#94A3B8',
+
+  // Device Info
+  deviceToggleBg: '#FFFFFF',
+  deviceToggleBorder: '#E2E8F0',
+  deviceToggleText: '#2563EB',
+
+  // Search Input
+  inputBg: '#FFFFFF',
+  inputBorder: '#CBD5E1',
+  inputText: '#0F172A',
+  inputPlaceholder: '#94A3B8',
+
+  // Employee List Item
+  listItemBg: '#FFFFFF',
+  listItemBorder: '#E2E8F0',
+  itemName: '#0F172A',
+  itemCode: '#64748B',
+  itemSelectedBg: '#EFF6FF',
+  itemSelectedBorder: '#3B82F6',
+  avatarBg: '#2563EB',
+  quickBadgeBg: '#E8F5E9',
+  quickBadgeText: '#2E7D32',
+
+  // Bottom Action Bar
+  bottomBarBg: '#FFFFFF',
+  bottomBarBorder: '#E2E8F0',
+
+  // Modal
+  modalOverlay: 'rgba(15, 23, 42, 0.6)',
+  modalCardBg: '#F8FAFC',
+  modalHandle: '#CBD5E1',
+  modalTitle: '#0F172A',
+  modalSub: '#64748B',
+  modalCloseBg: '#F1F5F9',
+  modalCloseIcon: '#475569',
+  countBadgeBg: '#EFF6FF',
+  countBadgeText: '#2563EB',
+  recordCardBg: '#FFFFFF',
+  recordCardBorder: '#E2E8F0',
+  recordDate: '#0F172A',
+  recordLocation: '#64748B',
+  latestBadgeBg: '#E8F5E9',
+  latestBadgeText: '#2E7D32',
+};
+
+const darkTheme = {
+  isDark: true,
+  statusBarStyle: 'light-content' as const,
+  background: '#0B0F19', // Deep sleek midnight dark
+  cardBg: '#131B2E',
+  cardBorder: '#1E293B',
+  textPrimary: '#F8FAFC',
+  textSecondary: '#94A3B8',
+  textMuted: '#64748B',
+  labelColor: '#94A3B8',
+  valueColor: '#F1F5F9',
+  rowBorder: '#1E293B',
+
+  // Header
+  headerTitle: '#F8FAFC',
+  headerSubtitle: '#A5B4FC',
+
+  // Location Card
+  locationBg: '#131B2E',
+  locationLabel: '#4ADE80',
+  locationText: '#F8FAFC',
+  locationEmptyText: '#64748B',
+
+  // Device Info
+  deviceToggleBg: '#131B2E',
+  deviceToggleBorder: '#1E293B',
+  deviceToggleText: '#818CF8',
+
+  // Search Input
+  inputBg: '#131B2E',
+  inputBorder: '#334155',
+  inputText: '#F8FAFC',
+  inputPlaceholder: '#64748B',
+
+  // Employee List Item
+  listItemBg: '#131B2E',
+  listItemBorder: '#1E293B',
+  itemName: '#F8FAFC',
+  itemCode: '#94A3B8',
+  itemSelectedBg: '#1E1B4B',
+  itemSelectedBorder: '#818CF8',
+  avatarBg: '#4F46E5',
+  quickBadgeBg: 'rgba(34, 197, 94, 0.15)',
+  quickBadgeText: '#4ADE80',
+
+  // Bottom Action Bar
+  bottomBarBg: '#0F172A',
+  bottomBarBorder: '#1E293B',
+
+  // Modal
+  modalOverlay: 'rgba(0, 0, 0, 0.75)',
+  modalCardBg: '#0F172A',
+  modalHandle: '#334155',
+  modalTitle: '#F8FAFC',
+  modalSub: '#94A3B8',
+  modalCloseBg: '#1E293B',
+  modalCloseIcon: '#94A3B8',
+  countBadgeBg: 'rgba(99, 102, 241, 0.2)',
+  countBadgeText: '#A5B4FC',
+  recordCardBg: '#131B2E',
+  recordCardBorder: '#1E293B',
+  recordDate: '#F8FAFC',
+  recordLocation: '#94A3B8',
+  latestBadgeBg: 'rgba(34, 197, 94, 0.15)',
+  latestBadgeText: '#4ADE80',
+};
 
 function Attendance() {
+  const insets = useSafeAreaInsets();
   const submitScale = new Animated.Value(1);
   const viewScale = new Animated.Value(1);
 
   const pressIn = (anim: Animated.Value) => Animated.spring(anim, { toValue: 0.95, useNativeDriver: true }).start();
   const pressOut = (anim: Animated.Value) => Animated.spring(anim, { toValue: 1, useNativeDriver: true }).start();
+  const [isNightMode, setIsNightMode] = useState(false);
   const [list, setList] = useState<AttendanceRecord[]>([]);
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>({} as DeviceInfo);
   const [selectedEmployee, setSelectedEmployee] = useState('');
@@ -51,6 +196,10 @@ function Attendance() {
   const [refreshing, setRefreshing] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceViewRecord[]>([]);
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [quickEmployeeCode, setQuickEmployeeCode] = useState('');
+
+  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+
 
   useEffect(() => {
     const loadDeviceInfo = async () => {
@@ -75,13 +224,45 @@ function Attendance() {
 
   const listofemployee = async () => {
     try {
+
+
       setLoadingList(true);
       const listresult = await axios.get(
         'https://hma.magnum.org.in/appEngnameandcode.php'
+
       );
 
-      const data = listresult.data?.data;
-      setList(data || []);
+      const data: AttendanceRecord[] = listresult.data?.data || [];
+
+      const savedEmployeeJson = await AsyncStorage.getItem(QUICK_ATTENDANCE_EMPLOYEE_KEY);
+      let orderedList = data;
+
+      if (savedEmployeeJson) {
+        try {
+          const savedEmployee: AttendanceRecord = JSON.parse(savedEmployeeJson);
+          const matchingEmployee = data.find(
+            item => item.EMPCODE === savedEmployee.EMPCODE && item.ENG_NAME === savedEmployee.ENG_NAME
+          );
+
+          if (matchingEmployee) {
+            setQuickEmployeeCode(matchingEmployee.EMPCODE);
+            orderedList = [
+              matchingEmployee,
+              ...data.filter(item => item.EMPCODE !== matchingEmployee.EMPCODE),
+            ];
+          } else {
+            await AsyncStorage.removeItem(QUICK_ATTENDANCE_EMPLOYEE_KEY);
+            setQuickEmployeeCode('');
+          }
+        } catch {
+          await AsyncStorage.removeItem(QUICK_ATTENDANCE_EMPLOYEE_KEY);
+          setQuickEmployeeCode('');
+        }
+      } else {
+        setQuickEmployeeCode('');
+      }
+
+      setList(orderedList);
     } catch (err) {
       Alert.alert('Error', 'Failed to load employees');
     } finally {
@@ -147,6 +328,7 @@ function Attendance() {
     }
 
     setLoading(true);
+    const submittedEmployee = selectedEmployee;
 
     const now = new Date();
     const formatted =
@@ -165,9 +347,12 @@ function Attendance() {
     formData.append('OS', deviceInfo.systemName);
     formData.append('Aattdatetime', formatted);
     formData.append('Brand', deviceInfo.brand);
+    formData.append('Shift', isNightMode ? 'Night' : 'Day');
+
+    const submitUrl = isNightMode ? NIGHT_ATTENDANCE_SUBMIT_API : DAY_ATTENDANCE_SUBMIT_API;
 
     try {
-      const result = await axios.post('https://hma.magnum.org.in/appAttendance.php', formData.toString(), {
+      const result = await axios.post(submitUrl, formData.toString(), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -175,6 +360,27 @@ function Attendance() {
 
       if (result.data?.status === "success") {
         Alert.alert('Success', result.data.reason);
+        const submittedRecord = list.find(item => item.EMPCODE === submittedEmployee);
+
+        if (submittedRecord) {
+          await AsyncStorage.setItem(
+            QUICK_ATTENDANCE_EMPLOYEE_KEY,
+            JSON.stringify(submittedRecord)
+          );
+          setQuickEmployeeCode(submittedRecord.EMPCODE);
+        }
+
+        setList(currentList => {
+          const currentEmployee = currentList.find(item => item.EMPCODE === submittedEmployee);
+          if (!currentEmployee) {
+            return currentList;
+          }
+
+          return [
+            currentEmployee,
+            ...currentList.filter(item => item.EMPCODE !== submittedEmployee),
+          ];
+        });
         setSelectedEmployee('');
         setSearchQuery('');
       }
@@ -183,7 +389,7 @@ function Attendance() {
       }
 
     } catch (err) {
-      Alert.alert('Error', 'Failed to submit attendance');
+      Alert.alert('Error', `Failed to submit ${isNightMode ? 'night' : 'day'} attendance`);
     } finally {
       setLoading(false);
     }
@@ -195,141 +401,230 @@ function Attendance() {
       return;
     }
     setLoadingView(true);
+    const viewUrl = isNightMode ? NIGHT_ATTENDANCE_VIEW_API : DAY_ATTENDANCE_VIEW_API;
     const formData = new URLSearchParams();
     formData.append('EMPCODE', selectedEmployee);
+    formData.append('Shift', isNightMode ? 'Night' : 'Day');
     try {
-      const result = await axios.post('https://hma.magnum.org.in/appAttendanceview.php', formData.toString(), {
+      const result = await axios.post(viewUrl, formData.toString(), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
       if (result.status === 200 && result.data.data) {
-      
+
         const sorted = [...result.data.data].sort(
           (a, b) => new Date(b.ATT_DATE).getTime() - new Date(a.ATT_DATE).getTime()
         );
         setAttendanceRecords(sorted);
         setShowAttendanceModal(true);
-      
+
       } else {
         Alert.alert('Error', 'No attendance records found');
       }
     } catch (err) {
-      Alert.alert('Error', 'Failed to fetch attendance');
+      Alert.alert('Error', `Failed to fetch ${isNightMode ? 'night' : 'day'} attendance`);
     } finally {
       setLoadingView(false);
     }
   };
 
+  const theme = isNightMode ? darkTheme : lightTheme;
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-
-      {location ? (
-        <View style={styles.locationCard}>
-          <Text style={styles.locationLabel}>📍 Current Location</Text>
-          <Text style={styles.locationText}>{location}</Text>
-        </View>
-      ) : (
-        <View style={[styles.locationCard, styles.locationCardEmpty]}>
-          <Text style={styles.locationLabel}>📍 Fetching Location...</Text>
-          <Text style={styles.locationTextEmpty}>Please wait</Text>
-        </View>
-      )}
-      {/* 🔹 Collapsible Device Info */}
-      <TouchableOpacity
-        style={styles.deviceInfoToggle}
-        onPress={() => setShowDeviceInfo(!showDeviceInfo)}
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar
+        barStyle={theme.statusBarStyle}
+        backgroundColor={theme.background}
+      />
+      <ScrollView
+        style={[styles.scrollArea, { backgroundColor: theme.background }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: Math.max(insets.top, 16), paddingBottom: 24 }
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.isDark ? '#818CF8' : '#1E88E5'}
+            colors={[theme.isDark ? '#818CF8' : '#1E88E5']}
+          />
+        }
       >
-        <Text style={styles.toggleText}>Device Info</Text>
-        <Text style={styles.toggleIcon}>{showDeviceInfo ? '▼' : '▶'}</Text>
-      </TouchableOpacity>
 
-      {showDeviceInfo && (
-        <View style={styles.card}>
-
-          <View style={styles.row}>
-            <Text style={styles.label}>Brand</Text>
-            <Text style={styles.value}>{deviceInfo.brand}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Device Name</Text>
-            <Text style={styles.value}>{deviceInfo.deviceName}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Model</Text>
-            <Text style={styles.value}>{deviceInfo.model}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>OS</Text>
-            <Text style={styles.value}>{deviceInfo.systemName} {deviceInfo.systemVersion}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Device ID</Text>
-            <Text style={styles.value}>{deviceInfo.deviceId}</Text>
-          </View>
-
-          <View style={styles.row}>
-            <Text style={styles.label}>Operating System</Text>
-            <Text style={styles.value}>
-              {deviceInfo.systemName} {deviceInfo.systemVersion}
+        {/* Toggle Button for night mode */}
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={[styles.headerTitle, { color: theme.headerTitle }]}>Attendance</Text>
+            <Text style={[styles.headerSubtitle, { color: theme.headerSubtitle }]}>
+              {isNightMode ? '🌙 Night Shift' : '☀️ Day Shift'}
             </Text>
           </View>
+          <DayNightButton value={isNightMode} onChange={(night) => setIsNightMode(night)} />
         </View>
-      )}
 
+        {location ? (
+          <View style={[
+            styles.locationCard,
+            {
+              backgroundColor: theme.locationBg,
+              borderColor: theme.cardBorder,
+              borderWidth: theme.isDark ? 1 : 0,
+            }
+          ]}>
+            <Text style={[styles.locationLabel, { color: theme.locationLabel }]}>📍 Current Location</Text>
+            <Text style={[styles.locationText, { color: theme.locationText }]}>{location}</Text>
+          </View>
+        ) : (
+          <View style={[
+            styles.locationCard,
+            styles.locationCardEmpty,
+            {
+              backgroundColor: theme.locationBg,
+              borderColor: theme.cardBorder,
+              borderWidth: theme.isDark ? 1 : 0,
+            }
+          ]}>
+            <Text style={styles.locationLabel}>📍 Fetching Location...</Text>
+            <Text style={[styles.locationTextEmpty, { color: theme.locationEmptyText }]}>Please wait</Text>
+          </View>
+        )}
 
-      {/* 🔹 Employee Section */}
+        {/* 🔹 Collapsible Device Info */}
+        <TouchableOpacity
+          style={[
+            styles.deviceInfoToggle,
+            {
+              backgroundColor: theme.deviceToggleBg,
+              borderColor: theme.deviceToggleBorder,
+              borderWidth: theme.isDark ? 1 : 0,
+            }
+          ]}
+          onPress={() => setShowDeviceInfo(!showDeviceInfo)}
+        >
+          <Text style={[styles.toggleText, { color: theme.deviceToggleText }]}>Device Info</Text>
+          <Text style={[styles.toggleIcon, { color: theme.deviceToggleText }]}>{showDeviceInfo ? '▼' : '▶'}</Text>
+        </TouchableOpacity>
 
-
-      <TextInput
-        placeholder="Search employee name"
-        style={styles.input}
-        placeholderTextColor="#888"
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-      />
-
-
-
-      {loadingList ? (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading employees...</Text>
-        </View>
-      ) : filteredList.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No employees found</Text>
-        </View>
-      ) : (
-        filteredList.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.listItem, selectedEmployee === item.EMPCODE && styles.selectedItem]}
-            onPress={() => {
-              setSelectedEmployee(item.EMPCODE);
-              setSearchQuery(item.ENG_NAME);
-            }}
-          >
-            <View style={styles.listItemContent}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{item.ENG_NAME.charAt(0)}</Text>
-              </View>
-              <View style={styles.listItemDetails}>
-                <Text style={styles.itemName}>{item.ENG_NAME}</Text>
-                <Text style={styles.itemCode}>Code: {item.EMPCODE}</Text>
-              </View>
+        {showDeviceInfo && (
+          <View style={[
+            styles.card,
+            {
+              backgroundColor: theme.cardBg,
+              borderColor: theme.cardBorder,
+              borderWidth: theme.isDark ? 1 : 0,
+            }
+          ]}>
+            <View style={[styles.row, { borderBottomColor: theme.rowBorder }]}>
+              <Text style={[styles.label, { color: theme.labelColor }]}>Brand</Text>
+              <Text style={[styles.value, { color: theme.valueColor }]}>{deviceInfo.brand}</Text>
             </View>
-          </TouchableOpacity>
-        ))
-      )}
+            <View style={[styles.row, { borderBottomColor: theme.rowBorder }]}>
+              <Text style={[styles.label, { color: theme.labelColor }]}>Device Name</Text>
+              <Text style={[styles.value, { color: theme.valueColor }]}>{deviceInfo.deviceName}</Text>
+            </View>
+            <View style={[styles.row, { borderBottomColor: theme.rowBorder }]}>
+              <Text style={[styles.label, { color: theme.labelColor }]}>Model</Text>
+              <Text style={[styles.value, { color: theme.valueColor }]}>{deviceInfo.model}</Text>
+            </View>
+            <View style={[styles.row, { borderBottomColor: theme.rowBorder }]}>
+              <Text style={[styles.label, { color: theme.labelColor }]}>OS</Text>
+              <Text style={[styles.value, { color: theme.valueColor }]}>{deviceInfo.systemName} {deviceInfo.systemVersion}</Text>
+            </View>
+            <View style={[styles.row, { borderBottomColor: theme.rowBorder }]}>
+              <Text style={[styles.label, { color: theme.labelColor }]}>Device ID</Text>
+              <Text style={[styles.value, { color: theme.valueColor }]}>{deviceInfo.deviceId}</Text>
+            </View>
+            <View style={[styles.row, { borderBottomColor: theme.rowBorder }]}>
+              <Text style={[styles.label, { color: theme.labelColor }]}>Operating System</Text>
+              <Text style={[styles.value, { color: theme.valueColor }]}>
+                {deviceInfo.systemName} {deviceInfo.systemVersion}
+              </Text>
+            </View>
+          </View>
+        )}
 
-      <View style={styles.buttonContainer}>
+        {/* 🔹 Employee Section */}
+        <TextInput
+          placeholder="Search employee name"
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme.inputBg,
+              borderColor: theme.inputBorder,
+              color: theme.inputText,
+            }
+          ]}
+          placeholderTextColor={theme.inputPlaceholder}
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+        />
 
+        {loadingList ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={theme.isDark ? '#818CF8' : '#1E88E5'} />
+            <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading employees...</Text>
+          </View>
+        ) : filteredList.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={[styles.emptyText, { color: theme.textMuted }]}>No employees found</Text>
+          </View>
+        ) : (
+          <View style={styles.listContainer}>
+            {filteredList.map(item => {
+              const isSelected = selectedEmployee === item.EMPCODE;
+              return (
+                <TouchableOpacity
+                  key={item.EMPCODE}
+                  style={[
+                    styles.listItem,
+                    {
+                      backgroundColor: isSelected ? theme.itemSelectedBg : theme.listItemBg,
+                      borderColor: isSelected ? theme.itemSelectedBorder : (theme.isDark ? theme.listItemBorder : 'transparent'),
+                      borderWidth: isSelected ? 2 : (theme.isDark ? 1 : 0),
+                    },
+                  ]}
+                  onPress={() => {
+                    setSelectedEmployee(item.EMPCODE);
+                    setSearchQuery(item.ENG_NAME);
+                  }}
+                >
+                  <View style={styles.listItemContent}>
+                    <View style={[styles.avatar, { backgroundColor: theme.avatarBg }]}>
+                      <Text style={styles.avatarText}>{item.ENG_NAME.charAt(0)}</Text>
+                    </View>
+                    <View style={styles.listItemDetails}>
+                      <View style={styles.itemNameRow}>
+                        <Text style={[styles.itemName, { color: theme.itemName }]}>{item.ENG_NAME}</Text>
+                        {item.EMPCODE === quickEmployeeCode && (
+                          <View style={[styles.quickBadge, { backgroundColor: theme.quickBadgeBg }]}>
+                            <MaterialCommunityIcons name="flash" size={12} color={theme.quickBadgeText} />
+                            <Text style={[styles.quickBadgeText, { color: theme.quickBadgeText }]}>Mark attendance quickly</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={[styles.itemCode, { color: theme.itemCode }]}>Code: {item.EMPCODE}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* 🔹 Fixed Bottom Action Bar: Fits Every Screen Height Perfectly */}
+      <View style={[
+        styles.bottomActionBar,
+        {
+          backgroundColor: theme.bottomBarBg,
+          borderTopColor: theme.bottomBarBorder,
+          paddingBottom: Math.max(insets.bottom, 14),
+        }
+      ]}>
         {/* ✅ Submit Attendance Button */}
         <Animated.View style={[styles.btnWrapper, { transform: [{ scale: submitScale }] }]}>
           <TouchableOpacity
@@ -338,16 +633,33 @@ function Attendance() {
             onPressIn={() => pressIn(submitScale)}
             onPressOut={() => pressOut(submitScale)}
             disabled={!location || loading}
-            activeOpacity={1}
+            activeOpacity={0.88}
           >
-            <LinearGradient colors={(!location || loading) ? ['#B0BEC5', '#90A4AE'] : ['#1E88E5', '#1565C0']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.btnGradient}>
+            <LinearGradient
+              colors={
+                (!location || loading)
+                  ? (isNightMode ? ['#334155', '#1E293B'] : ['#CBD5E1', '#94A3B8'])
+                  : isNightMode
+                    ? ['#7C3AED', '#5B21B6']
+                    : ['#2563EB', '#1D4ED8']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.btnGradient}
+            >
               <View style={styles.btnInner}>
-                {loading
-                  ? <ActivityIndicator color="#fff" size={24} />
-                  : <MaterialCommunityIcons name="check-circle" size={28} color="#fff" />}
-                <View>
-                  <Text style={styles.btnLabel}>{loading ? 'Submitting...' : 'Submit'}</Text>
-                  <Text style={styles.btnSub}>Mark Attendance</Text>
+                <View style={styles.btnIconBadge}>
+                  {loading
+                    ? <ActivityIndicator color="#fff" size={18} />
+                    : <MaterialCommunityIcons name="check-decagram" size={20} color="#fff" />}
+                </View>
+                <View style={styles.btnTextWrapper}>
+                  <Text style={styles.btnLabel} numberOfLines={1}>
+                    {loading ? 'Submitting...' : 'Submit'}
+                  </Text>
+                  <Text style={styles.btnSub} numberOfLines={1}>
+                    {isNightMode ? 'Night Shift' : 'Day Shift'}
+                  </Text>
                 </View>
               </View>
               <View style={styles.btnShine} />
@@ -358,58 +670,90 @@ function Attendance() {
         {/* 📋 View Attendance Button */}
         <Animated.View style={[styles.btnWrapper, { transform: [{ scale: viewScale }] }]}>
           <TouchableOpacity
-            style={[styles.premiumBtn, (!location || loadingView) && styles.btnDisabled]}
+            style={[styles.premiumBtn, loadingView && styles.btnDisabled]}
             onPress={handleViewAttendance}
             onPressIn={() => pressIn(viewScale)}
             onPressOut={() => pressOut(viewScale)}
-           
-            activeOpacity={1}
+            disabled={loadingView}
+            activeOpacity={0.88}
           >
-            <LinearGradient colors={( loadingView) ? ['#B0BEC5', '#90A4AE'] : ['#21b3a4', '#0b8b7d']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.btnGradient}>
+            <LinearGradient
+              colors={
+                loadingView
+                  ? (isNightMode ? ['#334155', '#1E293B'] : ['#CBD5E1', '#94A3B8'])
+                  : isNightMode
+                    ? ['#0D9488', '#115E59']
+                    : ['#059669', '#047857']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.btnGradient}
+            >
               <View style={styles.btnInner}>
-                {loadingView
-                  ? <ActivityIndicator color="#fff" size={24} />
-                  : <MaterialCommunityIcons name="clipboard-text" size={28} color="#fff" />}
-                <View>
-                  <Text style={styles.btnLabel}>{loadingView ? 'Loading...' : 'View'}</Text>
-                  <Text style={styles.btnSub}>Attendance Log</Text>
+                <View style={styles.btnIconBadge}>
+                  {loadingView
+                    ? <ActivityIndicator color="#fff" size={18} />
+                    : <MaterialCommunityIcons name="calendar-clock" size={20} color="#fff" />}
+                </View>
+                <View style={styles.btnTextWrapper}>
+                  <Text style={styles.btnLabel} numberOfLines={1}>
+                    {loadingView ? 'Loading...' : 'View Logs'}
+                  </Text>
+                  <Text style={styles.btnSub} numberOfLines={1}>
+                    {isNightMode ? 'Night Shift' : 'Day Shift'}
+                  </Text>
                 </View>
               </View>
               <View style={styles.btnShine} />
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
-
       </View>
 
       {/* Attendance Records Modal */}
       <Modal visible={showAttendanceModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+        <View style={[styles.modalOverlay, { backgroundColor: theme.modalOverlay }]}>
+          <View style={[styles.modalCard, { backgroundColor: theme.modalCardBg }]}>
 
             {/* Handle bar */}
-            <View style={styles.modalHandle} />
+            <View style={[styles.modalHandle, { backgroundColor: theme.modalHandle }]} />
 
             {/* Header */}
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleRow}>
-                <LinearGradient colors={['#1E88E5','#1565C0']} style={styles.modalIconBadge}>
+                <LinearGradient
+                  colors={isNightMode ? ['#6366F1', '#4338CA'] : ['#1E88E5', '#1565C0']}
+                  style={styles.modalIconBadge}
+                >
                   <MaterialCommunityIcons name="clipboard-text" size={20} color="#fff" />
                 </LinearGradient>
                 <View>
-                  <Text style={styles.modalTitle}>Attendance Log</Text>
-                  <Text style={styles.modalSub}>{attendanceRecords[0]?.EMPNAME ?? ''}</Text>
+                  <Text style={[styles.modalTitle, { color: theme.modalTitle }]}>
+                    Attendance Log ({isNightMode ? 'Night' : 'Day'})
+                  </Text>
+                  <Text style={[styles.modalSub, { color: theme.modalSub }]}>
+                    {attendanceRecords[0]?.EMPNAME ?? ''}
+                  </Text>
                 </View>
               </View>
-              <TouchableOpacity onPress={() => setShowAttendanceModal(false)} style={styles.modalCloseBtn}>
-                <MaterialCommunityIcons name="close" size={20} color="#555" />
+              <TouchableOpacity
+                onPress={() => setShowAttendanceModal(false)}
+                style={[styles.modalCloseBtn, { backgroundColor: theme.modalCloseBg }]}
+              >
+                <MaterialCommunityIcons name="close" size={20} color={theme.modalCloseIcon} />
               </TouchableOpacity>
             </View>
 
             {/* Count badge */}
-            <View style={styles.countBadge}>
-              <MaterialCommunityIcons name="calendar-check" size={14} color="#1976D2" />
-              <Text style={styles.countText}>{attendanceRecords.length} records found</Text>
+            <View style={[styles.countBadge, { backgroundColor: theme.countBadgeBg }]}>
+              <MaterialCommunityIcons
+                name="calendar-check"
+                size={14}
+                color={theme.countBadgeText}
+              />
+              <Text style={[styles.countText, { color: theme.countBadgeText }]}>
+                {attendanceRecords.length} records found
+              </Text>
             </View>
 
             <FlatList
@@ -418,34 +762,56 @@ function Attendance() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 16 }}
               renderItem={({ item, index }) => (
-                <View style={styles.recordCard}>
+                <View style={[
+                  styles.recordCard,
+                  {
+                    backgroundColor: theme.recordCardBg,
+                    borderColor: theme.recordCardBorder,
+                    borderWidth: theme.isDark ? 1 : 0,
+                  }
+                ]}>
                   {/* Left accent + index */}
-                  <LinearGradient colors={['#1E88E5','#1565C0']} style={styles.recordAccent}>
+                  <LinearGradient
+                    colors={isNightMode ? ['#6366F1', '#4338CA'] : ['#1E88E5', '#1565C0']}
+                    style={styles.recordAccent}
+                  >
                     <Text style={styles.recordIndex}>{index + 1}</Text>
                   </LinearGradient>
 
                   <View style={styles.recordBody}>
                     <View style={styles.recordTopRow}>
-                      <MaterialCommunityIcons name="clock-outline" size={14} color="#1976D2" />
-                      <Text style={styles.recordDate}>{item.ATT_DATE}</Text>
+                      <MaterialCommunityIcons
+                        name="clock-outline"
+                        size={14}
+                        color={isNightMode ? '#818CF8' : '#1976D2'}
+                      />
+                      <Text style={[styles.recordDate, { color: theme.recordDate }]}>
+                        {item.ATT_DATE}
+                      </Text>
                     </View>
                     <View style={styles.recordBottomRow}>
-                      <MaterialCommunityIcons name="map-marker-outline" size={14} color="#43A047" />
-                      <Text style={styles.recordLocation}>{item.LOCATION}</Text>
+                      <MaterialCommunityIcons
+                        name="map-marker-outline"
+                        size={14}
+                        color={isNightMode ? '#4ADE80' : '#43A047'}
+                      />
+                      <Text style={[styles.recordLocation, { color: theme.recordLocation }]}>
+                        {item.LOCATION}
+                      </Text>
                     </View>
                   </View>
 
                   {index === 0 && (
-                    <View style={styles.latestBadge}>
-                      <Text style={styles.latestText}>Latest</Text>
+                    <View style={[styles.latestBadge, { backgroundColor: theme.latestBadgeBg }]}>
+                      <Text style={[styles.latestText, { color: theme.latestBadgeText }]}>Latest</Text>
                     </View>
                   )}
                 </View>
               )}
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
-                  <MaterialCommunityIcons name="calendar-remove" size={48} color="#ccc" />
-                  <Text style={styles.emptyText}>No records found</Text>
+                  <MaterialCommunityIcons name="calendar-remove" size={48} color={theme.textMuted} />
+                  <Text style={[styles.emptyText, { color: theme.textMuted }]}>No records found</Text>
                 </View>
               }
             />
@@ -453,7 +819,7 @@ function Attendance() {
         </View>
       </Modal>
 
-    </ScrollView>
+    </View>
   );
 
 }
@@ -464,15 +830,64 @@ const styles = StyleSheet.create({
     backgroundColor: '#F4F6F8',
   },
 
-  scrollContent: {
-    padding: 16,
-    paddingTop: 50,
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
+
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+
+  headerSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
+    marginTop: 2,
+  },
+
+  scrollArea: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    paddingHorizontal: 16,
+  },
+
+  listContainer: {
+    paddingBottom: 12,
+  },
+
+  bottomActionBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    elevation: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: -3 },
+  },
+
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 10,
-    marginTop: 20,
+    marginTop: 'auto',
+  },
+
+  buttonContainerCompact: {
+    flexDirection: 'row',
   },
 
 
@@ -512,7 +927,7 @@ const styles = StyleSheet.create({
 
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     paddingVertical: 4,
     borderBottomWidth: 0.5,
     borderBottomColor: '#eee',
@@ -524,10 +939,11 @@ const styles = StyleSheet.create({
   },
 
   value: {
+    flex: 1,
     fontSize: 12,
     fontWeight: '600',
     color: '#111',
-    maxWidth: '60%',
+    marginLeft: 12,
     textAlign: 'right',
   },
 
@@ -553,6 +969,9 @@ const styles = StyleSheet.create({
   loadingContainer: {
     padding: 40,
     alignItems: 'center',
+    justifyContent: 'center',
+
+
   },
 
   loadingText: {
@@ -563,6 +982,8 @@ const styles = StyleSheet.create({
   emptyContainer: {
     padding: 40,
     alignItems: 'center',
+    justifyContent: 'center',
+
   },
 
   emptyText: {
@@ -609,10 +1030,35 @@ const styles = StyleSheet.create({
   },
 
   itemName: {
+    flexShrink: 1,
     fontSize: 16,
     fontWeight: '600',
     color: '#222',
     marginBottom: 4,
+  },
+
+  itemNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+
+  quickBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    marginBottom: 4,
+  },
+
+  quickBadgeText: {
+    color: '#2E7D32',
+    fontSize: 10,
+    fontWeight: '700',
+    marginLeft: 3,
   },
 
   itemCode: {
@@ -661,6 +1107,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#111',
     fontWeight: '600',
+    lineHeight: 20,
   },
 
   locationTextEmpty: {
@@ -671,24 +1118,24 @@ const styles = StyleSheet.create({
 
   btnWrapper: {
     flex: 1,
-    borderRadius: 20,
-    shadowColor: '#1565C0',
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 10,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
 
   premiumBtn: {
-    borderRadius: 10,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
+    borderColor: 'rgba(255,255,255,0.22)',
   },
 
   btnGradient: {
-    borderRadius: 10,
-    paddingVertical: 14,
+    borderRadius: 16,
+    paddingVertical: 12,
     paddingHorizontal: 12,
     overflow: 'hidden',
   },
@@ -696,26 +1143,43 @@ const styles = StyleSheet.create({
   btnDisabled: {
     shadowOpacity: 0,
     elevation: 0,
+    opacity: 0.85,
   },
 
   btnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    minHeight: 38,
+  },
+
+  btnIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  btnTextWrapper: {
+    flex: 1,
+    justifyContent: 'center',
   },
 
   btnLabel: {
-    color: '#fff',
-    fontSize: 15,
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '800',
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
   },
 
   btnSub: {
-    color: 'rgba(255,255,255,0.75)',
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: '600',
     marginTop: 1,
+    letterSpacing: 0.2,
   },
 
   btnShine: {
@@ -723,10 +1187,10 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: '50%',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    height: '45%',
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
 
   modalOverlay: {

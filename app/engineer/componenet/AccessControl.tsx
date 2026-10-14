@@ -13,6 +13,7 @@ export async function getAccessControlData(): Promise<AccessControlGrouped> {
         const response = await fetch('https://hma.magnum.org.in/appAccessControl.php');
         if (response.ok) {
             const json = await response.json();
+            console.log('Access Control Data fetched:', json);
             const actual_data = json.data as AccessControlItem[];
             const grouped: AccessControlGrouped = {};
             actual_data.forEach(item => {

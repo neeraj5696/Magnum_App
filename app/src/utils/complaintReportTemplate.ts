@@ -405,11 +405,10 @@ export const createComplaintReportTemplate = (data: any) => {
       <body>
         <div class="container">
           <div class="header">
-          ${
-            data.headerImageDataUri
-              ? `<img src="${data.headerImageDataUri}" alt="Magnum CRM" class="company-header-image" />`
-              : ``
-          }
+          ${data.headerImageDataUri
+      ? `<img src="${data.headerImageDataUri}" alt="Magnum CRM" class="company-header-image" />`
+      : ``
+    }
           </div>
           
           <div class="complaint-number">
@@ -429,10 +428,9 @@ export const createComplaintReportTemplate = (data: any) => {
               </div>
               <div class="info-item">
                 <div class="info-label">Address</div>
-                <div class="info-value">${
-                  [location, COMP_ADD2, COMP_ADD3].filter(Boolean).join(", ") ||
-                  "N/A"
-                }</div>
+                <div class="info-value">${[location, COMP_ADD2, COMP_ADD3].filter(Boolean).join(", ") ||
+    "N/A"
+    }</div>
               </div>
               <div class="info-item">
                 <div class="info-label"> System Status</div>
@@ -501,27 +499,24 @@ export const createComplaintReportTemplate = (data: any) => {
               <div class="info-item">
                 <div class="info-label">Current Status</div>
                 <div class="info-value">
-                  <span class="status-tag ${
-                    workStatus?.toLowerCase().includes("complete")
-                      ? "status-completed"
-                      : workStatus?.toLowerCase().includes("stand by")
-                      ? "status-standby"
-                      : workStatus?.toLowerCase().includes("observation")
-                      ? "status-observation"
-                      : "status-pending"
-                  }">
+                  <span class="status-tag ${workStatus?.toLowerCase().includes("complete")
+      ? "status-completed"
+      : workStatus?.toLowerCase().includes("stand by")
+        ? "status-standby"
+        : workStatus?.toLowerCase().includes("observation")
+          ? "status-observation"
+          : "status-pending"
+    }">
                     ${workStatus || "Pending"}
-                    ${
-                      workStatus?.toLowerCase().includes("complete")
-                        ? " - Over"
-                        : ""
-                    }
-                    ${
-                      !workStatus ||
-                      workStatus?.toLowerCase().includes("pending")
-                        ? ` - ${data.pendingReason || "Pending"}`
-                        : ""
-                    }
+                    ${workStatus?.toLowerCase().includes("complete")
+      ? " - Over"
+      : ""
+    }
+                    ${!workStatus ||
+      workStatus?.toLowerCase().includes("pending")
+      ? ` - ${data.pendingReason || "Pending"}`
+      : ""
+    }
                   </span>
                 </div>
               </div>
@@ -533,14 +528,12 @@ export const createComplaintReportTemplate = (data: any) => {
             
             <div class="remark-section">
               <div class="section-title">Engineer's Remarks</div>
-              <div class="remark-text">${
-                engineerComment || "No remarks provided."
-              }</div>
+              <div class="remark-text">${engineerComment || "No remarks provided."
+    }</div>
             </div>
 
-            ${
-              customerComment
-                ? `
+            ${customerComment
+      ? `
             <div class="remark-section" style="margin-top: 20px;">
               <div class="section-title">Customer's Comment</div>
               <div class="customer-comment">
@@ -549,22 +542,21 @@ export const createComplaintReportTemplate = (data: any) => {
               </div>
             </div>
             `
-                : ""
-            }
+      : ""
+    }
           </div>
           
           <div class="signatures">
             <div class="signature-box">
               <div class="signature-label">Engineer's Signature</div>
-              ${
-                processedEngineerSignature
-                  ? `<div style="text-align: center;">
+              ${processedEngineerSignature
+      ? `<div style="text-align: center;">
                    <img src="${processedEngineerSignature}" 
                         alt="Engineer's signature" 
                         class="signature-image" />
                  </div>`
-                  : `<div class="signature-placeholder">Engineer's signature</div>`
-              }
+      : `<div class="signature-placeholder">Engineer's signature</div>`
+    }
               <div style="margin-top:8px; text-align:left;">
                 <h3>Engineer Updated By: <span style="font-weight:normal">${engineerUpdateBy}</span></h3>
                
@@ -572,20 +564,18 @@ export const createComplaintReportTemplate = (data: any) => {
             </div>
             <div class="signature-box">
               <div class="signature-label">Client's Signature</div>
-              ${
-                processedCustomerSignature
-                  ? `<div style="text-align: center;">
+              ${processedCustomerSignature
+      ? `<div style="text-align: center;">
                    <img src="${processedCustomerSignature}" 
                         alt="Client's signature" 
                         class="signature-image" />
                  </div>`
-                  : `<div class="signature-placeholder">Client's signature</div>`
-              }
+      : `<div class="signature-placeholder">Client's signature</div>`
+    }
               <div style="margin-top:8px; text-align:left;">
                 <div><strong>Name:</strong> ${customerName || "-"}</div>
-                <div><strong>Contact No:</strong> ${
-                  customerContact || "-"
-                }</div>
+                <div><strong>Contact No:</strong> ${customerContact || "-"
+    }</div>
               </div>
             </div>
           </div>

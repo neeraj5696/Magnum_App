@@ -10,7 +10,11 @@ import { Alert } from 'react-native';
  * @param {string} fileName Name of the file to save (without extension)
  * @returns {Promise<{success: boolean, localUri?: string}>} Result of the operation with local file URI
  */
-export const generatePdfFromHtml = async (htmlContent: string, fileName: string) => {
+export const generatePdfFromHtml = async (
+  htmlContent: string,
+  fileName: string,
+  options: { share?: boolean } = { share: true }
+) => {
   try {
     // Sanitize filename for filesystem safety
     const sanitizedFileName = (fileName || 'document')
@@ -18,7 +22,7 @@ export const generatePdfFromHtml = async (htmlContent: string, fileName: string)
       .replace(/[^a-zA-Z0-9._-]/g, '_');
 
     // Add base64 image handling options to ensure images render correctly
-    const options = {
+    const printOptions = {
       html: htmlContent,
       base64: false,
       // This helps with image rendering
@@ -29,7 +33,7 @@ export const generatePdfFromHtml = async (htmlContent: string, fileName: string)
     console.log('Generating PDF...');
     
     // Generate PDF using expo-print
-    const { uri } = await Print.printToFileAsync(options);
+    const { uri } = await Print.printToFileAsync(printOptions);
     console.log('PDF generated at temporary location:', uri);
     
     // Store the PDF locally
@@ -65,12 +69,14 @@ export const generatePdfFromHtml = async (htmlContent: string, fileName: string)
 
     console.log('PDF stored locally at:', localUri);
     
-    // Handle file sharing/download based on platform
-    if (Platform.OS === 'web') {
-      await saveWebFile(uri, `${sanitizedFileName}.pdf`);
-    } else {
-      // Share the saved file, not the temporary one
-      await shareMobileFile(localUri, `${sanitizedFileName}.pdf`);
+    // Handle file sharing/download based on platform only when requested
+    if (options.share) {
+      if (Platform.OS === 'web') {
+        await saveWebFile(uri, `${sanitizedFileName}.pdf`);
+      } else {
+        // Share the saved file, not the temporary one
+        await shareMobileFile(localUri, `${sanitizedFileName}.pdf`);
+      }
     }
     
     return {

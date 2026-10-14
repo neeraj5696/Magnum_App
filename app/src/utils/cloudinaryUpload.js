@@ -49,7 +49,8 @@ const uploadPDFToCloudinary = async (pdfUri, folder = cloudinaryConfig.folder) =
       
       formData.append('upload_preset', cloudinaryConfig.uploadPreset);
       formData.append('resource_type', 'raw');
-      formData.append('public_id', `${folder}/${fileNameWithExtension}`); // Use folder and filename with extension as public_id
+      const timestamp = Date.now();
+      formData.append('public_id', `${folder}/${fileNameWithExtension}_${timestamp}`); // Timestamp ensures unique public_id on every upload
 
       console.log('Form data created with upload_preset:', cloudinaryConfig.uploadPreset);
       
@@ -88,7 +89,8 @@ const uploadPDFToCloudinary = async (pdfUri, folder = cloudinaryConfig.folder) =
       formData.append('upload_preset', cloudinaryConfig.uploadPreset);
       formData.append('format', 'pdf');
       formData.append('resource_type', 'raw');
-      formData.append('public_id', `${folder}/${fileNameWithExtension}`); // Use folder and filename with extension as public_id
+      const timestampWeb = Date.now();
+      formData.append('public_id', `${folder}/${fileNameWithExtension}_${timestampWeb}`); // Timestamp ensures unique public_id on every upload
       
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/raw/upload`,
