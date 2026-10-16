@@ -15,7 +15,8 @@ import {
   Dimensions,
   Image,
   ActivityIndicator,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Animated,
 } from "react-native";
 import PrefixedMultilineInput from "./PrefixedMultilineInput";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -152,6 +153,44 @@ export default function EnggComplaintDetails() {
   const [rnaModalVisible, setRnaModalVisible] = useState(false);
   const [rnaFormSubmitted, setRnaFormSubmitted] = useState(false);
   const [showRmaErrorModal, setShowRmaErrorModal] = useState(false);
+
+  // ── RMA Success Toast ──────────────────────────────────────────────────
+  const [rmaToastMsg, setRmaToastMsg] = useState({
+    submitted: "",
+    written: "",
+    duplicates: "",
+    totalItems: "",
+    reason: "",
+  });
+  const rmaToastAnim = useRef(new Animated.Value(100)).current; // starts off-screen (bottom)
+  const rmaToastVisible = useRef(false);
+
+  const showRmaToast = (
+    submitted: string,
+    written: string,
+    duplicates: string = "",
+    totalItems: string = "",
+    reason: string = ""
+  ) => {
+    if (rmaToastVisible.current) return;
+    rmaToastVisible.current = true;
+    setRmaToastMsg({ submitted, written, duplicates, totalItems, reason });
+    Animated.sequence([
+      Animated.spring(rmaToastAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        bounciness: 8,
+      }),
+      Animated.delay(4000),
+      Animated.timing(rmaToastAnim, {
+        toValue: 120,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      rmaToastVisible.current = false;
+    });
+  };
   const [rnaRows, setRnarows] = useState([
     {
       Sr: '1',
@@ -553,7 +592,7 @@ export default function EnggComplaintDetails() {
         let rmaResponseJson1: any = null;
         if (shouldCreateRma) {
           console.log('🚩 CHECKPOINT 6.1: Preparing to submit RMA update with the following data:', getParam('SystemName'), getParam('customer'), getParam('complaintNo'), getRMAItems());
-          
+
           try {
             // Call the submitRMAcomplaintUpdate function to submit RMA update
             rmaResponseJson1 = await submitRMAcomplaintUpdate({
@@ -590,6 +629,28 @@ export default function EnggComplaintDetails() {
             setShowRmaErrorModal(true);
             return; // ⛔ HALT: Stop handleFinalSubmit completely! Second API will NOT be called.
           }
+
+          // ✅ RMA non-blocking toast: Use direct API fields when available;
+          // fall back to splitting reason string for backward compatibility.
+          const reasonParts = String(rmaResponseJson1.reason ?? "").split(",");
+          const toastSubmitted =
+            rmaResponseJson1.totalSubmitted !== undefined
+              ? String(rmaResponseJson1.totalSubmitted)
+              : reasonParts[0]?.trim() ?? "?";
+          const toastWritten =
+            rmaResponseJson1.inserted !== undefined
+              ? String(rmaResponseJson1.inserted)
+              : reasonParts[1]?.trim() ?? "?";
+          const toastDuplicates =
+            rmaResponseJson1.duplicates !== undefined
+              ? String(rmaResponseJson1.duplicates)
+              : "";
+          const toastTotalItems =
+            rmaResponseJson1.totalItemsInDatabase !== undefined
+              ? String(rmaResponseJson1.totalItemsInDatabase)
+              : "";
+          const toastReason = String(rmaResponseJson1.reason ?? "");
+          showRmaToast(toastSubmitted, toastWritten, toastDuplicates, toastTotalItems, toastReason);
         }
 
         // Call the submitComplaintUpdate function to update the complaint status
@@ -855,7 +916,7 @@ export default function EnggComplaintDetails() {
         ", "
       )}`;
     }
-    console.log("Material Summary coming from getMaterialSummary:", summary);
+    // console.log("Material Summary coming from getMaterialSummary:", summary);
     return summary;
   };
 
@@ -2451,6 +2512,47 @@ export default function EnggComplaintDetails() {
         </View>
       </Modal>
 
+      {/* ── RMA Success Toast ─────────────────────────────────────────── */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.rmaToast,
+          { transform: [{ translateY: rmaToastAnim }] },
+        ]}
+      >
+        <View style={styles.rmaToastIconWrap}>
+          <Ionicons name="checkmark-circle" size={26} color="#fff" />
+        </View>
+        <View style={styles.rmaToastTextWrap}>
+          <Text style={styles.rmaToastTitle}>RMA Submitted Successfully</Text>
+          <Text style={styles.rmaToastRow}>
+            Items Submitted:{" "}
+            <Text style={styles.rmaToastVal}>{rmaToastMsg.submitted}</Text>
+          </Text>
+          <Text style={styles.rmaToastRow}>
+            Written to DB:{" "}
+            <Text style={styles.rmaToastVal}>{rmaToastMsg.written}</Text>
+          </Text>
+          {rmaToastMsg.duplicates !== "" && (
+            <Text style={styles.rmaToastRow}>
+              Duplicates:{" "}
+              <Text style={styles.rmaToastVal}>{rmaToastMsg.duplicates}</Text>
+            </Text>
+          )}
+          {rmaToastMsg.totalItems !== "" && (
+            <Text style={styles.rmaToastRow}>
+              Total in DB:{" "}
+              <Text style={styles.rmaToastVal}>{rmaToastMsg.totalItems}</Text>
+            </Text>
+          )}
+          {rmaToastMsg.reason !== "" && (
+            <Text style={[styles.rmaToastRow, { marginTop: 3, fontStyle: "italic" }]}>
+              {rmaToastMsg.reason}
+            </Text>
+          )}
+        </View>
+      </Animated.View>
+
     </LinearGradient>
   );
 }
@@ -3821,5 +3923,47 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     letterSpacing: 0.4,
+  },
+
+  // ── RMA Success Toast styles ──────────────────────────────────────────
+  rmaToast: {
+    position: "absolute",
+    bottom: 28,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0d6b3a",
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    elevation: 12,
+    zIndex: 9999,
+  },
+  rmaToastIconWrap: {
+    marginRight: 12,
+  },
+  rmaToastTextWrap: {
+    flex: 1,
+  },
+  rmaToastTitle: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+  rmaToastRow: {
+    color: "#d0f0e0",
+    fontSize: 12.5,
+    fontWeight: "400",
+  },
+  rmaToastVal: {
+    color: "#ffffff",
+    fontWeight: "700",
   },
 });

@@ -52,12 +52,21 @@ export async function submitRMAcomplaintUpdate({
         const responseText = await response.text();
 
 
-        console.log(responseText, "response")
-        let responseJson;
+        let responseJson: any = {};
         try {
-            responseJson = JSON.parse(responseText);
-            console.log('try me aa gaya ', responseJson)
+            // Extract the valid JSON substring between the first '{' and last '}'
+            // to handle trailing characters/markdown code fences returned by PHP
+            const firstBrace = responseText.indexOf("{");
+            const lastBrace = responseText.lastIndexOf("}");
+            const cleanJsonText =
+                firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace
+                    ? responseText.substring(firstBrace, lastBrace + 1)
+                    : responseText.trim();
+
+            responseJson = JSON.parse(cleanJsonText);
+            console.log("Parsed RMA response JSON:", responseJson);
         } catch (e) {
+            console.error("Failed to parse RMA response JSON:", e, "Raw response:", responseText);
             responseJson = {};
         }
         return responseJson;
